@@ -12,7 +12,7 @@ import {
   arrayMove,
   rectSortingStrategy,
 } from '@dnd-kit/sortable'
-import { useStore } from '../state/store'
+import { useStore } from '../../../shared/state/store'
 import { PageThumb } from './PageThumb'
 
 export function Workspace() {

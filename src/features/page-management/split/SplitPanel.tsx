@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import JSZip from 'jszip'
-import { Modal } from './Modal'
-import { useStore } from '../state/store'
-import { splitPdf, type SplitRange } from '../lib/pdfEdit'
-import { downloadBlob } from '../lib/download'
-import { DownloadIcon, ScissorsIcon } from './icons'
+import { Modal } from '../../../shared/components/Modal'
+import { useStore } from '../../../shared/state/store'
+import { splitPdf, type SplitRange } from './splitPdf'
+import { downloadBlob } from '../../../shared/lib/download'
+import { DownloadIcon, ScissorsIcon } from '../../../shared/components/icons'
 
 interface SplitPanelProps {
   baseName: string

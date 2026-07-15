@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { PageItem, SourceDoc } from '../state/types'
-import { getThumbnail } from '../lib/thumbnails'
-import { RotateIcon, TrashIcon, DragIcon } from './icons'
+import type { PageItem, SourceDoc } from '../../../shared/state/types'
+import { getThumbnail } from '../../../shared/lib/thumbnails'
+import { RotateIcon, TrashIcon, DragIcon } from '../../../shared/components/icons'
 
 interface PageThumbProps {
   page: PageItem

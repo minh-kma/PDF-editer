@@ -1,11 +1,11 @@
-import { DropZone } from './DropZone'
+import { DropZone } from '../../../shared/components/DropZone'
 import {
   RotateIcon,
   RefreshIcon,
   ScissorsIcon,
   CompressIcon,
   DownloadIcon,
-} from './icons'
+} from '../../../shared/components/icons'
 
 interface ToolbarProps {
   onAddFiles: (files: File[]) => void
