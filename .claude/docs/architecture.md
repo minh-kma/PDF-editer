@@ -1,67 +1,111 @@
 # PDFdemo — Project Architecture
 
 PDFdemo is a 100% client-side (in-browser) PDF editor. Nothing is ever
-uploaded; all PDF work runs in the browser via `pdf-lib` and `pdf.js`.
+uploaded; all PDF work runs in the browser via `pdf-lib` (editing) and
+`pdf.js` (rendering). The build output is pure static files.
 
-## Folder structure: feature-based
+## Folder structure: feature-based (do not drift)
 
-Code is organized by **feature**, not by technical type. The goal is easy
-long-term maintenance and adding new features without touching unrelated code.
+Code is organized by **feature**, not by technical type. Each PDF operation
+lives as a self-contained module under `src/features/`, with cross-cutting
+code centralized in `src/shared/`. The goal: add new features without touching
+unrelated code.
+
+**Anti-pattern to avoid:** do not recreate type-based folders like
+`src/components/` or `src/lib/` at the src root, and do not put
+feature-specific code into `shared/`. New UI + logic for a feature belongs in
+that feature's module folder.
 
 ```
 src/
-  App.tsx            Top-level composition — wires features + shared UI together
-  main.tsx           App entry point
-  index.css          Global styles
+  App.tsx            Top-level composition — wires features + shared UI, owns
+                     preview/error/busy orchestration and the autosave effects
+  main.tsx           Entry point (StrictMode + StoreProvider)
+  index.css          Global styles (Tailwind layers + component classes)
 
   features/
-    <group>/         A group of related features (see convention below)
+    <group>/         A group of related features
       <module>/      One self-contained feature: its own UI + its own logic
-        ...
 
   shared/            Cross-cutting code used by more than one feature
-    components/       Reusable UI (Modal, Toast, icons, DropZone, ...)
-    lib/              Reusable helpers (download, format, pdfjs, thumbnails,
-                      storage, pdfCore)
-    state/            The shared app store (store.tsx) + types (types.ts)
+    components/      Reusable UI: Modal, Toast, icons, DropZone, Header,
+                     PreviewModal, RecoverBanner, BusyOverlay
+    lib/             Helpers: download, format, pdfjs (render), thumbnails,
+                     storage (IndexedDB), pdfCore (shared pdf-lib primitives)
+    state/           App store (store.tsx: useReducer + context) and
+                     data types (types.ts: SourceDoc, PageItem, AppState)
 ```
 
 ## The `features/<group>/<module>/` convention
 
-- A **group** bundles related features (e.g. `page-management`).
+- A **group** bundles related features (currently only `page-management`).
 - A **module** is one self-contained feature inside a group, holding both its
   UI and its logic. A module may be UI-only, logic-only, or both.
 - Anything used by **two or more** modules is **not** duplicated — it moves to
   `shared/`.
+- Modules must not import from sibling modules. If two modules need the same
+  code, that code belongs in `shared/`.
 
 ### Current group: `page-management`
 
 ```
 features/page-management/
-  workspace/    Upload, page thumbnails, rotate, delete, reorder, and the
-                merge/assemble step. These share one page model and are
-                assembled together by buildPdf.ts — so they stay together
-                rather than being split into four artificial modules.
-  split/        SplitPanel.tsx (UI) + splitPdf.ts (logic)
-  compress/     compressPdf.ts (logic; triggered from the workspace toolbar,
-                previewed via the shared PreviewModal)
+  workspace/    Workspace.tsx (thumbnail grid + dnd-kit reorder),
+                PageThumb.tsx (one page card: rotate/delete buttons),
+                Toolbar.tsx (action bar), buildPdf.ts (assemble output)
+  split/        SplitPanel.tsx (range UI + JSZip download) + splitPdf.ts
+  compress/     compressPdf.ts (lossless re-save; result UI lives in App.tsx)
 ```
 
-`shared/lib/pdfCore.ts` holds PDF-assembly primitives (`loadSources`) used by
-both `workspace/buildPdf.ts` and `split/splitPdf.ts`.
+**Why merge/delete/reorder/rotate share one `workspace/` module:** they all
+operate on the same page plan and are assembled together by `buildPdf.ts`.
+Splitting them into four modules would create artificial coupling — they are
+one feature (the workspace), not four.
+
+`shared/lib/pdfCore.ts` holds pdf-lib primitives (`loadSources`) used by both
+`workspace/buildPdf.ts` and `split/splitPdf.ts`.
 
 ### Planned future groups
 
-New feature groups get their own folder under `features/` when work on them
-begins (no empty placeholder folders are created ahead of time):
+Create the folder when work begins (no empty placeholders):
 
-- `conversion/` — e.g. PDF ↔ images, other format conversions
-- `editing-annotations/` — e.g. text, highlights, shapes, signatures
+- `conversion/` — e.g. PDF ↔ images
+- `editing-annotations/` — e.g. text, highlights, signatures
+
+## State & data flow
+
+Single store, no external state library: `shared/state/store.tsx` is a
+`useReducer` + React context (`StoreProvider` in `main.tsx`, consumed via
+`useStore()`).
+
+- **State:** `sources: SourceDoc[]` (uploaded files, original bytes untouched)
+  and `pages: PageItem[]` (the ordered "page plan"), plus `busy`/`busyMessage`.
+- **Edits are plan mutations only** (reducer actions: ADD_SOURCE, DELETE_PAGE,
+  ROTATE_PAGE, ROTATE_ALL, REORDER, RESET, RESTORE, SET_BUSY). No PDF bytes
+  are produced until the user downloads/splits/compresses.
+- **Flow:** DropZone → `App.handleFiles` → `addSource` (one PageItem per
+  page) → Workspace renders the plan → toolbar/actions call feature logic →
+  result shown in PreviewModal → download.
+- Module-level caches (pdf.js doc cache, thumbnail cache) intentionally live
+  **outside** React — see `.claude/docs/pdf-processing.md`.
 
 ## Adding a new feature — checklist
 
 1. Pick or create the right `features/<group>/`.
-2. Add a `<module>/` folder with the feature's UI and logic.
-3. Import cross-cutting pieces from `shared/`; if you find yourself copying
-   something a second time, move it into `shared/` instead.
-4. Wire the feature into `App.tsx`.
+2. Add a `<module>/` folder with the feature's UI and logic files.
+3. Import cross-cutting pieces from `shared/`; if you'd copy something a
+   second time, move it to `shared/` instead. Never import from a sibling
+   module.
+4. If it needs new app state, extend the reducer in `shared/state/store.tsx`;
+   keep feature-local UI state (inputs, open/closed) inside the module.
+5. Wire the feature into `App.tsx`.
+6. Verify: `npx tsc --noEmit` → `npm run build` → `npm run dev` + manual check.
+
+## Build & deploy notes
+
+- `vite.config.ts` sets `base: './'` so the built app works from a subfolder
+  (GitHub Pages etc.). Do not remove.
+- `tsconfig.node.json` redirects its emit into `node_modules/.tmp/` — do not
+  let `tsc -b` emit `vite.config.js`/`.d.ts` next to the source (they are
+  gitignored as a safety net).
+- `netlify.toml` defines the optional auto-deploy (`npm run build` → `dist/`).

@@ -58,13 +58,26 @@ Because everything runs in the visitor's browser, there are no running costs.
 
 ### Folder layout
 
+The code is organized by **feature**: each PDF operation lives in its own
+folder, and anything used by several features lives in `shared/`.
+
 ```
 src/
-  components/   Screen pieces (Header, DropZone, Workspace, PageThumb, Toolbar, …)
-  lib/          PDF helpers (pdf-lib editing, pdf.js thumbnails, zip, storage)
-  state/        The in-memory "page plan" and its types
-  App.tsx       Ties everything together
+  features/
+    page-management/
+      workspace/   The main editing screen: page thumbnails, rotate,
+                   delete, drag-to-reorder, and building the final PDF
+      split/       The "split into separate files" panel and its logic
+      compress/    The lossless compress step
+  shared/
+    components/    Reusable screen pieces (header, pop-ups, buttons, icons)
+    lib/           Helpers (thumbnails, downloads, autosave storage, …)
+    state/         The in-memory "page plan" — which pages, in what order
+  App.tsx          Ties everything together
 ```
+
+New features (for example, converting PDFs to images) get their own folder
+under `src/features/` — see `.claude/docs/architecture.md` for the details.
 
 ## A note on "Compress"
 
