@@ -11,9 +11,10 @@ interface PageThumbProps {
   position: number // 1-based position shown to the user
   onRotate: (pageId: string) => void
   onDelete: (pageId: string) => void
+  onEnlarge: (page: PageItem) => void
 }
 
-export function PageThumb({ page, source, position, onRotate, onDelete }: PageThumbProps) {
+export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarge }: PageThumbProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: page.id })
 
@@ -43,10 +44,12 @@ export function PageThumb({ page, source, position, onRotate, onDelete }: PageTh
         isDragging ? 'z-10 opacity-80 shadow-card ring-2 ring-brand-300' : ''
       }`}
     >
-      {/* Thumbnail image area (also the drag handle). */}
+      {/* Thumbnail image area (also the drag handle). Double-click enlarges. */}
       <div
         {...attributes}
         {...listeners}
+        onDoubleClick={() => onEnlarge(page)}
+        title="Double-click to enlarge"
         className="relative flex aspect-[3/4] cursor-grab items-center justify-center bg-cream-soft active:cursor-grabbing"
       >
         {thumb ? (
@@ -82,7 +85,7 @@ export function PageThumb({ page, source, position, onRotate, onDelete }: PageTh
             onClick={() => onRotate(page.id)}
             title="Rotate 90°"
             aria-label={`Rotate page ${position} 90 degrees`}
-            className="rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
+            className="btn-motion rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
           >
             <RotateIcon width={16} height={16} />
           </button>
@@ -91,7 +94,7 @@ export function PageThumb({ page, source, position, onRotate, onDelete }: PageTh
             onClick={() => onDelete(page.id)}
             title="Delete page"
             aria-label={`Delete page ${position}`}
-            className="rounded-lg p-1.5 text-ink-soft hover:bg-red-50 hover:text-red-600"
+            className="btn-motion rounded-lg p-1.5 text-ink-soft hover:bg-red-50 hover:text-red-600"
           >
             <TrashIcon width={16} height={16} />
           </button>

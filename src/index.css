@@ -22,9 +22,16 @@
 }
 
 @layer components {
+  /* One subtle, shared hover/press motion for every button in the app.
+     Applied via .btn (all text buttons) and added to icon-only buttons.
+     Guarded with `enabled:` so disabled buttons don't animate. */
+  .btn-motion {
+    @apply transition duration-150 ease-out
+      enabled:hover:scale-[1.03] enabled:hover:shadow-md enabled:active:scale-[0.97];
+  }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
-      font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply btn-motion inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+      font-bold disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
     @apply btn bg-brand-500 text-white hover:bg-brand-600 shadow-soft;

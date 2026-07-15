@@ -100,18 +100,40 @@ export default function App() {
   const handleCompress = useCallback(async () => {
     try {
       setBusy(true, 'Compressing…')
-      const original = await buildPdf(sources, pages)
-      const compressed = await compressPdf(original)
-      // Keep whichever is smaller — compression is best-effort.
-      const best = compressed.length < original.length ? compressed : original
-      const saved = original.length - best.length
-      const pct = original.length > 0 ? Math.round((saved / original.length) * 100) : 0
+      const assembled = await buildPdf(sources, pages)
+      const compressed = await compressPdf(assembled)
+
+      // Is the current plan exactly the uploaded file, untouched? Only then is
+      // the original upload a faithful stand-in for the user's document, so we
+      // may fall back to it. Any delete/rotate/reorder/merge makes it not
+      // pristine (and re-assembly is then the correct baseline instead).
+      const pristine =
+        sources.length === 1 &&
+        pages.length === sources[0].pageCount &&
+        pages.every(
+          (p, i) => p.sourceId === sources[0].id && p.sourceIndex === i && p.rotation === 0,
+        )
+
+      // The document as it stands WITHOUT our compression — i.e. what the user
+      // would otherwise download. For an untouched upload that's the original
+      // file itself; pdf-lib re-assembly can duplicate shared resources (a font
+      // or image reused across pages) and actually inflate the file.
+      const baseline = pristine ? sources[0].bytes : assembled
+
+      // Safety rule: never ship a result larger than that input. Pick the
+      // smallest faithful representation of the document.
+      let best = baseline
+      if (assembled.length < best.length) best = assembled
+      if (compressed.length < best.length) best = compressed
+
+      const saved = baseline.length - best.length
+      const pct = baseline.length > 0 ? Math.round((saved / baseline.length) * 100) : 0
 
       const info = (
         <div className="rounded-xl bg-cream-soft p-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-ink-soft">Before</span>
-            <span className="font-bold text-ink">{formatBytes(original.length)}</span>
+            <span className="font-bold text-ink">{formatBytes(baseline.length)}</span>
           </div>
           <div className="mt-1 flex items-center justify-between">
             <span className="text-ink-soft">After</span>

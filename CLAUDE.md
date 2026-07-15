@@ -70,3 +70,10 @@ npx tsc --noEmit  # typecheck only (use this to verify refactors)
   caching, byte-buffer ownership pitfalls, download helpers.
 - [.claude/docs/persistence.md](.claude/docs/persistence.md) — IndexedDB
   session autosave/recovery: schema, debounce flow, restore quirks.
+
+## Bug Fix Protocol
+When fixing a reported bug:
+1. Diagnose the root cause before editing code; briefly state it.
+2. Fix only the reported issue — no unrelated refactors.
+3. After all fixes in the batch: npx tsc --noEmit && npm run build.
+4. List changed files per item.

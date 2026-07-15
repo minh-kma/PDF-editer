@@ -23,7 +23,7 @@ export function Toast({ message, onClose }: ToastProps) {
           type="button"
           onClick={onClose}
           aria-label="Dismiss"
-          className="rounded-lg p-1 text-ink-faint hover:text-ink"
+          className="btn-motion rounded-lg p-1 text-ink-faint hover:text-ink"
         >
           <CloseIcon width={16} height={16} />
         </button>

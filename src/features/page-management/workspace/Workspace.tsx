@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   DndContext,
   PointerSensor,
@@ -12,11 +13,16 @@ import {
   arrayMove,
   rectSortingStrategy,
 } from '@dnd-kit/sortable'
+import type { PageItem } from '../../../shared/state/types'
 import { useStore } from '../../../shared/state/store'
 import { PageThumb } from './PageThumb'
+import { PageZoom } from './PageZoom'
 
 export function Workspace() {
   const { pages, sources, reorder, rotatePage, deletePage, getSource } = useStore()
+
+  // The page currently shown enlarged (double-click a thumbnail), or null.
+  const [zoomed, setZoomed] = useState<PageItem | null>(null)
 
   const sensors = useSensors(
     // A small movement threshold so tapping the rotate/delete buttons doesn't
@@ -58,11 +64,21 @@ export function Workspace() {
                 position={i + 1}
                 onRotate={(id) => rotatePage(id, 90)}
                 onDelete={deletePage}
+                onEnlarge={setZoomed}
               />
             ))}
           </div>
         </SortableContext>
       </DndContext>
+
+      {zoomed && (
+        <PageZoom
+          page={zoomed}
+          source={getSource(zoomed.sourceId)}
+          position={pages.findIndex((p) => p.id === zoomed.id) + 1}
+          onClose={() => setZoomed(null)}
+        />
+      )}
     </div>
   )
 }
