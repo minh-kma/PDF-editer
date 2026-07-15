@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-cream text-ink font-sans antialiased;
+  }
+  /* Subtle warm background wash reminiscent of the reference UI. */
+  body {
+    background-image: radial-gradient(
+        60rem 60rem at 90% -10%,
+        rgba(244, 81, 44, 0.06),
+        transparent 60%
+      ),
+      radial-gradient(50rem 50rem at -10% 10%, rgba(244, 81, 44, 0.05), transparent 55%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+      font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-600 shadow-soft;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-ink border border-brand-100 hover:bg-brand-50;
+  }
+  .btn-ghost {
+    @apply btn text-ink-soft hover:bg-brand-50 hover:text-brand-600;
+  }
+  .card {
+    @apply bg-cream-card rounded-2xl shadow-card border border-black/5;
+  }
+}
