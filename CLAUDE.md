@@ -77,3 +77,9 @@ When fixing a reported bug:
 2. Fix only the reported issue — no unrelated refactors.
 3. After all fixes in the batch: npx tsc --noEmit && npm run build.
 4. List changed files per item.
+
+## CLAUDE.md Maintenance
+If a fix or feature reveals a wrong assumption, a new convention, or
+a structural change, flag it at the end of your response with:
+"Suggest updating CLAUDE.md: [what and why]" — but do not edit
+CLAUDE.md yourself unless explicitly asked.
