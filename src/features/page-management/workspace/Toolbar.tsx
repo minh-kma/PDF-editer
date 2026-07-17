@@ -3,6 +3,7 @@ import {
   RotateIcon,
   RefreshIcon,
   ScissorsIcon,
+  ExpandIcon,
   CompressIcon,
   DownloadIcon,
 } from '../../../shared/components/icons'
@@ -12,6 +13,7 @@ interface ToolbarProps {
   onRotateAll: () => void
   onReset: () => void
   onSplit: () => void
+  onExtract: () => void
   onCompress: () => void
   onDownload: () => void
   disabled?: boolean
@@ -22,6 +24,7 @@ export function Toolbar({
   onRotateAll,
   onReset,
   onSplit,
+  onExtract,
   onCompress,
   onDownload,
   disabled,
@@ -38,6 +41,11 @@ export function Toolbar({
       <button type="button" className="btn-secondary" onClick={onSplit} disabled={disabled}>
         <ScissorsIcon width={18} height={18} />
         Split
+      </button>
+
+      <button type="button" className="btn-secondary" onClick={onExtract} disabled={disabled}>
+        <ExpandIcon width={18} height={18} />
+        Extract
       </button>
 
       <button type="button" className="btn-secondary" onClick={onCompress} disabled={disabled}>

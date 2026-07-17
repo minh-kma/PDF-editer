@@ -83,3 +83,8 @@ If a fix or feature reveals a wrong assumption, a new convention, or
 a structural change, flag it at the end of your response with:
 "Suggest updating CLAUDE.md: [what and why]" — but do not edit
 CLAUDE.md yourself unless explicitly asked.
+
+## Session Continuity
+CLAUDE.md loads automatically each session — never ask me to re-read it.
+Files under .claude/docs/ do not auto-load; read only the ones relevant
+to the current task, and only if not already read this session.

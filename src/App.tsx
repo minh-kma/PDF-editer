@@ -4,6 +4,7 @@ import { DropZone } from './shared/components/DropZone'
 import { Workspace } from './features/page-management/workspace/Workspace'
 import { Toolbar } from './features/page-management/workspace/Toolbar'
 import { SplitPanel } from './features/page-management/split/SplitPanel'
+import { ExtractPanel } from './features/page-management/split/ExtractPanel'
 import { PreviewModal } from './shared/components/PreviewModal'
 import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
@@ -30,6 +31,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewState | null>(null)
   const [showSplit, setShowSplit] = useState(false)
+  const [showExtract, setShowExtract] = useState(false)
   const [recover, setRecover] = useState<SavedSession | null>(null)
 
   const hasPages = pages.length > 0
@@ -220,6 +222,7 @@ export default function App() {
               onRotateAll={() => rotateAll(90)}
               onReset={handleReset}
               onSplit={() => setShowSplit(true)}
+              onExtract={() => setShowExtract(true)}
               onCompress={handleCompress}
               onDownload={handleDownload}
               disabled={busy}
@@ -237,6 +240,21 @@ export default function App() {
           onError={(m) => {
             setShowSplit(false)
             setError(m)
+          }}
+        />
+      )}
+
+      {showExtract && (
+        <ExtractPanel
+          baseName={baseName(outputName())}
+          onClose={() => setShowExtract(false)}
+          onError={(m) => {
+            setShowExtract(false)
+            setError(m)
+          }}
+          onExtracted={(bytes, fileName) => {
+            setShowExtract(false)
+            setPreview({ title: 'Extracted pages', bytes, fileName })
           }}
         />
       )}

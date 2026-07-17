@@ -67,10 +67,30 @@ one feature (the workspace), not four.
 
 ### Planned future groups
 
-Create the folder when work begins (no empty placeholders):
+The product roadmap has four feature groups: **Organize**, **Optimize**,
+**Edit**, **Security** (see `.claude/docs/features.md`). `page-management`
+already covers the built Organize + workspace features. Create a group's
+folder only when work on it begins (no empty placeholders). Likely homes:
 
-- `conversion/` — e.g. PDF ↔ images
-- `editing-annotations/` — e.g. text, highlights, signatures
+- `optimize/` — e.g. OCR (Compress already lives under `page-management/`, see below)
+- `edit/` — annotation tools (text, highlights, signatures, shapes) + page numbers, watermark, crop, forms
+- `security/` — e.g. password protect
+
+### Code location vs. roadmap group
+
+A feature's **code folder** is chosen by real code coupling, not by its
+product-roadmap group name (decision **D2**). So some features live under a
+group that doesn't literally match their roadmap group — intentionally:
+
+- **Rotate** is roadmap-group *Edit* but lives in
+  `page-management/workspace/` — it mutates the same page plan and is
+  assembled by `buildPdf.ts` alongside merge/delete/reorder.
+- **Compress** is roadmap-group *Optimize* but lives in
+  `page-management/compress/` — it builds on the assembled page plan.
+
+When reading the roadmap against the folder tree, expect this. New features
+should follow the same principle: co-locate by what shares code, not by
+product-group name.
 
 ## State & data flow
 
