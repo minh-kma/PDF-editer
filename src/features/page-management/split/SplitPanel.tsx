@@ -29,7 +29,7 @@ function buildRanges(points: number[], total: number): SplitRange[] {
 }
 
 export function SplitPanel({ baseName, onClose, onError }: SplitPanelProps) {
-  const { sources, pages, setBusy } = useStore()
+  const { sources, pages, annotations, docAnnotations, assets, setBusy } = useStore()
   const total = pages.length
   const [raw, setRaw] = useState('')
   const [working, setWorking] = useState(false)
@@ -55,7 +55,11 @@ export function SplitPanel({ baseName, onClose, onError }: SplitPanelProps) {
     try {
       setWorking(true)
       setBusy(true, 'Splitting your PDF…')
-      const parts = await splitPdf(sources, pages, ranges, baseName)
+      const parts = await splitPdf(sources, pages, ranges, baseName, {
+        annotations,
+        docAnnotations,
+        assets,
+      })
       const zip = new JSZip()
       for (const part of parts) zip.file(part.name, part.bytes)
       const blob = await zip.generateAsync({ type: 'blob' })

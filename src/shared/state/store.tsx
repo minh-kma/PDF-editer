@@ -6,16 +6,36 @@ import {
   useReducer,
   type ReactNode,
 } from 'react'
-import type { AppState, PageItem, SourceDoc } from './types'
+import { produce } from 'immer'
+import type {
+  Annotation,
+  AppState,
+  Asset,
+  AssetMap,
+  DocAnnotation,
+  EditSnapshot,
+  PageItem,
+  SourceDoc,
+} from './types'
 
 // ---------------------------------------------------------------------------
-// A small, dependency-free state store built on React's useReducer + context.
-// Kept deliberately simple and readable so features can be added later.
+// A small, dependency-light state store: React useReducer + context, with
+// immer for ergonomic immutable updates and a whole-edit-slice undo/redo
+// history. See .claude/docs (Edit-group state model) for the design.
 // ---------------------------------------------------------------------------
 
-const initialState: AppState = {
+const HISTORY_LIMIT = 50
+
+// Exported for headless/unit testing of the pure state logic.
+// eslint-disable-next-line react-refresh/only-export-components
+export const initialState: AppState = {
   sources: [],
   pages: [],
+  annotations: {},
+  docAnnotations: [],
+  assets: {},
+  past: [],
+  future: [],
   busy: false,
   busyMessage: '',
 }
@@ -26,57 +46,171 @@ type Action =
   | { type: 'ROTATE_PAGE'; pageId: string; delta: number }
   | { type: 'ROTATE_ALL'; delta: number }
   | { type: 'REORDER'; pages: PageItem[] }
+  | { type: 'ADD_ANNOTATION'; pageId: string; annotation: Annotation }
+  | { type: 'UPDATE_ANNOTATION'; pageId: string; annotation: Annotation }
+  | { type: 'DELETE_ANNOTATION'; pageId: string; id: string }
+  | { type: 'ADD_DOC_ANNOTATION'; annotation: DocAnnotation }
+  | { type: 'UPDATE_DOC_ANNOTATION'; annotation: DocAnnotation }
+  | { type: 'DELETE_DOC_ANNOTATION'; id: string }
+  | { type: 'ADD_ASSET'; id: string; asset: Asset }
   | { type: 'RESET' }
-  | { type: 'RESTORE'; sources: SourceDoc[]; pages: PageItem[] }
+  | {
+      type: 'RESTORE'
+      sources: SourceDoc[]
+      pages: PageItem[]
+      annotations?: Record<string, Annotation[]>
+      docAnnotations?: DocAnnotation[]
+      assets?: AssetMap
+    }
   | { type: 'SET_BUSY'; busy: boolean; message?: string }
+  | { type: 'UNDO' }
+  | { type: 'REDO' }
+
+// Actions that create an undo step (the whole edit slice: pages + annotations).
+// ADD_ASSET is deliberately absent — assets are append-only and referenced by
+// id, so they never need to be rolled back.
+const UNDOABLE = new Set<Action['type']>([
+  'ADD_SOURCE',
+  'DELETE_PAGE',
+  'ROTATE_PAGE',
+  'ROTATE_ALL',
+  'REORDER',
+  'ADD_ANNOTATION',
+  'UPDATE_ANNOTATION',
+  'DELETE_ANNOTATION',
+  'ADD_DOC_ANNOTATION',
+  'UPDATE_DOC_ANNOTATION',
+  'DELETE_DOC_ANNOTATION',
+])
 
 function normalizeRotation(deg: number): number {
   return ((deg % 360) + 360) % 360
 }
 
-function reducer(state: AppState, action: Action): AppState {
+function editSlice(s: AppState): EditSnapshot {
+  // Cheap thanks to immer structural sharing: unchanged nested objects/arrays
+  // keep their references, so a snapshot is just a few pointers.
+  return { pages: s.pages, annotations: s.annotations, docAnnotations: s.docAnnotations }
+}
+
+// Core state transitions (no history bookkeeping — that's the wrapper's job).
+const coreReducer = produce((draft: AppState, action: Action) => {
   switch (action.type) {
     case 'ADD_SOURCE':
-      return {
-        ...state,
-        sources: [...state.sources, action.source],
-        pages: [...state.pages, ...action.pages],
-      }
-    case 'DELETE_PAGE': {
-      const pages = state.pages.filter((p) => p.id !== action.pageId)
-      // Drop sources that no longer have any pages in the plan.
-      const usedSourceIds = new Set(pages.map((p) => p.sourceId))
-      const sources = state.sources.filter((s) => usedSourceIds.has(s.id))
-      return { ...state, pages, sources }
-    }
+      draft.sources.push(action.source)
+      draft.pages.push(...action.pages)
+      break
+    case 'DELETE_PAGE':
+      draft.pages = draft.pages.filter((p) => p.id !== action.pageId)
+      delete draft.annotations[action.pageId]
+      // Sources are retained (undo/redo of a delete needs the bytes back);
+      // orphaned sources are ignored by loadSources and cleared on RESET.
+      break
     case 'ROTATE_PAGE':
-      return {
-        ...state,
-        pages: state.pages.map((p) =>
-          p.id === action.pageId
-            ? { ...p, rotation: normalizeRotation(p.rotation + action.delta) }
-            : p,
-        ),
+      for (const p of draft.pages) {
+        if (p.id === action.pageId) p.rotation = normalizeRotation(p.rotation + action.delta)
       }
+      break
     case 'ROTATE_ALL':
-      return {
-        ...state,
-        pages: state.pages.map((p) => ({
-          ...p,
-          rotation: normalizeRotation(p.rotation + action.delta),
-        })),
-      }
+      for (const p of draft.pages) p.rotation = normalizeRotation(p.rotation + action.delta)
+      break
     case 'REORDER':
-      return { ...state, pages: action.pages }
-    case 'RESET':
-      return { ...initialState }
-    case 'RESTORE':
-      return { ...initialState, sources: action.sources, pages: action.pages }
+      draft.pages = action.pages
+      break
+    case 'ADD_ANNOTATION':
+      ;(draft.annotations[action.pageId] ??= []).push(action.annotation)
+      break
+    case 'UPDATE_ANNOTATION': {
+      const list = draft.annotations[action.pageId]
+      if (list) {
+        const i = list.findIndex((a) => a.id === action.annotation.id)
+        if (i >= 0) list[i] = action.annotation
+      }
+      break
+    }
+    case 'DELETE_ANNOTATION': {
+      const list = draft.annotations[action.pageId]
+      if (list) draft.annotations[action.pageId] = list.filter((a) => a.id !== action.id)
+      break
+    }
+    case 'ADD_DOC_ANNOTATION':
+      draft.docAnnotations.push(action.annotation)
+      break
+    case 'UPDATE_DOC_ANNOTATION': {
+      const i = draft.docAnnotations.findIndex((d) => d.id === action.annotation.id)
+      if (i >= 0) draft.docAnnotations[i] = action.annotation
+      break
+    }
+    case 'DELETE_DOC_ANNOTATION':
+      draft.docAnnotations = draft.docAnnotations.filter((d) => d.id !== action.id)
+      break
+    case 'ADD_ASSET':
+      draft.assets[action.id] = action.asset
+      break
     case 'SET_BUSY':
-      return { ...state, busy: action.busy, busyMessage: action.message ?? '' }
-    default:
-      return state
+      draft.busy = action.busy
+      draft.busyMessage = action.message ?? ''
+      break
+    case 'RESET':
+      return initialState
+    case 'RESTORE':
+      return {
+        ...initialState,
+        sources: action.sources,
+        pages: action.pages,
+        annotations: action.annotations ?? {},
+        docAnnotations: action.docAnnotations ?? [],
+        assets: action.assets ?? {},
+      }
   }
+}, initialState)
+
+// History wrapper: records the pre-action edit slice for undoable actions,
+// and services UNDO / REDO.
+// eslint-disable-next-line react-refresh/only-export-components
+export function reducer(state: AppState, action: Action): AppState {
+  if (action.type === 'UNDO') {
+    if (state.past.length === 0) return state
+    const previous = state.past[state.past.length - 1]
+    return {
+      ...state,
+      ...previous,
+      past: state.past.slice(0, -1),
+      future: [editSlice(state), ...state.future],
+    }
+  }
+  if (action.type === 'REDO') {
+    if (state.future.length === 0) return state
+    const next = state.future[0]
+    return {
+      ...state,
+      ...next,
+      past: [...state.past, editSlice(state)],
+      future: state.future.slice(1),
+    }
+  }
+
+  const nextState = coreReducer(state, action)
+  if (nextState === state) return state // no-op, don't touch history
+
+  if (UNDOABLE.has(action.type)) {
+    return {
+      ...nextState,
+      past: [...state.past, editSlice(state)].slice(-HISTORY_LIMIT),
+      future: [], // a fresh edit invalidates the redo stack
+    }
+  }
+  return nextState
+}
+
+// Fast, dependency-free content hash (FNV-1a) for asset dedup.
+function hashBytes(bytes: Uint8Array): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < bytes.length; i++) {
+    h ^= bytes[i]
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(16) + ':' + bytes.length
 }
 
 interface StoreValue extends AppState {
@@ -85,9 +219,27 @@ interface StoreValue extends AppState {
   rotatePage: (pageId: string, delta: number) => void
   rotateAll: (delta: number) => void
   reorder: (pages: PageItem[]) => void
+  addAnnotation: (pageId: string, annotation: Annotation) => void
+  updateAnnotation: (pageId: string, annotation: Annotation) => void
+  deleteAnnotation: (pageId: string, id: string) => void
+  addDocAnnotation: (annotation: DocAnnotation) => void
+  updateDocAnnotation: (annotation: DocAnnotation) => void
+  deleteDocAnnotation: (id: string) => void
+  /** Add image bytes (deduped by content hash); returns the assetId to reference. */
+  addAsset: (bytes: Uint8Array, mimeType: Asset['mimeType']) => string
   reset: () => void
-  restore: (sources: SourceDoc[], pages: PageItem[]) => void
+  restore: (
+    sources: SourceDoc[],
+    pages: PageItem[],
+    annotations?: Record<string, Annotation[]>,
+    docAnnotations?: DocAnnotation[],
+    assets?: AssetMap,
+  ) => void
   setBusy: (busy: boolean, message?: string) => void
+  undo: () => void
+  redo: () => void
+  canUndo: boolean
+  canRedo: boolean
   getSource: (sourceId: string) => SourceDoc | undefined
 }
 
@@ -114,9 +266,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       rotatePage: (pageId, delta) => dispatch({ type: 'ROTATE_PAGE', pageId, delta }),
       rotateAll: (delta) => dispatch({ type: 'ROTATE_ALL', delta }),
       reorder: (pages) => dispatch({ type: 'REORDER', pages }),
+      addAnnotation: (pageId, annotation) => dispatch({ type: 'ADD_ANNOTATION', pageId, annotation }),
+      updateAnnotation: (pageId, annotation) =>
+        dispatch({ type: 'UPDATE_ANNOTATION', pageId, annotation }),
+      deleteAnnotation: (pageId, id) => dispatch({ type: 'DELETE_ANNOTATION', pageId, id }),
+      addDocAnnotation: (annotation) => dispatch({ type: 'ADD_DOC_ANNOTATION', annotation }),
+      updateDocAnnotation: (annotation) => dispatch({ type: 'UPDATE_DOC_ANNOTATION', annotation }),
+      deleteDocAnnotation: (id) => dispatch({ type: 'DELETE_DOC_ANNOTATION', id }),
+      addAsset: (bytes, mimeType) => {
+        // Assets are keyed by their content hash, so identical images dedup
+        // automatically and the assetId is stable across re-inserts.
+        const hash = hashBytes(bytes)
+        if (!state.assets[hash]) dispatch({ type: 'ADD_ASSET', id: hash, asset: { mimeType, bytes, hash } })
+        return hash
+      },
       reset: () => dispatch({ type: 'RESET' }),
-      restore: (sources, pages) => dispatch({ type: 'RESTORE', sources, pages }),
+      restore: (sources, pages, annotations, docAnnotations, assets) =>
+        dispatch({ type: 'RESTORE', sources, pages, annotations, docAnnotations, assets }),
       setBusy: (busy, message) => dispatch({ type: 'SET_BUSY', busy, message }),
+      undo: () => dispatch({ type: 'UNDO' }),
+      redo: () => dispatch({ type: 'REDO' }),
+      canUndo: state.past.length > 0,
+      canRedo: state.future.length > 0,
       getSource: (sourceId) => state.sources.find((s) => s.id === sourceId),
     }),
     [state, addSource],

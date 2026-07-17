@@ -27,7 +27,22 @@ interface PreviewState {
 
 export default function App() {
   const store = useStore()
-  const { sources, pages, busy, busyMessage, addSource, rotateAll, reset, restore, setBusy } = store
+  const {
+    sources,
+    pages,
+    annotations,
+    docAnnotations,
+    assets,
+    busy,
+    busyMessage,
+    addSource,
+    rotateAll,
+    reset,
+    restore,
+    setBusy,
+    undo,
+    redo,
+  } = store
 
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewState | null>(null)
@@ -61,10 +76,38 @@ export default function App() {
     // before the user has actually done anything.
     if (recover) return
     const t = setTimeout(() => {
-      saveSession(sources, pages).catch(() => {})
+      saveSession(sources, pages, annotations, docAnnotations, assets).catch(() => {})
     }, 800)
     return () => clearTimeout(t)
-  }, [sources, pages, recover])
+  }, [sources, pages, annotations, docAnnotations, assets, recover])
+
+  // -- Undo / redo keyboard shortcuts ----------------------------------------
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return
+      // Don't hijack undo inside a text field.
+      const el = document.activeElement
+      if (
+        el &&
+        (el.tagName === 'INPUT' ||
+          el.tagName === 'TEXTAREA' ||
+          (el as HTMLElement).isContentEditable)
+      ) {
+        return
+      }
+      const k = e.key.toLowerCase()
+      if (k === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+      } else if (k === 'y') {
+        e.preventDefault()
+        redo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo, redo])
 
   // -- File upload -----------------------------------------------------------
   const handleFiles = useCallback(
@@ -95,27 +138,30 @@ export default function App() {
   const handleDownload = useCallback(async () => {
     try {
       setBusy(true, 'Preparing your PDF…')
-      const bytes = await buildPdf(sources, pages)
+      const bytes = await buildPdf(sources, pages, { annotations, docAnnotations, assets })
       setPreview({ title: 'Your PDF is ready', bytes, fileName: outputName() })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create the PDF.')
     } finally {
       setBusy(false)
     }
-  }, [sources, pages, outputName, setBusy])
+  }, [sources, pages, annotations, docAnnotations, assets, outputName, setBusy])
 
   // -- Compress --------------------------------------------------------------
   const handleCompress = useCallback(async () => {
     try {
       setBusy(true, 'Compressing…')
-      const assembled = await buildPdf(sources, pages)
+      const assembled = await buildPdf(sources, pages, { annotations, docAnnotations, assets })
       const compressed = await compressPdf(assembled)
 
       // Is the current plan exactly the uploaded file, untouched? Only then is
       // the original upload a faithful stand-in for the user's document, so we
-      // may fall back to it. Any delete/rotate/reorder/merge makes it not
-      // pristine (and re-assembly is then the correct baseline instead).
+      // may fall back to it. Any delete/rotate/reorder/merge — or any
+      // annotation — makes it not pristine (re-assembly is the baseline then).
+      const hasAnnotations =
+        docAnnotations.length > 0 || Object.values(annotations).some((list) => list.length > 0)
       const pristine =
+        !hasAnnotations &&
         sources.length === 1 &&
         pages.length === sources[0].pageCount &&
         pages.every(
@@ -167,7 +213,7 @@ export default function App() {
     } finally {
       setBusy(false)
     }
-  }, [sources, pages, outputName, setBusy])
+  }, [sources, pages, annotations, docAnnotations, assets, outputName, setBusy])
 
   // -- Tool discovery (landing grid) -----------------------------------------
   // Picking a tool remembers the intent, then opens the file picker so the
@@ -199,7 +245,13 @@ export default function App() {
   // -- Recover banner actions ------------------------------------------------
   const handleRestore = useCallback(() => {
     if (recover) {
-      restore(recover.sources, recover.pages)
+      restore(
+        recover.sources,
+        recover.pages,
+        recover.annotations,
+        recover.docAnnotations,
+        recover.assets,
+      )
     }
     setRecover(null)
   }, [recover, restore])

@@ -16,6 +16,7 @@ In-progress work is auto-saved to IndexedDB so a page reload can be recovered.
 - **@dnd-kit** (core/sortable/utilities) — drag-to-reorder pages
 - **jszip 3.10** — bundles split output into one `.zip`
 - **idb-keyval 6.2** — IndexedDB session autosave
+- **immer 11** — immutable state updates + undo/redo structural sharing (store)
 - No test framework, no linter config, no backend. Deploys as static files
   (`netlify.toml` present; any static host works).
 
@@ -32,13 +33,22 @@ npx tsc --noEmit  # typecheck only (use this to verify refactors)
 ## Core Logic Summary
 
 - The app holds an in-memory **"page plan"**: uploaded source files
-  (`SourceDoc[]`) plus one ordered list of pages (`PageItem[]`), managed by a
-  useReducer store in `src/shared/state/store.tsx`. Edits only mutate the
+  (`SourceDoc[]`) plus one ordered list of pages (`PageItem[]`), managed by an
+  immer + useReducer store in `src/shared/state/store.tsx`. Edits only mutate the
   plan; real PDF bytes are produced only when the user downloads
-  (`buildPdf`), splits (`splitPdf`), or compresses (`compressPdf`).
+  (`buildPdf`), splits/extracts (`splitPdf`/`extractPdf`), or compresses
+  (`compressPdf`).
+- Edit-group tools layer **annotations** on the plan (one generic `Annotation`
+  shape per page, plus doc-level watermark/page-numbers and an image `assets`
+  map). They're baked onto output by the single pipeline
+  `shared/lib/annotationBake.ts`, called from `pdfCore.copyPagesToPdf` — the one
+  place pages are copied and annotations drawn (decision D11).
+- The store carries a whole-edit-slice **undo/redo** history (`past`/`future`,
+  in-memory only, Ctrl+Z / Ctrl+Shift+Z).
 - **pdf-lib edits, pdf.js draws.** Never cross these roles.
-- Autosave: `App.tsx` debounce-writes the session to IndexedDB
-  (`shared/lib/storage.ts`); on load, a recover banner offers to restore.
+- Autosave: `App.tsx` debounce-writes the session (plan + annotations + assets)
+  to IndexedDB (`shared/lib/storage.ts`, key `…:v2`); on load, a recover banner
+  offers to restore.
 - Details: see the docs linked below before touching this logic.
 
 ## Key Constraints

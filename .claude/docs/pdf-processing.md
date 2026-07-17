@@ -13,30 +13,58 @@ Never use pdf.js to modify a document or pdf-lib to render one.
 
 Edits never touch the original bytes. The store holds `SourceDoc[]` (original
 uploaded bytes, untouched) and an ordered `PageItem[]` plan (each item:
-`sourceId`, 0-based `sourceIndex`, user `rotation` 0/90/180/270). Output bytes
-are produced on demand by the three operations below, all of which walk the
-plan and copy pages out of the sources.
+`sourceId`, 0-based `sourceIndex`, user `rotation` 0/90/180/270). Edit-group
+tools add **annotations** on top (see "Annotations & the bake pipeline"). Output
+bytes are produced on demand by the three operations below, all of which walk
+the plan and copy pages out of the sources.
 
 ## Operations
 
-### `shared/lib/pdfCore.ts` — `loadSources(sources, neededIds)`
-Parses each needed source once into a `Map<sourceId, PDFDocument>`. Shared by
-`buildPdf` and `splitPdf`. Note it loads from `s.bytes.slice()` — see
-"Buffer ownership" below.
+### `shared/lib/pdfCore.ts` — `loadSources` + `copyPagesToPdf`
+`loadSources(sources, neededIds)` parses each needed source once into a
+`Map<sourceId, PDFDocument>` from `s.bytes.slice()` (see "Buffer ownership").
+`copyPagesToPdf(loaded, items, bake?)` is **the single chokepoint** that copies
+pages one at a time in plan order (per-page copying is intentional — batch copy
+would lose the user's ordering), applies `page.rotation` on top of the page's
+intrinsic rotation (`(current + delta) % 360`), bakes annotations when a `bake`
+arg is passed, and returns `out.save()`. `buildPdf`, `splitPdf` and `extractPdf`
+all funnel through it, so page-copy + annotation baking live in exactly one
+place.
 
-### `features/page-management/workspace/buildPdf.ts` — `buildPdf(sources, pages)`
-Merge/delete/reorder/rotate all collapse into this one function: create an
-empty `PDFDocument`, copy pages one at a time in plan order (per-page copying
-is intentional — batch copy would lose the user's ordering), apply
-`page.rotation` on top of the page's intrinsic rotation (`(current + delta) % 360`),
-return `out.save()`.
+### `features/page-management/workspace/buildPdf.ts` — `buildPdf(sources, pages, bake?)`
+Merge/delete/reorder/rotate collapse into this: `loadSources` → `copyPagesToPdf`.
+Pass `bake` (a `BakeInput`) to draw annotations; omit it for a plain assembly.
 
-### `features/page-management/split/splitPdf.ts` — `splitPdf(sources, pages, ranges, baseName)`
-Same copy loop, but once per `SplitRange` (1-based, inclusive, positions in
-the *plan*, i.e. after reordering). Returns named parts
-(`{base}_part{N}_p{start}-{end}.pdf`). `SplitPanel.tsx` zips the parts with
-JSZip and downloads `{base}_split.zip`. Range parsing/validation
-(`buildRanges`) lives in `SplitPanel.tsx`.
+### `features/page-management/split/splitPdf.ts` — `splitPdf(…, bake?)` and `extractPdf(…, bake?)`
+`splitPdf(sources, pages, ranges, baseName, bake?)` calls `copyPagesToPdf` once
+per `SplitRange` (1-based, inclusive, positions in the *plan*), returning named
+parts (`{base}_part{N}_p{start}-{end}.pdf`); `SplitPanel.tsx` zips them with
+JSZip → `{base}_split.zip`. `extractPdf(sources, pages, positions, bake?)` calls
+it once for the selected 1-based positions, in the order given, returning one
+PDF's bytes (`ExtractPanel.tsx` routes it through the preview modal). Range
+parsing (`buildRanges`) lives in `SplitPanel.tsx`.
+
+## Annotations & the bake pipeline
+
+The Edit group layers annotations onto the plan (decision **D11**: one shared
+"draw object onto PDF" pipeline for all ~15 tools). See the Edit-group state
+model plan for the data shapes.
+
+- **State (`shared/state/types.ts`, `store.tsx`):** one generic `Annotation`
+  discriminated union (`text`/`freehand`/`shape`/`highlight`/`textHighlight`/
+  `image`/`note` — eraser is a white `shape` box, sign is `image`/`text`), kept
+  per page in `annotations: Record<PageItem.id, Annotation[]>`, plus
+  `docAnnotations` (watermark / page numbers) and an `assets` map (image bytes,
+  keyed by content hash, referenced by `assetId`). Coordinates are normalized
+  0..1, top-left origin, relative to the page's *unrotated* crop box.
+- **Bake (`shared/lib/annotationBake.ts`):** `createBakeSession` + `bakePage`
+  are the only place annotations become PDF marks (pdf-lib
+  `drawText/drawLine/drawRectangle/drawEllipse/drawImage`). Normalized→points
+  conversion and per-doc font/image embedding live here. `copyPagesToPdf` calls
+  it per output page; a `BakeInput` is `{ annotations, docAnnotations, assets }`.
+- **pdf-lib edits, pdf.js draws** still holds — annotations are baked with
+  pdf-lib at export; the (future) interactive overlay renders them as a DOM
+  layer, so the pdf.js thumbnail cache key is unchanged.
 
 ### `features/page-management/compress/compressPdf.ts` — `compressPdf(bytes)`
 Lossless re-save with `{ useObjectStreams: true, addDefaultPage: false }`.

@@ -42,7 +42,7 @@ function parseSelection(raw: string, total: number): number[] {
 }
 
 export function ExtractPanel({ baseName, onClose, onError, onExtracted }: ExtractPanelProps) {
-  const { sources, pages, setBusy } = useStore()
+  const { sources, pages, annotations, docAnnotations, assets, setBusy } = useStore()
   const total = pages.length
   const [raw, setRaw] = useState('')
   const [working, setWorking] = useState(false)
@@ -57,7 +57,11 @@ export function ExtractPanel({ baseName, onClose, onError, onExtracted }: Extrac
     try {
       setWorking(true)
       setBusy(true, 'Extracting pages…')
-      const bytes = await extractPdf(sources, pages, selection)
+      const bytes = await extractPdf(sources, pages, selection, {
+        annotations,
+        docAnnotations,
+        assets,
+      })
       onExtracted(bytes, `${baseName}_extracted.pdf`)
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Something went wrong while extracting.')

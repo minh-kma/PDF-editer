@@ -7,15 +7,21 @@ ever leaves the device. There is no server, no accounts, no cloud sync.
 ## Storage layer — `src/shared/lib/storage.ts`
 
 - Backed by **idb-keyval** (single key/value pair, no custom DB schema).
-- Key: `pdfdemo:session:v1`. Bump the `v1` suffix if `SavedSession`'s shape
-  ever changes incompatibly — old saves are then simply ignored.
+- Key: `pdfdemo:session:v2`. Bump the suffix if `SavedSession`'s shape ever
+  changes incompatibly — old saves under the previous key are then simply
+  ignored (sessions are ephemeral, so there's no migration). `v2` added the
+  Edit-group annotation fields to `v1`.
 - Value shape:
 
 ```ts
 interface SavedSession {
-  savedAt: number        // Date.now() at save time
-  sources: SourceDoc[]   // includes full original PDF bytes
-  pages: PageItem[]      // the ordered page plan
+  version: 2
+  savedAt: number                               // Date.now() at save time
+  sources: SourceDoc[]                          // includes full original PDF bytes
+  pages: PageItem[]                             // the ordered page plan
+  annotations: Record<string, Annotation[]>     // per-page, keyed by PageItem.id
+  docAnnotations: DocAnnotation[]               // watermark / page numbers
+  assets: AssetMap                              // image/signature bytes, by content hash
 }
 ```
 
@@ -23,9 +29,11 @@ interface SavedSession {
   sources/pages (empty state = nothing to recover).
 - `loadSession()` returns `undefined` on any error or empty/invalid data —
   recovery is best-effort, it must never crash the app.
+- **Undo/redo history is NOT persisted** — `past`/`future` are in-memory only.
 - **Restore quirk:** IndexedDB's structured clone can return `bytes` as a raw
-  `ArrayBuffer` instead of `Uint8Array`; `loadSession()` re-wraps them. Keep
-  this normalization if you touch the load path.
+  `ArrayBuffer` instead of `Uint8Array`; `loadSession()` re-wraps them — for
+  **both** `sources[].bytes` and `assets[].bytes`. Keep this normalization if
+  you touch the load path.
 
 ## Autosave flow — `src/App.tsx`
 
@@ -34,14 +42,15 @@ Two `useEffect`s:
 1. **On first load:** `loadSession()` → if a session exists, set `recover`
    state, which renders `RecoverBanner` (shared component) offering
    Restore / Dismiss.
-2. **On every `sources`/`pages` change:** debounce 800ms, then
-   `saveSession()`. Guard: **saving is skipped while the recover banner is
-   showing** — otherwise the current (empty) state would overwrite the saved
-   session before the user chooses.
+2. **On every `sources`/`pages`/`annotations`/`docAnnotations`/`assets`
+   change:** debounce 800ms, then `saveSession()`. Guard: **saving is skipped
+   while the recover banner is showing** — otherwise the current (empty) state
+   would overwrite the saved session before the user chooses.
 
 User actions:
 
-- **Restore** → `store.restore(sources, pages)` re-populates the store.
+- **Restore** → `store.restore(sources, pages, annotations, docAnnotations,
+  assets)` re-populates the store (and resets undo history).
 - **Dismiss** → `clearSession()`; the offer never returns for that session.
 - **Start over** (toolbar) → `store.reset()` + `clearSession()`.
 

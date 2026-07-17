@@ -1,8 +1,8 @@
 // Splits (or extracts pages from) the current page plan. Powered by pdf-lib;
-// runs entirely in the browser — no bytes are ever sent anywhere.
-import { PDFDocument, degrees } from 'pdf-lib'
+// runs entirely in the browser — no bytes are ever sent anywhere. Page copying
+// and annotation baking live in shared/lib/pdfCore.copyPagesToPdf.
 import type { PageItem, SourceDoc } from '../../../shared/state/types'
-import { loadSources, type SourceMap } from '../../../shared/lib/pdfCore'
+import { loadSources, copyPagesToPdf, type BakeInput } from '../../../shared/lib/pdfCore'
 
 export interface SplitRange {
   /** 1-based inclusive start page (position in the current plan). */
@@ -18,26 +18,6 @@ export interface SplitPart {
 }
 
 /**
- * Copy an ordered list of plan pages into a single new PDF (honouring each
- * page's user rotation) and return its bytes. Shared by splitPdf (once per
- * range) and extractPdf (once for the whole selection).
- */
-async function copyPagesToPdf(loaded: SourceMap, items: PageItem[]): Promise<Uint8Array> {
-  const out = await PDFDocument.create()
-  for (const page of items) {
-    const src = loaded.get(page.sourceId)
-    if (!src) continue
-    const [copied] = await out.copyPages(src, [page.sourceIndex])
-    if (page.rotation) {
-      const current = copied.getRotation().angle
-      copied.setRotation(degrees((current + page.rotation) % 360))
-    }
-    out.addPage(copied)
-  }
-  return out.save()
-}
-
-/**
  * Split the current page plan into several PDFs, one per range.
  * Ranges refer to positions in the plan (after any reordering), 1-based.
  */
@@ -46,6 +26,7 @@ export async function splitPdf(
   pages: PageItem[],
   ranges: SplitRange[],
   baseName: string,
+  bake?: BakeInput,
 ): Promise<SplitPart[]> {
   const parts: SplitPart[] = []
   const neededIds = new Set(pages.map((p) => p.sourceId))
@@ -58,7 +39,7 @@ export async function splitPdf(
 
     parts.push({
       name: `${baseName}_part${index}_p${range.start}-${range.end}.pdf`,
-      bytes: await copyPagesToPdf(loaded, slice),
+      bytes: await copyPagesToPdf(loaded, slice, bake),
     })
     index++
   }
@@ -75,6 +56,7 @@ export async function extractPdf(
   sources: SourceDoc[],
   pages: PageItem[],
   positions: number[],
+  bake?: BakeInput,
 ): Promise<Uint8Array> {
   const items: PageItem[] = []
   for (const pos of positions) {
@@ -85,5 +67,5 @@ export async function extractPdf(
 
   const neededIds = new Set(items.map((p) => p.sourceId))
   const loaded = await loadSources(sources, neededIds)
-  return copyPagesToPdf(loaded, items)
+  return copyPagesToPdf(loaded, items, bake)
 }
