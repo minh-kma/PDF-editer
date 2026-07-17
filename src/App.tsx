@@ -10,9 +10,10 @@ import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
 import { Toast } from './shared/components/Toast'
 import { ToolGrid, type ToolIntent } from './shared/components/ToolGrid'
+import { PasswordPrompt } from './shared/components/PasswordPrompt'
 import { ShieldIcon, CompressIcon } from './shared/components/icons'
 import { useStore } from './shared/state/store'
-import { getPageCount } from './shared/lib/pdfjs'
+import { probePdf, decryptPdf, WrongPasswordError } from './shared/lib/pdfUnlock'
 import { buildPdf } from './features/page-management/workspace/buildPdf'
 import { compressPdf } from './features/page-management/compress/compressPdf'
 import { formatBytes, baseName } from './shared/lib/format'
@@ -54,6 +55,17 @@ export default function App() {
   // is loaded, the matching panel/action is opened (see the effect below).
   const [pendingTool, setPendingTool] = useState<ToolIntent | null>(null)
   const toolFileInput = useRef<HTMLInputElement>(null)
+
+  // Password-unlock (D8): prompt state + the current prompt's resolver, plus an
+  // in-memory password cached for this session only (never persisted; a reload
+  // re-prompts). Cleared on Start over.
+  const [pendingUnlock, setPendingUnlock] = useState<{
+    fileName: string
+    wrongPassword: boolean
+  } | null>(null)
+  const [unlockBusy, setUnlockBusy] = useState(false)
+  const unlockResolver = useRef<((password: string | null) => void) | null>(null)
+  const sessionPassword = useRef<string | null>(null)
 
   const hasPages = pages.length > 0
 
@@ -109,29 +121,103 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [undo, redo])
 
+  // -- Password unlock (D8) --------------------------------------------------
+  // Show the prompt and resolve once the user submits a password or skips.
+  const requestPassword = useCallback(
+    (fileName: string, wrongPassword: boolean) =>
+      new Promise<string | null>((resolve) => {
+        unlockResolver.current = resolve
+        setPendingUnlock({ fileName, wrongPassword })
+      }),
+    [],
+  )
+
+  // Turn protected bytes into plaintext bytes, or null if skipped/unusable.
+  const unlockFile = useCallback(
+    async (fileName: string, bytes: Uint8Array): Promise<Uint8Array | null> => {
+      // Try the session password and an empty password (owner-only / permissions
+      // -only files) silently before bothering the user.
+      const silent = [sessionPassword.current, ''].filter(
+        (pw, i, a): pw is string => pw != null && a.indexOf(pw) === i,
+      )
+      for (const pw of silent) {
+        try {
+          return await decryptPdf(bytes, pw)
+        } catch (err) {
+          if (!(err instanceof WrongPasswordError)) {
+            setError(`"${fileName}" could not be unlocked.`)
+            return null
+          }
+        }
+      }
+      // Prompt loop — unlimited retries until the password works or the user skips.
+      let wrong = false
+      for (;;) {
+        const pw = await requestPassword(fileName, wrong)
+        if (pw === null) {
+          setPendingUnlock(null)
+          return null
+        }
+        setUnlockBusy(true)
+        try {
+          const out = await decryptPdf(bytes, pw)
+          sessionPassword.current = pw // reuse for the rest of this session
+          setUnlockBusy(false)
+          setPendingUnlock(null)
+          return out
+        } catch (err) {
+          setUnlockBusy(false)
+          if (err instanceof WrongPasswordError) {
+            wrong = true
+            continue
+          }
+          setPendingUnlock(null)
+          setError(`"${fileName}" could not be unlocked.`)
+          return null
+        }
+      }
+    },
+    [requestPassword],
+  )
+
   // -- File upload -----------------------------------------------------------
   const handleFiles = useCallback(
     async (files: File[]) => {
-      setBusy(true, files.length > 1 ? 'Reading your files…' : 'Reading your file…')
       try {
         for (const file of files) {
+          setBusy(true, 'Reading your file…')
           const bytes = new Uint8Array(await file.arrayBuffer())
-          let pageCount: number
-          try {
-            pageCount = await getPageCount(bytes)
-          } catch {
-            setError(
-              `"${file.name}" couldn't be opened. It may be damaged or password-protected.`,
-            )
+          const probe = await probePdf(bytes)
+
+          if (probe.status === 'damaged') {
+            setError(`"${file.name}" couldn't be opened. It may be damaged.`)
             continue
           }
-          addSource({ id: crypto.randomUUID(), name: file.name, bytes, pageCount })
+
+          let plaintext: Uint8Array = bytes
+          let pageCount = probe.status === 'ok' ? probe.pageCount : 0
+
+          if (probe.status === 'encrypted') {
+            setBusy(false) // release the overlay so the prompt is usable
+            const unlocked = await unlockFile(file.name, bytes)
+            if (!unlocked) continue // skipped or failed
+            plaintext = unlocked
+            setBusy(true, 'Reading your file…')
+            const after = await probePdf(plaintext)
+            if (after.status !== 'ok') {
+              setError(`"${file.name}" couldn't be read after unlocking.`)
+              continue
+            }
+            pageCount = after.pageCount
+          }
+
+          addSource({ id: crypto.randomUUID(), name: file.name, bytes: plaintext, pageCount })
         }
       } finally {
         setBusy(false)
       }
     },
-    [addSource, setBusy],
+    [addSource, setBusy, unlockFile],
   )
 
   // -- Download (build the assembled PDF, then preview) ----------------------
@@ -239,6 +325,7 @@ export default function App() {
   // -- Start over ------------------------------------------------------------
   const handleReset = useCallback(() => {
     reset()
+    sessionPassword.current = null // forget the cached password on Start over
     clearSession().catch(() => {})
   }, [reset])
 
@@ -344,6 +431,16 @@ export default function App() {
             setShowExtract(false)
             setPreview({ title: 'Extracted pages', bytes, fileName })
           }}
+        />
+      )}
+
+      {pendingUnlock && (
+        <PasswordPrompt
+          fileName={pendingUnlock.fileName}
+          wrongPassword={pendingUnlock.wrongPassword}
+          busy={unlockBusy}
+          onSubmit={(pw) => unlockResolver.current?.(pw)}
+          onCancel={() => unlockResolver.current?.(null)}
         />
       )}
 

@@ -35,6 +35,30 @@ export async function getPageCount(bytes: Uint8Array): Promise<number> {
   return count
 }
 
+export type PdfOpenResult =
+  | { status: 'ok'; pageCount: number }
+  | { status: 'needsPassword' } // user-password encrypted
+  | { status: 'error' } // damaged / unreadable
+
+/**
+ * Try to open a PDF for probing: returns its page count, or flags that it needs
+ * a user password, or that it's unreadable. pdf.js is authoritative here — it's
+ * the render engine and raises a `PasswordException` for user-password files.
+ */
+export async function openPdf(bytes: Uint8Array): Promise<PdfOpenResult> {
+  try {
+    const doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise
+    const pageCount = doc.numPages
+    await doc.destroy()
+    return { status: 'ok', pageCount }
+  } catch (err) {
+    if (err && (err as { name?: string }).name === 'PasswordException') {
+      return { status: 'needsPassword' }
+    }
+    return { status: 'error' }
+  }
+}
+
 /**
  * Render one page to a PNG data URL.
  * @param rotation extra rotation (0/90/180/270) applied on top of the page's own.
