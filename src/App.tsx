@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Header } from './shared/components/Header'
 import { DropZone } from './shared/components/DropZone'
 import { Workspace } from './features/page-management/workspace/Workspace'
@@ -9,6 +9,7 @@ import { PreviewModal } from './shared/components/PreviewModal'
 import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
 import { Toast } from './shared/components/Toast'
+import { ToolGrid, type ToolIntent } from './shared/components/ToolGrid'
 import { ShieldIcon, CompressIcon } from './shared/components/icons'
 import { useStore } from './shared/state/store'
 import { getPageCount } from './shared/lib/pdfjs'
@@ -33,6 +34,11 @@ export default function App() {
   const [showSplit, setShowSplit] = useState(false)
   const [showExtract, setShowExtract] = useState(false)
   const [recover, setRecover] = useState<SavedSession | null>(null)
+
+  // A tool the user picked from the landing grid before uploading. Once a file
+  // is loaded, the matching panel/action is opened (see the effect below).
+  const [pendingTool, setPendingTool] = useState<ToolIntent | null>(null)
+  const toolFileInput = useRef<HTMLInputElement>(null)
 
   const hasPages = pages.length > 0
 
@@ -163,6 +169,27 @@ export default function App() {
     }
   }, [sources, pages, outputName, setBusy])
 
+  // -- Tool discovery (landing grid) -----------------------------------------
+  // Picking a tool remembers the intent, then opens the file picker so the
+  // user drops straight into that tool once a file is loaded.
+  const handleToolSelect = useCallback((intent: ToolIntent) => {
+    setPendingTool(intent)
+    toolFileInput.current?.click()
+  }, [])
+
+  // Once pages exist and a tool was requested, open that tool's panel/action.
+  // merge/remove/rearrange have no panel — the workspace itself is the tool.
+  useEffect(() => {
+    // Wait until reading finishes (busy false) so panels open after the load
+    // overlay clears and multi-file uploads don't fire a tool mid-read.
+    if (!hasPages || !pendingTool || busy) return
+    const intent = pendingTool
+    setPendingTool(null)
+    if (intent === 'split') setShowSplit(true)
+    else if (intent === 'extract') setShowExtract(true)
+    else if (intent === 'compress') handleCompress()
+  }, [hasPages, pendingTool, busy, handleCompress])
+
   // -- Start over ------------------------------------------------------------
   const handleReset = useCallback(() => {
     reset()
@@ -212,7 +239,16 @@ export default function App() {
 
         {!hasPages ? (
           <>
-            <DropZone onFiles={handleFiles} disabled={busy} />
+            <DropZone
+              onFiles={(files) => {
+                // A plain upload clears any tool the user may have picked and
+                // then cancelled, so it doesn't fire unexpectedly on load.
+                setPendingTool(null)
+                handleFiles(files)
+              }}
+              disabled={busy}
+            />
+            <ToolGrid onSelect={handleToolSelect} disabled={busy} />
             <PrivacyNote />
           </>
         ) : (
@@ -268,6 +304,22 @@ export default function App() {
           onClose={() => setPreview(null)}
         />
       )}
+
+      {/* Hidden picker used when a tool is launched from the landing grid. */}
+      <input
+        ref={toolFileInput}
+        type="file"
+        accept="application/pdf,.pdf"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []).filter(
+            (f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name),
+          )
+          e.target.value = '' // allow re-picking the same file
+          if (files.length) handleFiles(files)
+        }}
+      />
 
       {busy && <BusyOverlay message={busyMessage} />}
       {error && <Toast message={error} onClose={() => setError(null)} />}
