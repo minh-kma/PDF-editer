@@ -7,6 +7,8 @@ import {
   ExpandIcon,
   CompressIcon,
   DownloadIcon,
+  UndoIcon,
+  RedoIcon,
 } from '../../../shared/components/icons'
 
 interface ToolbarProps {
@@ -17,6 +19,10 @@ interface ToolbarProps {
   onExtract: () => void
   onCompress: () => void
   onDownload: () => void
+  onUndo: () => void
+  onRedo: () => void
+  canUndo: boolean
+  canRedo: boolean
   disabled?: boolean
 }
 
@@ -34,13 +40,19 @@ export function Toolbar({
   onExtract,
   onCompress,
   onDownload,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   disabled,
 }: ToolbarProps) {
   // Editing actions clustered by roadmap category (features.md), so Edit and
   // Security tools have an obvious home when they ship — add an entry (or a new
   // group) here, no layout rewrite. Rotate lives under "Edit" per features.md,
   // even though its code sits in workspace/ (decision D2).
-  const editingGroups: { tools: { label: string; icon: IconType; onClick: () => void }[] }[] = [
+  const editingGroups: {
+    tools: { label: string; icon: IconType; onClick: () => void; disabled?: boolean }[]
+  }[] = [
     // Organize
     {
       tools: [
@@ -54,7 +66,11 @@ export function Toolbar({
     },
     // Edit
     {
-      tools: [{ label: 'Rotate all', icon: RotateIcon, onClick: onRotateAll }],
+      tools: [
+        { label: 'Rotate all', icon: RotateIcon, onClick: onRotateAll },
+        { label: 'Undo', icon: UndoIcon, onClick: onUndo, disabled: !canUndo },
+        { label: 'Redo', icon: RedoIcon, onClick: onRedo, disabled: !canRedo },
+      ],
     },
   ]
 
@@ -79,7 +95,7 @@ export function Toolbar({
               type="button"
               className="btn-secondary"
               onClick={tool.onClick}
-              disabled={disabled}
+              disabled={disabled || tool.disabled}
             >
               <tool.icon width={18} height={18} />
               {tool.label}

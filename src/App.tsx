@@ -43,6 +43,8 @@ export default function App() {
     setBusy,
     undo,
     redo,
+    canUndo,
+    canRedo,
   } = store
 
   const [error, setError] = useState<string | null>(null)
@@ -400,6 +402,10 @@ export default function App() {
               onExtract={() => setShowExtract(true)}
               onCompress={handleCompress}
               onDownload={handleDownload}
+              onUndo={undo}
+              onRedo={redo}
+              canUndo={canUndo}
+              canRedo={canRedo}
               disabled={busy}
             />
             <Workspace />

@@ -145,3 +145,17 @@ export const RefreshIcon = (p: IconProps) => (
     <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
   </svg>
 )
+
+export const UndoIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <polyline points="9 14 4 9 9 4" />
+    <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+  </svg>
+)
+
+export const RedoIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <polyline points="15 14 20 9 15 4" />
+    <path d="M4 20v-7a4 4 0 0 1 4-4h12" />
+  </svg>
+)
