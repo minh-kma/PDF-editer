@@ -197,12 +197,17 @@ function PageRow({ page, source, position, zoom, shouldRender, registerEl }: Pag
       className="card scroll-mt-24 flex flex-col items-center gap-2 p-3 sm:p-4"
     >
       <p className="text-xs font-semibold text-ink-faint">Page {position}</p>
-      <div className="flex min-h-[60vh] w-full items-center justify-center overflow-hidden rounded-xl bg-cream-soft">
+      <div className="flex min-h-[60vh] w-full items-center justify-center overflow-x-auto rounded-xl bg-cream-soft">
         {url ? (
+          // Width is driven by `zoom` directly (same technique as PageZoom.tsx's
+          // wrapper) so the page visibly grows/shrinks — usePageRender's
+          // resolution bump is about sharpness, not display size, so without
+          // this the page never actually looked different when zoomed.
           <img
             src={url}
             alt={`Page ${position}`}
-            className="max-w-full object-contain"
+            style={{ width: `${zoom * 100}%` }}
+            className="max-w-none flex-none object-contain"
             draggable={false}
           />
         ) : (

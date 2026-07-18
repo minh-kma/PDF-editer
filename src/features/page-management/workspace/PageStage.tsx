@@ -8,7 +8,7 @@ import { PlusIcon, MinusIcon } from '../../../shared/components/icons'
 // bitmap), so detail stays crisp. Capped to bound memory on a single image.
 const BASE_WIDTH = 1600
 const MAX_RENDER_WIDTH = 3600
-const ZOOM_MIN = 1
+const ZOOM_MIN = 0.2
 const ZOOM_MAX = 3
 const ZOOM_STEP = 0.5
 
