@@ -10,6 +10,7 @@ import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
 import { Toast } from './shared/components/Toast'
 import { PasswordPrompt } from './shared/components/PasswordPrompt'
+import { ConfirmDialog } from './shared/components/ConfirmDialog'
 import { ShieldIcon, CompressIcon } from './shared/components/icons'
 import { useStore } from './shared/state/store'
 import { probePdf, decryptPdf, WrongPasswordError } from './shared/lib/pdfUnlock'
@@ -357,6 +358,14 @@ export default function App() {
     clearSession().catch(() => {})
   }, [reset])
 
+  // -- Logo click: same destination as Start over, confirm first if there's
+  // a session to lose (nothing to confirm when the screen is already empty).
+  const [confirmReset, setConfirmReset] = useState(false)
+  const handleLogoClick = useCallback(() => {
+    if (hasPages) setConfirmReset(true)
+    else handleReset()
+  }, [hasPages, handleReset])
+
   // -- Recover banner actions ------------------------------------------------
   const handleRestore = useCallback(() => {
     if (recover) {
@@ -384,6 +393,7 @@ export default function App() {
         onSelectTool={handleToolSelect}
         onAddFiles={handleFiles}
         onReset={handleReset}
+        onLogoClick={handleLogoClick}
         onUndo={undo}
         onRedo={redo}
         canUndo={canUndo}
@@ -459,6 +469,20 @@ export default function App() {
             setMainMode({ kind: 'browse' })
             setPreview({ title: 'Extracted pages', bytes, fileName })
           }}
+        />
+      )}
+
+      {confirmReset && (
+        <ConfirmDialog
+          title="Start over?"
+          message="This will discard your current session and take you back to the upload screen. This can't be undone."
+          confirmLabel="Discard and start over"
+          cancelLabel="Keep working"
+          onConfirm={() => {
+            setConfirmReset(false)
+            handleReset()
+          }}
+          onCancel={() => setConfirmReset(false)}
         />
       )}
 

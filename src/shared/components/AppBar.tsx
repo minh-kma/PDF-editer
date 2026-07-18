@@ -22,6 +22,10 @@ interface AppBarProps {
   onSelectTool: (intent: ToolIntent) => void
   onAddFiles: (files: File[]) => void
   onReset: () => void
+  /** Logo click: same destination as Start over, but the caller decides
+   * whether to confirm first (there's something to lose) or reset right
+   * away (nothing loaded yet). */
+  onLogoClick: () => void
   onUndo: () => void
   onRedo: () => void
   canUndo: boolean
@@ -50,6 +54,7 @@ export function AppBar({
   onSelectTool,
   onAddFiles,
   onReset,
+  onLogoClick,
   onUndo,
   onRedo,
   canUndo,
@@ -61,15 +66,22 @@ export function AppBar({
   return (
     <header className="sticky top-0 z-30 w-full border-b border-black/5 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6">
-        {/* Branding */}
-        <div className="flex items-center gap-2.5">
+        {/* Branding — also a reset-to-upload-screen shortcut (App.tsx decides
+            whether that needs confirming first). */}
+        <button
+          type="button"
+          onClick={onLogoClick}
+          disabled={disabled}
+          aria-label="PDFdemo — start over"
+          className="icon-btn flex items-center gap-2.5 rounded-xl hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+        >
           <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-brand-500 font-extrabold text-white shadow-soft">
             P
           </div>
           <span className="hidden text-xl font-extrabold tracking-tight text-ink sm:inline">
             PDF<span className="text-brand-500">demo</span>
           </span>
-        </div>
+        </button>
 
         {/* Inline shortcuts */}
         <div className="ml-1 hidden items-center gap-1.5 lg:flex">
