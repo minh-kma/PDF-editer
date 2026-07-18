@@ -174,3 +174,12 @@ JS-only tooling.
 **R2. OCR was briefly assumed dropped in one exchange, but was never
 actually dropped.** See D7. Authoritative state: OCR is in scope,
 client-side, Tesseract.js.
+
+## Notes
+
+- Claude Code never runs git commands (add/commit/push/branch, etc.) —
+  the product owner handles all git/GitHub operations.
+- The app's UI shell was redesigned: `AppBar.tsx` (persistent top bar
+  with an "All tools" mega-menu) + `BrowseView.tsx` (continuous-scroll
+  browsing with a thumbnail sidebar) replaced the old
+  Header/Toolbar/ToolGrid and paginated Browse.

@@ -56,15 +56,20 @@ export function MegaMenu({ onSelect, disabled }: MegaMenuProps) {
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full z-50 mt-2 w-[min(90vw,640px)] rounded-2xl border border-black/5 bg-white p-4 shadow-card"
+          className="absolute left-0 top-full z-50 mt-2 w-[min(92vw,34rem)] rounded-2xl border border-black/5 bg-white p-3 shadow-card"
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* One column per category so a short category (Security) gets its
+              own column instead of stacking under a taller one — wraps to a
+              single stacked column when the panel is too narrow to fit them
+              side by side (small screens, or if more categories are added
+              later than comfortably fit at the capped width above). */}
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-x-5 gap-y-3">
             {TOOL_CATEGORIES.map((category) => (
               <div key={category.heading}>
                 <h3 className="text-xs font-extrabold uppercase tracking-wide text-ink-faint">
                   {category.heading}
                 </h3>
-                <div className="mt-2 space-y-1">
+                <div className="mt-1 space-y-0.5">
                   {category.tools.map((tool) => (
                     <button
                       key={tool.intent}
@@ -74,10 +79,10 @@ export function MegaMenu({ onSelect, disabled }: MegaMenuProps) {
                         setOpen(false)
                         onSelect(tool.intent)
                       }}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-brand-50"
+                      className="flex w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left hover:bg-brand-50"
                     >
-                      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-md bg-brand-100 text-brand-500">
-                        <tool.icon width={15} height={15} />
+                      <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-brand-100 text-brand-500">
+                        <tool.icon width={13} height={13} />
                       </span>
                       <span className="text-sm font-semibold text-ink">{tool.label}</span>
                     </button>

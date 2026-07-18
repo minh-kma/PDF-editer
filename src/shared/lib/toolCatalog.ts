@@ -2,14 +2,34 @@
 // shared/components/MegaMenu.tsx). Group headings follow the product
 // roadmap (features.md), NOT the code folder layout.
 import type { ComponentType, SVGProps } from 'react'
-import { PlusIcon, ScissorsIcon, ExpandIcon, DragIcon, CompressIcon } from '../components/icons'
+import {
+  PlusIcon,
+  ScissorsIcon,
+  ExpandIcon,
+  DragIcon,
+  CompressIcon,
+  ScanIcon,
+  UnlockIcon,
+  LockIcon,
+} from '../components/icons'
 
 // The intent a tool entry carries into the upload flow (or, once a file is
 // already loaded, straight into the matching mode) — see App.tsx. 'manage'
 // is the combined Rotate+Remove+Rearrange tool (formerly two separate
 // intents, 'remove' and 'rearrange' — both already routed to the same
-// underlying Workspace grid, so they're one tool now, not two).
-export type ToolIntent = 'merge' | 'split' | 'extract' | 'manage' | 'compress'
+// underlying Workspace grid, so they're one tool now, not two). 'unlock' is
+// a one-shot action with no mode of its own (like 'compress') — it always
+// operates on a freshly-picked file, never the current session, so it
+// bypasses mainMode entirely; see App.tsx's handleToolSelect.
+export type ToolIntent =
+  | 'merge'
+  | 'split'
+  | 'extract'
+  | 'manage'
+  | 'compress'
+  | 'ocr'
+  | 'unlock'
+  | 'protect'
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -40,6 +60,14 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     heading: 'Optimize PDF',
     tools: [
       { intent: 'compress', label: 'Compress', description: 'Shrink the file size, losslessly', icon: CompressIcon },
+      { intent: 'ocr', label: 'OCR', description: 'Make scanned pages searchable', icon: ScanIcon },
+    ],
+  },
+  {
+    heading: 'Security',
+    tools: [
+      { intent: 'unlock', label: 'Unlock', description: "Remove a PDF's password", icon: UnlockIcon },
+      { intent: 'protect', label: 'Protect', description: 'Add a password to a PDF', icon: LockIcon },
     ],
   },
 ]

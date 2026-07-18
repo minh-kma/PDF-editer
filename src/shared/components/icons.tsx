@@ -186,3 +186,27 @@ export const ChevronRightIcon = (p: IconProps) => (
     <polyline points="9 18 15 12 9 6" />
   </svg>
 )
+
+export const LockIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="11" width="18" height="10" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+)
+
+export const UnlockIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="11" width="18" height="10" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 9.9-2" />
+  </svg>
+)
+
+export const ScanIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M4 8V5a1 1 0 0 1 1-1h3" />
+    <path d="M16 4h3a1 1 0 0 1 1 1v3" />
+    <path d="M20 16v3a1 1 0 0 1-1 1h-3" />
+    <path d="M8 20H5a1 1 0 0 1-1-1v-3" />
+    <line x1="7" y1="12" x2="17" y2="12" />
+  </svg>
+)

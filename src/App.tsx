@@ -5,13 +5,15 @@ import { Workspace } from './features/page-management/workspace/Workspace'
 import { BrowseView } from './features/page-management/workspace/BrowseView'
 import { SplitPanel } from './features/page-management/split/SplitPanel'
 import { ExtractPanel } from './features/page-management/split/ExtractPanel'
+import { ProtectPanel } from './features/security/protect/ProtectPanel'
+import { OcrPanel } from './features/optimize/ocr/OcrPanel'
 import { PreviewModal } from './shared/components/PreviewModal'
 import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
 import { Toast } from './shared/components/Toast'
 import { PasswordPrompt } from './shared/components/PasswordPrompt'
 import { ConfirmDialog } from './shared/components/ConfirmDialog'
-import { ShieldIcon, CompressIcon } from './shared/components/icons'
+import { ShieldIcon, CompressIcon, LockIcon } from './shared/components/icons'
 import { useStore } from './shared/state/store'
 import { probePdf, decryptPdf, WrongPasswordError } from './shared/lib/pdfUnlock'
 import { buildPdf } from './features/page-management/workspace/buildPdf'
@@ -25,6 +27,10 @@ interface PreviewState {
   bytes: Uint8Array
   fileName: string
   info?: React.ReactNode
+  /** Protect PDF only (see PreviewModal's `overlay` prop) — the encrypted
+   * result can't render in the preview frame, so this covers it with a
+   * confirmation instead of the browser's native password prompt. */
+  overlay?: React.ReactNode
 }
 
 // Which UI the main content area shows. 'browse' (the default, single-page
@@ -32,8 +38,16 @@ interface PreviewState {
 // the combined Rotate+Remove+Rearrange grid (Workspace.tsx, unchanged
 // internally — just now an explicitly-selected tool instead of the
 // default). Compress and Unlock are NOT modes — they're instant one-shot
-// actions that go straight to a PreviewModal, same as today.
-type MainMode = { kind: 'browse' } | { kind: 'manage' } | { kind: 'split' } | { kind: 'extract' }
+// actions that go straight to a PreviewModal, same as today. 'protect' and
+// 'ocr' need user input first (a password; a language pick), so — unlike
+// Compress/Unlock — they're modal-form panels, same pattern as split/extract.
+type MainMode =
+  | { kind: 'browse' }
+  | { kind: 'manage' }
+  | { kind: 'split' }
+  | { kind: 'extract' }
+  | { kind: 'protect' }
+  | { kind: 'ocr' }
 
 // Don't offer to restore a session that's gone stale — past this age, skip
 // the recover banner and proceed as if no session existed.
@@ -68,6 +82,11 @@ export default function App() {
   // is loaded, the matching panel/action is opened (see the effect below).
   const [pendingTool, setPendingTool] = useState<ToolIntent | null>(null)
   const toolFileInput = useRef<HTMLInputElement>(null)
+
+  // Unlock (mega-menu tool): always operates on a freshly-picked file, never
+  // the current session — its own file input, separate from toolFileInput,
+  // so picking a file here never touches addSource/the page-plan store.
+  const unlockFileInput = useRef<HTMLInputElement>(null)
 
   // Password-unlock (D8): prompt state + the current prompt's resolver, plus an
   // in-memory password cached for this session only (never persisted; a reload
@@ -193,6 +212,44 @@ export default function App() {
     [requestPassword],
   )
 
+  // -- Unlock (mega-menu tool): pick a file, decrypt it, preview the result —
+  // never touches the page-plan store, never lands the user in Browse.
+  // Mirrors handleCompress's one-shot shape: setBusy while working, end at
+  // setPreview (CLAUDE.md: never auto-download, always preview first).
+  const handleUnlockTool = useCallback(
+    async (file: File) => {
+      try {
+        setBusy(true, 'Reading your file…')
+        const bytes = new Uint8Array(await file.arrayBuffer())
+        const probe = await probePdf(bytes)
+
+        if (probe.status === 'damaged') {
+          setError(`"${file.name}" couldn't be opened. It may be damaged.`)
+          return
+        }
+        if (probe.status === 'ok') {
+          setError(`"${file.name}" isn't password-protected — there's nothing to unlock.`)
+          return
+        }
+
+        setBusy(false) // release the overlay so the password prompt is usable
+        const unlocked = await unlockFile(file.name, bytes)
+        if (!unlocked) return // skipped or failed — unlockFile already surfaced any error
+
+        setPreview({
+          title: 'Unlocked PDF',
+          bytes: unlocked,
+          fileName: `${baseName(file.name)}_unlocked.pdf`,
+        })
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not unlock this file.')
+      } finally {
+        setBusy(false)
+      }
+    },
+    [unlockFile, setBusy],
+  )
+
   // -- File upload -----------------------------------------------------------
   const handleFiles = useCallback(
     async (files: File[]) => {
@@ -315,12 +372,19 @@ export default function App() {
   }, [sources, pages, annotations, docAnnotations, assets, outputName, setBusy])
 
   // -- Tool discovery (persistent bar + landing grid) -------------------------
-  // 'merge' always needs a new file to combine, so it always opens the picker.
-  // Everything else, if a file is already loaded, applies straight to the
-  // current pages (no re-upload); otherwise it remembers the intent and opens
-  // the picker, same as a fresh landing-page pick.
+  // 'unlock' always needs a freshly-picked file (never the current session —
+  // uploaded files are already decrypted by the time they're in the store),
+  // so it always opens its own dedicated picker. 'merge' always needs a new
+  // file to combine, so it always opens the picker too. Everything else, if
+  // a file is already loaded, applies straight to the current pages (no
+  // re-upload); otherwise it remembers the intent and opens the picker, same
+  // as a fresh landing-page pick.
   const handleToolSelect = useCallback(
     (intent: ToolIntent) => {
+      if (intent === 'unlock') {
+        unlockFileInput.current?.click()
+        return
+      }
       if (intent === 'merge' || !hasPages) {
         setPendingTool(intent)
         toolFileInput.current?.click()
@@ -346,8 +410,12 @@ export default function App() {
     setPendingTool(null)
     if (intent === 'split') setMainMode({ kind: 'split' })
     else if (intent === 'extract') setMainMode({ kind: 'extract' })
+    else if (intent === 'protect') setMainMode({ kind: 'protect' })
+    else if (intent === 'ocr') setMainMode({ kind: 'ocr' })
     else if (intent === 'compress') handleCompress()
     else if (intent === 'manage' || intent === 'merge') setMainMode({ kind: 'manage' })
+    // 'unlock' never reaches here — handleToolSelect routes it to its own
+    // file input before pendingTool is ever set.
   }, [hasPages, pendingTool, busy, handleCompress])
 
   // -- Start over ------------------------------------------------------------
@@ -472,6 +540,54 @@ export default function App() {
         />
       )}
 
+      {mainMode.kind === 'protect' && (
+        <ProtectPanel
+          baseName={baseName(outputName())}
+          onClose={() => setMainMode({ kind: 'browse' })}
+          onError={(m) => {
+            setMainMode({ kind: 'browse' })
+            setError(m)
+          }}
+          onProtected={(bytes, fileName) => {
+            setMainMode({ kind: 'browse' })
+            setPreview({
+              title: 'Protected PDF',
+              bytes,
+              fileName,
+              // The encrypted result can only render in the preview frame as
+              // the browser's own native password prompt — confusing right
+              // after the user just chose that password — so cover it with
+              // a plain confirmation instead. Download still works normally
+              // (the footer button is outside this overlay).
+              overlay: (
+                <div className="flex flex-col items-center gap-2 px-6 text-center">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-500">
+                    <LockIcon width={24} height={24} />
+                  </span>
+                  <p className="font-bold text-ink">Your PDF is now password-protected.</p>
+                  <p className="text-sm text-ink-soft">Download it below whenever you're ready.</p>
+                </div>
+              ),
+            })
+          }}
+        />
+      )}
+
+      {mainMode.kind === 'ocr' && (
+        <OcrPanel
+          baseName={baseName(outputName())}
+          onClose={() => setMainMode({ kind: 'browse' })}
+          onError={(m) => {
+            setMainMode({ kind: 'browse' })
+            setError(m)
+          }}
+          onDone={(bytes, fileName) => {
+            setMainMode({ kind: 'browse' })
+            setPreview({ title: 'Searchable PDF', bytes, fileName })
+          }}
+        />
+      )}
+
       {confirmReset && (
         <ConfirmDialog
           title="Start over?"
@@ -502,6 +618,7 @@ export default function App() {
           bytes={preview.bytes}
           fileName={preview.fileName}
           info={preview.info}
+          overlay={preview.overlay}
           onClose={() => setPreview(null)}
         />
       )}
@@ -519,6 +636,21 @@ export default function App() {
           )
           e.target.value = '' // allow re-picking the same file
           if (files.length) handleFiles(files)
+        }}
+      />
+
+      {/* Hidden picker used by the Unlock tool — deliberately separate from
+          toolFileInput above: picking a file here never calls addSource, so
+          it never touches the page-plan store. */}
+      <input
+        ref={unlockFileInput}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          e.target.value = ''
+          if (file) handleUnlockTool(file)
         }}
       />
 

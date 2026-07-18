@@ -8,10 +8,16 @@ interface PreviewModalProps {
   bytes: Uint8Array
   fileName: string
   info?: ReactNode
+  /** Covers the preview frame itself with a dimmed/blurred layer — for
+   * results the iframe can't meaningfully render (e.g. Protect PDF's output,
+   * which the browser can only show as its own native password prompt).
+   * Optional and unused by every other tool; the frame renders normally
+   * when omitted. */
+  overlay?: ReactNode
   onClose: () => void
 }
 
-export function PreviewModal({ title, bytes, fileName, info, onClose }: PreviewModalProps) {
+export function PreviewModal({ title, bytes, fileName, info, overlay, onClose }: PreviewModalProps) {
   const [fullscreen, setFullscreen] = useState(false)
 
   // A temporary in-memory URL just for showing the PDF in the preview frame.
@@ -63,12 +69,17 @@ export function PreviewModal({ title, bytes, fileName, info, onClose }: PreviewM
       <p className="mb-2 text-sm text-ink-soft">
         Here's your result. Check it looks right, then download it.
       </p>
-      <div className="overflow-hidden rounded-xl border border-black/10 bg-cream-soft">
+      <div className="relative overflow-hidden rounded-xl border border-black/10 bg-cream-soft">
         <iframe
           title="PDF preview"
           src={url}
           className={`w-full ${fullscreen ? 'h-[calc(100vh-12rem)]' : 'h-[66vh]'}`}
         />
+        {overlay && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
+            {overlay}
+          </div>
+        )}
       </div>
     </Modal>
   )
