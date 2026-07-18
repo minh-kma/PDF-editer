@@ -18,7 +18,7 @@ no database, no file uploads. Funded by ads (see decisions.md D12).
 | Feature | Status | Notes |
 |---|---|---|
 | Compress | Built | |
-| OCR | Logic complete (recognition + write-back), no UI yet (D19) | `src/features/optimize/ocr/`: `ocrWorker.ts` + `ocrDocument.ts` (recognition, per-page skip, word bboxes) and `bakeOcrTextLayer.ts` (write-back — draws each recognized word as invisible text via pdf-lib's `TextRenderingMode.Invisible`, positioned from the word's bbox using the same normalized-`Rect` conversion as `annotationBake.ts`; skipped pages pass through byte-unchanged). Verified: recognized pages become genuinely searchable (re-extracted via pdf.js `getTextContent` after baking), skipped pages' original text is untouched, page count/dimensions preserved, invisible-rendering-mode operator confirmed present only on baked words (via pdf.js `getOperatorList`). Known limitation: doesn't correct for page `/Rotate` (see decisions.md D11 addendum). Only remaining work: ToolGrid/Toolbar entry, a "Run OCR" trigger chaining `ocrDocument()` → `bakeOcrTextLayer()`, and a progress bar consuming `onProgress`. |
+| OCR | Logic complete (recognition + write-back), no UI yet (D19) | `src/features/optimize/ocr/`: `ocrWorker.ts` + `ocrDocument.ts` (recognition, per-page skip, word bboxes) and `bakeOcrTextLayer.ts` (write-back — invisible searchable text layer via pdf-lib). Verified: recognized pages become genuinely searchable, skipped pages untouched, page count/dimensions preserved. Only remaining work: ToolGrid/Toolbar entry, a "Run OCR" trigger chaining `ocrDocument()` → `bakeOcrTextLayer()`, and a progress bar. |
 
 ## Group 3: Edit
 
@@ -28,7 +28,7 @@ Toolbar tools (shared annotation infrastructure):
 |---|---|---|
 | Undo / Redo | Built | Keyboard-only (Ctrl+Z / Ctrl+Shift+Z), no toolbar buttons yet. Works for Organize actions today; already wired for annotation actions too, pending authoring UI below. |
 | Add text | Data model + bake pipeline built, no authoring UI | Font, size, color pickers |
-| Edit text | Not started | PDFAid-style: extract text objects, inline edit, accept font substitution. Logic-first candidate (D19). |
+| Edit text | Logic built, no UI yet (D19) | `src/features/edit/edit-text/editText.ts`: `extractEditableText` (read-only, per-run text + rect + font size via pdf.js) and `applyTextEdits` (draws an opaque white cover + new text on top, reusing Eraser's cover technique and Add-text's font loading from `annotationBake.ts`). Confirmed design: visual-only, same as Eraser (D5) — original text is NOT removed from the content stream and remains extractable; `EDIT_TEXT_DISCLOSURE` exported for a future UI. Verified: new text present after edit, old text also still present (expected, not a bug), page count/dimensions unchanged, new text uses normal (non-invisible) rendering. Only remaining work: click-to-edit overlay UI. |
 | Sign | Data model + bake pipeline built, no authoring UI | Typed (font suggestions), drawn, or uploaded image. Not digital signature. |
 | Draw | Data model + bake pipeline built, no authoring UI | Freehand |
 | Shapes | Data model + bake pipeline built, no authoring UI | Line / Arrow / Box / Circle — grouped dropdown |
@@ -46,14 +46,14 @@ Page-level tools:
 | Add page numbers | Data model + bake pipeline built, no authoring UI | Position, font, format |
 | Add watermark | Data model + bake pipeline built, no authoring UI | Text or image |
 | Crop | Not started | Uses pdf-lib setCropBox. Logic-first candidate (D19). |
-| PDF Forms | Not started | Fill existing forms. If none present, allow creating: text field, checkbox, radio, list box, combo box. |
+| PDF Forms | Not started | Fill existing forms. If none present, allow creating: text field, checkbox, radio, list box, combo box. Logic-first candidate (D19). |
 
 ## Group 4: Security
 
 | Feature | Status | Notes |
 |---|---|---|
 | Unlock existing password (prompt-before-proceeding) | Built | qpdf-wasm decrypt only. `pdfUnlock.ts`, `PasswordPrompt.tsx`, wired in `App.tsx`. |
-| Protect PDF (create new password) | Logic built, no UI yet (D19) | `src/features/security/protect/protectPdf.ts`. AES-256 via qpdf-wasm, owner password set equal to user password (single secret — see decisions.md D8 addendum). Mirrors `pdfUnlock.ts`'s scaffolding (dynamic import, fresh module instance per call, virtual FS). Verified via a temporary round-trip script, 8/8 checks passed. No `ToolGrid`/`Toolbar`/`App.tsx` changes yet. |
+| Protect PDF (create new password) | Logic built, no UI yet (D19) | `src/features/security/protect/protectPdf.ts`. AES-256 via qpdf-wasm, owner password set equal to user password (single secret — see decisions.md D8 addendum). Verified via a temporary round-trip script, 8/8 checks passed. No `ToolGrid`/`Toolbar`/`App.tsx` changes yet. |
 
 Cross-feature: opening a password-protected file in any tool must prompt
 for the password before proceeding.
@@ -79,13 +79,12 @@ for the password before proceeding.
   categories — Edit and Security have zero user-facing entry points, even
   for Rotate/Unlock which are otherwise fully built. Intentional for now
   — UI wiring is deferred to a dedicated pass per D19.
-- The Edit group is backend-complete, UI-absent: annotation data model
-  (D11 discriminated union), undo/redo wiring, and the bake pipeline
-  (`annotationBake.ts`) are all done, but no component anywhere creates
-  an `Annotation` or `DocAnnotation` — no toolbar buttons, no canvas
+- The Edit group is backend-complete, UI-absent for its annotation tools:
+  data model (D11 discriminated union), undo/redo wiring, and the bake
+  pipeline (`annotationBake.ts`) are all done, but no component anywhere
+  creates an `Annotation`/`DocAnnotation` — no toolbar buttons, no canvas
   overlay, no pickers. Per D19 this authoring-UI investment is
-  deliberately deferred until the logic-first batch (Crop, PDF Forms,
-  Edit text) is done.
+  deliberately deferred until the logic-first batch (Crop, PDF Forms) is
+  done.
 - Logic-first batch progress (D19): Protect PDF done; OCR done
-  (recognition + write-back, only its own UI trigger remains).
-  Remaining: Crop, PDF Forms, Edit text.
+  (recognition + write-back); Edit text done. Remaining: Crop, PDF Forms.

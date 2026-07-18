@@ -15,15 +15,13 @@ modules split by real code coupling, not by product-name hierarchy.
 Example: merge/delete/reorder/rotate share `buildPdf()` and stay
 together as `workspace/`, not four separate folders. See architecture.md.
 
-> Precedent: OCR lives in a new `optimize/` code folder (not
-> `page-management/`, where Compress lives) since it doesn't share the
-> page-plan/`buildPdf` coupling — it operates on raw document bytes via
-> pdf.js + Tesseract + pdf-lib. Both `ocrDocument.ts` (recognition) and
-> `bakeOcrTextLayer.ts` (write-back) live there, not in `shared/lib/`,
-> because — unlike `annotationBake.ts` — they're one-shot on-demand
-> transforms with no ongoing app-state involvement, not part of the
-> universal `pdfCore.copyPagesToPdf` export pipeline. See
-> architecture.md's "planned future groups".
+> Precedent: on-demand, one-shot transforms with no ongoing app-state
+> involvement get their own feature folder instead of `shared/lib/`,
+> even when they reuse `shared/lib/annotationBake.ts`'s drawing
+> techniques — e.g. `optimize/ocr/` (`ocrDocument.ts` +
+> `bakeOcrTextLayer.ts`) and `edit/edit-text/` (`editText.ts`). They're
+> not part of D11's universal `pdfCore.copyPagesToPdf` export pipeline.
+> See architecture.md's "planned future groups".
 
 **D3. IndexedDB autosave + beforeunload warning.** In-progress work
 survives reload without a server.
@@ -45,6 +43,15 @@ Recommend Adobe Acrobat Pro for genuine redaction needs.
 via pdf.js, allow inline editing, write back with pdf-lib. Accept
 limitations: font may be substituted, layout may shift with length
 changes, scanned PDFs need OCR first. UI must disclose these.
+
+> Implementation note (confirmed decision, not open for
+> reconsideration without discussion): edits use the same visual-only
+> technique as Eraser (D5) — draw an opaque white cover over the
+> original text's region, draw new text on top. The original text's
+> operators are NOT removed from the content stream; old text remains
+> present/extractable underneath. `editText.ts` exports
+> `EDIT_TEXT_DISCLOSURE` for a future UI to surface this, same pattern
+> as `OCR_SPEED_DISCLOSURE`.
 
 ## Technology
 
@@ -88,10 +95,14 @@ tools (Add text, Sign, Draw, Shapes, Eraser, Highlight, Image, Note)
 plus Watermark and Add page numbers reuse a single "draw object onto
 PDF" pipeline. Do not implement them as isolated features.
 
-> Known limitation (applies to `annotationBake.ts` and, by inheritance,
-> `bakeOcrTextLayer.ts`): normalized-`Rect`-to-pdf-lib-point conversion
-> does not correct for a page's intrinsic `/Rotate` value. Pre-existing
-> simplification, not introduced by OCR — worth a look whenever the
+> Known limitation: `annotationBake.ts`'s normalized-`Rect`-to-pdf-lib-
+> point conversion does not correct for a page's intrinsic `/Rotate`
+> value. Applies to annotations and to OCR's word boxes (`bakeOcrTextLayer.ts`,
+> derived from a rotation-aware rendered viewport). It does NOT apply to
+> `editText.ts`: pdf.js's raw text-run coordinates (`getTextContent`)
+> are already in the page's unrotated MediaBox space, matching
+> `page.view`/pdf-lib's `page.getSize()` directly — confirmed empirically,
+> no rotation adjustment needed there. Worth a look whenever
 > annotation-authoring UI or OCR UI work touches rotated pages.
 
 ## Business model
@@ -144,12 +155,15 @@ silently building or silently skipping them.
 (Vite `?url` assets, Worker/wasm loaders) must run under plain Node,
 re-invoking the underlying call directly instead of importing the TS
 module.** ts-node/direct import fails outside Vite's build pipeline.
-Learned from `pdfUnlock.ts`/`protectPdf.ts`; confirmed again for OCR.
-Strongest form of this so far: `bakeOcrTextLayer.ts` has zero runtime
-bundler-only dependencies (its only OCR-feature reference is a
-type-only import), so its verification script bundled the real file
-with esbuild and required it directly, instead of hand-mirroring calls
-— prefer this when a module turns out not to need the workaround.
+Learned from `pdfUnlock.ts`/`protectPdf.ts`; confirmed again for OCR and
+Edit Text (both `ocrDocument.ts`/`editText.ts` have a real runtime
+import chain through `shared/lib/pdfjs.ts`'s Vite-only `?url` asset
+import, so their scripts mirror the logic under plain Node). Exception:
+`bakeOcrTextLayer.ts` has zero runtime bundler-only dependencies (its
+only OCR-feature reference is a type-only import), so its verification
+script bundled the real file with esbuild and required it directly
+instead — prefer that stronger form whenever a module turns out not to
+need the mirroring workaround.
 
 ## Reversals (for clarity)
 
