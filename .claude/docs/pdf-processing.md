@@ -93,6 +93,18 @@ passing store bytes directly will corrupt state in subtle ways.
 
 ## Download
 
-`shared/lib/download.ts`: `downloadBlob` (object URL + synthetic `<a>` click,
-URL revoked after 1s) and `downloadPdf` (wraps bytes in a Blob). Downloads are
-only triggered from the preview modal or the split panel — never automatically.
+`shared/lib/download.ts` exports three helpers:
+
+- `savePdf(bytes, fileName)` — the primary, live path: wired to
+  `PreviewModal.tsx`'s Download button. Uses the File System Access API
+  (`showSaveFilePicker`) where supported (Chromium), pre-filling the
+  auto-generated name and letting the user pick the save location; falls
+  back to `downloadPdf` on browsers without the API (Firefox, Safari) or
+  if the picker fails for any reason other than the user cancelling.
+- `downloadPdf` (wraps bytes in a Blob, calls `downloadBlob`) — `savePdf`'s
+  fallback; no component calls it directly.
+- `downloadBlob` (object URL + synthetic `<a>` click, URL revoked after
+  1s) — called directly by `SplitPanel.tsx` for the `.zip` download.
+
+Downloads are only triggered from the preview modal or the split panel —
+never automatically.

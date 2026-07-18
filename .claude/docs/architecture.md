@@ -52,8 +52,11 @@ src/
 features/page-management/
   workspace/    Workspace.tsx (thumbnail grid + dnd-kit reorder),
                 PageThumb.tsx (one page card: rotate/delete buttons),
+                PageZoom.tsx (double-click enlarge/zoom modal),
                 Toolbar.tsx (action bar), buildPdf.ts (assemble output)
-  split/        SplitPanel.tsx (range UI + JSZip download) + splitPdf.ts
+  split/        SplitPanel.tsx (range UI + JSZip download),
+                ExtractPanel.tsx (pick pages -> new file via the preview
+                modal), splitPdf.ts (both splitPdf and extractPdf)
   compress/     compressPdf.ts (lossless re-save; result UI lives in App.tsx)
 ```
 
@@ -65,16 +68,44 @@ one feature (the workspace), not four.
 `shared/lib/pdfCore.ts` holds pdf-lib primitives (`loadSources`) used by both
 `workspace/buildPdf.ts` and `split/splitPdf.ts`.
 
-### Planned future groups
+### Other groups already started: `edit`, `optimize`, `security`
+
+Unlike `page-management`, these three groups are logic-only so far: real
+pdf-lib/pdf.js code exists, but nothing is wired into the UI yet (D19:
+logic-first, UI-last). 7 files, 984 lines total:
+
+```
+features/edit/
+  crop/         cropPages.ts — setCropBox per page, degenerate-rect/
+                no-overlap validation, per-page applied/failed results
+  edit-text/    editText.ts — extract text runs via pdf.js, redraw via
+                pdf-lib (Eraser-style white cover + new text)
+  forms/        formFields.ts — read/fill existing AcroForm fields, and
+                create new ones (text/checkbox/radio/listbox/dropdown)
+
+features/optimize/
+  ocr/          ocrDocument.ts (Tesseract.js recognition, per-page skip),
+                bakeOcrTextLayer.ts (invisible searchable text layer),
+                ocrWorker.ts (shared Tesseract Web Worker)
+
+features/security/
+  protect/      protectPdf.ts — qpdf-wasm AES-256 encrypt (D8)
+```
+
+See `.claude/docs/features.md` for per-tool status.
+
+### Other roadmap groups: what's still unclaimed
 
 The product roadmap has four feature groups: **Organize**, **Optimize**,
 **Edit**, **Security** (see `.claude/docs/features.md`). `page-management`
-already covers the built Organize + workspace features. Create a group's
-folder only when work on it begins (no empty placeholders). Likely homes:
+covers the built Organize + workspace features; `edit/`, `optimize/`,
+`security/` (above) hold the Edit/Optimize/Security logic built so far.
+Create a group's folder only when work on it begins (no empty
+placeholders). Still unclaimed within the existing groups:
 
-- `optimize/` — e.g. OCR (Compress already lives under `page-management/`, see below)
-- `edit/` — annotation tools (text, highlights, signatures, shapes) + page numbers, watermark, crop, forms
-- `security/` — e.g. password protect
+- `optimize/` — nothing pending beyond OCR (Compress itself lives under `page-management/`, see above)
+- `edit/` — the annotation tools (text, highlights, signatures, shapes) + page numbers/watermark have no module of their own yet — they'll land here once their authoring UI work starts (D19)
+- `security/` — nothing pending beyond Protect PDF (Unlock lives in `shared/lib/pdfUnlock.ts`, since the shared file-load pipeline needs it, not a standalone module)
 
 ### Code location vs. roadmap group
 

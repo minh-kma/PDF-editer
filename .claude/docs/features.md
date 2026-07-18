@@ -45,8 +45,8 @@ Page-level tools:
 | Rotate | Built | |
 | Add page numbers | Data model + bake pipeline built, no authoring UI | Position, font, format |
 | Add watermark | Data model + bake pipeline built, no authoring UI | Text or image |
-| Crop | Not started | Uses pdf-lib setCropBox. Logic-first candidate (D19). |
-| PDF Forms | Not started | Fill existing forms. If none present, allow creating: text field, checkbox, radio, list box, combo box. Logic-first candidate (D19). |
+| Crop | Logic complete, no UI yet (D19) | `src/features/edit/crop/cropPages.ts` (95 lines): `setCropBox` per page, degenerate-rect/no-overlap validation, per-page applied/failed results. |
+| PDF Forms | Logic complete, no UI yet (D19) | `src/features/edit/forms/formFields.ts`: `extractFormFields`/`fillFormFields` (read/fill existing AcroForm fields) plus `createFormFields` (new text field, checkbox, radio, list box, combo box) — both halves of D10 done. |
 
 ## Group 4: Security
 
@@ -86,5 +86,7 @@ for the password before proceeding.
   overlay, no pickers. Per D19 this authoring-UI investment is
   deliberately deferred until the logic-first batch (Crop, PDF Forms) is
   done.
-- Logic-first batch progress (D19): Protect PDF done; OCR done
-  (recognition + write-back); Edit text done. Remaining: Crop, PDF Forms.
+- Logic-first batch progress (D19): all done — Protect PDF, OCR
+  (recognition + write-back), Edit text, PDF Forms (read/fill + create
+  fields), and Crop (`setCropBox`). Nothing logic-side remains; only UI
+  wiring is left for the whole batch.

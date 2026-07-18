@@ -17,6 +17,9 @@ In-progress work is auto-saved to IndexedDB so a page reload can be recovered.
 - **jszip 3.10** — bundles split output into one `.zip`
 - **idb-keyval 6.2** — IndexedDB session autosave
 - **immer 11** — immutable state updates + undo/redo structural sharing (store)
+- **@neslinesli93/qpdf-wasm 0.3** — client-side WASM build of qpdf; powers
+  password unlock (built) and Protect PDF/AES-256 encrypt (logic-only)
+- **tesseract.js 7.0** — OCR recognition, runs in a Web Worker (logic-only)
 - No test framework, no linter config, no backend. Deploys as static files
   (`netlify.toml` present; any static host works).
 
