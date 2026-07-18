@@ -75,10 +75,11 @@ for the password before proceeding.
 
 ## Known gaps
 
-- `ToolGrid.tsx` (landing tool catalog) only lists Organize + Optimize
-  categories — Edit and Security have zero user-facing entry points, even
-  for Rotate/Unlock which are otherwise fully built. Intentional for now
-  — UI wiring is deferred to a dedicated pass per D19.
+- `toolCatalog.ts`'s `TOOL_CATEGORIES` (consumed by the persistent bar's
+  `MegaMenu.tsx`) only lists Organize + Optimize categories — Edit and
+  Security have zero user-facing entry points, even for Rotate/Unlock which
+  are otherwise fully built. Intentional for now — UI wiring is deferred to
+  a dedicated pass per D19.
 - The Edit group is backend-complete, UI-absent for its annotation tools:
   data model (D11 discriminated union), undo/redo wiring, and the bake
   pipeline (`annotationBake.ts`) are all done, but no component anywhere

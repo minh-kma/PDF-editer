@@ -9,7 +9,6 @@ import { PreviewModal } from './shared/components/PreviewModal'
 import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
 import { Toast } from './shared/components/Toast'
-import { ToolGrid } from './shared/components/ToolGrid'
 import { PasswordPrompt } from './shared/components/PasswordPrompt'
 import { ShieldIcon, CompressIcon } from './shared/components/icons'
 import { useStore } from './shared/state/store'
@@ -423,7 +422,6 @@ export default function App() {
               }}
               disabled={busy}
             />
-            <ToolGrid onSelect={handleToolSelect} disabled={busy} />
             <PrivacyNote />
           </>
         ) : (

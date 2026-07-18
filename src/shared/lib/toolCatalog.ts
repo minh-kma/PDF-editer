@@ -1,5 +1,4 @@
-// Config-driven tool catalog, shared by the landing-page ToolGrid and the
-// persistent bar's MegaMenu (see shared/components/ToolGrid.tsx and
+// Config-driven tool catalog, used by the persistent bar's MegaMenu (see
 // shared/components/MegaMenu.tsx). Group headings follow the product
 // roadmap (features.md), NOT the code folder layout.
 import type { ComponentType, SVGProps } from 'react'
