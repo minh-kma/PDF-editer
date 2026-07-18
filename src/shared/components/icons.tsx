@@ -159,3 +159,18 @@ export const RedoIcon = (p: IconProps) => (
     <path d="M4 20v-7a4 4 0 0 1 4-4h12" />
   </svg>
 )
+
+export const GridIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+  </svg>
+)
+
+export const ChevronDownIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+)

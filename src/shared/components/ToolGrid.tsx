@@ -1,53 +1,6 @@
-import type { ComponentType, SVGProps } from 'react'
-import {
-  PlusIcon,
-  ScissorsIcon,
-  ExpandIcon,
-  TrashIcon,
-  DragIcon,
-  CompressIcon,
-} from './icons'
+import { TOOL_CATEGORIES, type ToolIntent } from '../lib/toolCatalog'
 
-// The intent a tool entry carries into the upload flow. Once a file is loaded,
-// App maps the intent to the matching panel/action (see App.tsx).
-export type ToolIntent = 'merge' | 'split' | 'extract' | 'remove' | 'rearrange' | 'compress'
-
-type IconType = ComponentType<SVGProps<SVGSVGElement>>
-
-interface ToolEntry {
-  intent: ToolIntent
-  label: string
-  description: string
-  icon: IconType
-}
-
-interface ToolCategory {
-  /** Heading text — matches the roadmap category names in features.md. */
-  heading: string
-  tools: ToolEntry[]
-}
-
-// Config-driven catalog. Group headings follow the product roadmap
-// (features.md), NOT the code folder layout. Adding a tool when a new feature
-// ships is a one-line addition here — no markup to write per tool.
-export const TOOL_CATEGORIES: ToolCategory[] = [
-  {
-    heading: 'Organize PDF',
-    tools: [
-      { intent: 'merge', label: 'Merge', description: 'Combine several PDFs into one', icon: PlusIcon },
-      { intent: 'split', label: 'Split', description: 'Divide a PDF into separate files', icon: ScissorsIcon },
-      { intent: 'extract', label: 'Extract pages', description: 'Save chosen pages as a new file', icon: ExpandIcon },
-      { intent: 'remove', label: 'Remove pages', description: 'Delete pages you don’t need', icon: TrashIcon },
-      { intent: 'rearrange', label: 'Rearrange', description: 'Drag pages into a new order', icon: DragIcon },
-    ],
-  },
-  {
-    heading: 'Optimize PDF',
-    tools: [
-      { intent: 'compress', label: 'Compress', description: 'Shrink the file size, losslessly', icon: CompressIcon },
-    ],
-  },
-]
+export type { ToolIntent }
 
 interface ToolGridProps {
   onSelect: (intent: ToolIntent) => void
@@ -57,7 +10,8 @@ interface ToolGridProps {
 /**
  * Landing-page tool discovery. Presentational: it renders the catalog and
  * reports which tool the user picked; App decides how to route that intent
- * into the upload flow.
+ * into the upload flow. Catalog data lives in shared/lib/toolCatalog.ts,
+ * shared with the persistent bar's MegaMenu (shared/components/MegaMenu.tsx).
  */
 export function ToolGrid({ onSelect, disabled }: ToolGridProps) {
   return (
