@@ -60,6 +60,84 @@ export async function openPdf(bytes: Uint8Array): Promise<PdfOpenResult> {
 }
 
 /**
+ * Concatenated text content of one page, via pdf.js's text layer extraction.
+ * Used to detect whether a page already has a real text layer (e.g. for OCR
+ * skip-detection) — reading only, never editing (pdf.js draws/reads, pdf-lib
+ * edits).
+ */
+export async function getTextContent(
+  sourceId: string,
+  bytes: Uint8Array,
+  pageIndex: number,
+): Promise<string> {
+  const doc = await loadDoc(sourceId, bytes)
+  const page = await doc.getPage(pageIndex + 1)
+  const content = await page.getTextContent()
+  return content.items.map((item) => ('str' in item ? item.str : '')).join('')
+}
+
+/** One pdf.js text run, as needed by Edit Text (decision D6) — deliberately
+ * thin (no filtering/merging), that's a feature-level concern. */
+export interface PageTextRun {
+  text: string
+  /** PDF text-rendering matrix [a, b, c, d, e, f]; (e, f) is the baseline start. */
+  transform: number[]
+  /** Run width, in PDF points. */
+  width: number
+  /** Run height, in PDF points (pdf.js's own font-metric estimate). */
+  height: number
+}
+
+/**
+ * Raw per-run text content for one page, plus the page's own (unrotated)
+ * MediaBox size those run coordinates are relative to — via pdf.js's `view`,
+ * matching pdf-lib's `page.getSize()` (both are the raw MediaBox, so Edit
+ * Text's rects need no rotation adjustment when baked back with pdf-lib).
+ */
+export async function getPageTextRuns(
+  sourceId: string,
+  bytes: Uint8Array,
+  pageIndex: number,
+): Promise<{ runs: PageTextRun[]; width: number; height: number }> {
+  const doc = await loadDoc(sourceId, bytes)
+  const page = await doc.getPage(pageIndex + 1)
+  const content = await page.getTextContent()
+  const [x0, y0, x1, y1] = page.view
+  // pdf.js's TextItem type isn't re-exported from the package's main type
+  // entry, so narrow inline (same technique getTextContent uses) rather
+  // than naming it.
+  const runs: PageTextRun[] = []
+  for (const item of content.items) {
+    if (!('str' in item)) continue
+    runs.push({ text: item.str, transform: item.transform, width: item.width, height: item.height })
+  }
+  return { runs, width: x1 - x0, height: y1 - y0 }
+}
+
+async function renderPageToCanvas(
+  sourceId: string,
+  bytes: Uint8Array,
+  pageIndex: number,
+  rotation: number,
+  maxWidth: number,
+): Promise<HTMLCanvasElement> {
+  const doc = await loadDoc(sourceId, bytes)
+  const page = await doc.getPage(pageIndex + 1) // pdf.js pages are 1-based
+  const base = page.getViewport({ scale: 1 })
+  const scale = maxWidth / base.width
+  const viewport = page.getViewport({ scale, rotation })
+
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.ceil(viewport.width)
+  canvas.height = Math.ceil(viewport.height)
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Could not get a drawing surface for rendering.')
+
+  await page.render({ canvasContext: ctx, viewport }).promise
+  return canvas
+}
+
+/**
  * Render one page to a PNG data URL.
  * @param rotation extra rotation (0/90/180/270) applied on top of the page's own.
  * @param maxWidth target width in CSS pixels; height scales to keep aspect ratio.
@@ -71,18 +149,21 @@ export async function renderPage(
   rotation: number,
   maxWidth: number,
 ): Promise<string> {
-  const doc = await loadDoc(sourceId, bytes)
-  const page = await doc.getPage(pageIndex + 1) // pdf.js pages are 1-based
-  const base = page.getViewport({ scale: 1 })
-  const scale = maxWidth / base.width
-  const viewport = page.getViewport({ scale, rotation })
-
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.ceil(viewport.width)
-  canvas.height = Math.ceil(viewport.height)
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Could not get a drawing surface for the thumbnail.')
-
-  await page.render({ canvasContext: ctx, viewport }).promise
+  const canvas = await renderPageToCanvas(sourceId, bytes, pageIndex, rotation, maxWidth)
   return canvas.toDataURL('image/png')
+}
+
+/**
+ * Render one page for OCR input: a PNG data URL plus the exact pixel
+ * dimensions it was rendered at, so word bounding boxes (in that same pixel
+ * space) can be normalized back to 0..1 page-relative coordinates.
+ */
+export async function renderPageForOcr(
+  sourceId: string,
+  bytes: Uint8Array,
+  pageIndex: number,
+  maxWidth: number,
+): Promise<{ dataUrl: string; width: number; height: number }> {
+  const canvas = await renderPageToCanvas(sourceId, bytes, pageIndex, 0, maxWidth)
+  return { dataUrl: canvas.toDataURL('image/png'), width: canvas.width, height: canvas.height }
 }

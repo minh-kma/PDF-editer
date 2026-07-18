@@ -18,7 +18,7 @@ no database, no file uploads. Funded by ads (see decisions.md D12).
 | Feature | Status | Notes |
 |---|---|---|
 | Compress | Built | |
-| OCR | Logic complete (recognition + write-back), no UI yet (D19) | `src/features/optimize/ocr/`: `ocrWorker.ts` + `ocrDocument.ts` (recognition, per-page skip, word bboxes) and `bakeOcrTextLayer.ts` (write-back — draws each recognized word as invisible text via pdf-lib's `TextRenderingMode.Invisible`, positioned from the word's bbox using the same normalized-`Rect` conversion as `annotationBake.ts`; skipped pages pass through byte-unchanged). Verified: recognized pages become genuinely searchable (re-extracted via pdf.js `getTextContent` after baking), skipped pages' original text is untouched, page count/dimensions preserved, invisible-rendering-mode operator confirmed present only on baked words (via pdf.js `getOperatorList`). Known limitation: doesn't correct for page `/Rotate` (see decisions.md D11 addendum). Only remaining work: ToolGrid/Toolbar entry, a "Run OCR" trigger chaining `ocrDocument()` → `bakeOcrTextLayer()`, and a progress bar consuming `onProgress`. |
+| OCR | Recognition logic built, no UI yet (D19) | `src/features/optimize/ocr/` — `ocrWorker.ts` (Tesseract Web Worker wrapper, per-language worker cache) + `ocrDocument.ts` (per-page pipeline). Per-page text-layer skip via `hasTextLayer` heuristic (≥20 non-whitespace chars from pdf.js `getTextContent`). Word-level bboxes normalized 0..1, reusing the existing `Rect` type — ready for a future step to bake them into an invisible searchable layer (that write-back step is a separate, still-not-started follow-up). Progress contract: skipped pages fire `onProgress` once (`'skipped'`); recognized pages fire twice (`'recognizing'` then `'done'`) since recognition can take seconds — confirm this matches expectations before building a progress UI on top of it. Language model files fetched from Tesseract's CDN (the one intentional network exception, see decisions.md D7 addendum); worker/wasm engine assets self-hosted via Vite `?url` like pdf.js/qpdf. Verified via a temporary script, 4/4 checks passed (text-page skip, image-page recognition accuracy, language-worker cache hit, progress-call counts). `shared/lib/pdfjs.ts` got additive-only changes (`getTextContent`, `renderPageForOcr`); no existing export's behavior changed. |
 
 ## Group 3: Edit
 
@@ -84,8 +84,9 @@ for the password before proceeding.
   (`annotationBake.ts`) are all done, but no component anywhere creates
   an `Annotation` or `DocAnnotation` — no toolbar buttons, no canvas
   overlay, no pickers. Per D19 this authoring-UI investment is
-  deliberately deferred until the logic-first batch (Crop, PDF Forms,
-  Edit text) is done.
-- Logic-first batch progress (D19): Protect PDF done; OCR done
-  (recognition + write-back, only its own UI trigger remains).
-  Remaining: Crop, PDF Forms, Edit text.
+  deliberately deferred until the logic-first batch (OCR write-back,
+  Crop, PDF Forms, Edit text) is done.
+- Logic-first batch progress (D19): Protect PDF done; OCR recognition
+  done (write-back of recognized text into an invisible searchable PDF
+  layer is a separate remaining sub-task). Remaining: Crop, PDF Forms,
+  Edit text, OCR write-back.

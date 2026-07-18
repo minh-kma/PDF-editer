@@ -18,12 +18,7 @@ together as `workspace/`, not four separate folders. See architecture.md.
 > Precedent: OCR lives in a new `optimize/` code folder (not
 > `page-management/`, where Compress lives) since it doesn't share the
 > page-plan/`buildPdf` coupling — it operates on raw document bytes via
-> pdf.js + Tesseract + pdf-lib. Both `ocrDocument.ts` (recognition) and
-> `bakeOcrTextLayer.ts` (write-back) live there, not in `shared/lib/`,
-> because — unlike `annotationBake.ts` — they're one-shot on-demand
-> transforms with no ongoing app-state involvement, not part of the
-> universal `pdfCore.copyPagesToPdf` export pipeline. See
-> architecture.md's "planned future groups".
+> pdf.js + Tesseract. See architecture.md's "planned future groups".
 
 **D3. IndexedDB autosave + beforeunload warning.** In-progress work
 survives reload without a server.
@@ -88,12 +83,6 @@ tools (Add text, Sign, Draw, Shapes, Eraser, Highlight, Image, Note)
 plus Watermark and Add page numbers reuse a single "draw object onto
 PDF" pipeline. Do not implement them as isolated features.
 
-> Known limitation (applies to `annotationBake.ts` and, by inheritance,
-> `bakeOcrTextLayer.ts`): normalized-`Rect`-to-pdf-lib-point conversion
-> does not correct for a page's intrinsic `/Rotate` value. Pre-existing
-> simplification, not introduced by OCR — worth a look whenever the
-> annotation-authoring UI or OCR UI work touches rotated pages.
-
 ## Business model
 
 **D12. Tracking ads (AdSense) are acceptable.** Higher revenue than
@@ -144,12 +133,12 @@ silently building or silently skipping them.
 (Vite `?url` assets, Worker/wasm loaders) must run under plain Node,
 re-invoking the underlying call directly instead of importing the TS
 module.** ts-node/direct import fails outside Vite's build pipeline.
-Learned from `pdfUnlock.ts`/`protectPdf.ts`; confirmed again for OCR.
-Strongest form of this so far: `bakeOcrTextLayer.ts` has zero runtime
-bundler-only dependencies (its only OCR-feature reference is a
-type-only import), so its verification script bundled the real file
-with esbuild and required it directly, instead of hand-mirroring calls
-— prefer this when a module turns out not to need the workaround.
+Learned from `pdfUnlock.ts`/`protectPdf.ts`; confirmed again for OCR
+(`ocrWorker.ts`/`ocrDocument.ts` — tesseract.js has a Node backend and
+pdfjs-dist ships a Node-compatible build, so the mirrored script could
+run functionally in Node; a separate temporary Vite entry was still
+needed to confirm the `?url` worker/wasm assets actually bundle
+correctly, since real `npm run build` doesn't touch UI-unwired code).
 
 ## Reversals (for clarity)
 

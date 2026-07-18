@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Modal } from './Modal'
-import { ShieldIcon } from './icons'
+import { ShieldIcon, EyeIcon, EyeOffIcon } from './icons'
 
 interface PasswordPromptProps {
   /** Name of the protected file we need a password for. */
@@ -26,6 +26,7 @@ export function PasswordPrompt({
   onCancel,
 }: PasswordPromptProps) {
   const [password, setPassword] = useState('')
+  const [visible, setVisible] = useState(false)
 
   function submit() {
     if (!busy) onSubmit(password)
@@ -54,16 +55,28 @@ export function PasswordPrompt({
       <label className="mt-4 block text-sm font-bold text-ink" htmlFor="pdf-password">
         Password
       </label>
-      <input
-        id="pdf-password"
-        type="password"
-        autoFocus
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && submit()}
-        disabled={busy}
-        className="mt-1 w-full rounded-xl border border-brand-100 bg-white px-3 py-2.5 font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
-      />
+      <div className="relative mt-1">
+        <input
+          id="pdf-password"
+          type={visible ? 'text' : 'password'}
+          autoFocus
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
+          disabled={busy}
+          className="w-full rounded-xl border border-brand-100 bg-white px-3 py-2.5 pr-10 font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          title={visible ? 'Hide password' : 'Show password'}
+          aria-label={visible ? 'Hide password' : 'Show password'}
+          disabled={busy}
+          className="btn-motion absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {visible ? <EyeOffIcon width={16} height={16} /> : <EyeIcon width={16} height={16} />}
+        </button>
+      </div>
       {wrongPassword && (
         <p className="mt-1.5 text-xs font-semibold text-red-600">
           That password didn’t work — please try again.
