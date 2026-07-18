@@ -34,7 +34,7 @@ export function PreviewModal({ title, bytes, fileName, info, onClose }: PreviewM
           onClick={() => setFullscreen((v) => !v)}
           aria-label={fullscreen ? 'Exit fullscreen' : 'Expand to fullscreen'}
           title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-          className="btn-motion rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
+          className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
         >
           {fullscreen ? (
             <CollapseIcon width={20} height={20} />

@@ -69,7 +69,12 @@ for the password before proceeding.
 
 - Autosave in-progress edits to IndexedDB; recover after reload
 - beforeunload warning for unsaved changes
-- Consistent hover animation on all enabled buttons
+- Consistent hover animation on all enabled buttons, EXCEPT small/icon-only/
+  compact controls (rotate/delete on a thumbnail, zoom +/-, modal close,
+  sidebar thumbnails, menu items), which use color-only hover — no scale/
+  transform, which reads oddly at that size. `.btn-motion` (scale) for
+  labeled buttons, `.icon-btn` (color-only) for icon-only ones — see
+  index.css.
 - Long-running operations (OCR, compress) must run off the main thread
   and show per-item progress
 

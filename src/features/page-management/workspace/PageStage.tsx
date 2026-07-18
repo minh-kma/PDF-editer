@@ -97,7 +97,7 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, className }: ZoomContr
         onClick={onZoomOut}
         disabled={zoom <= ZOOM_MIN}
         aria-label="Zoom out"
-        className="btn-motion rounded-full p-2 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
+        className="icon-btn rounded-full p-2 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <MinusIcon width={18} height={18} />
       </button>
@@ -109,7 +109,7 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, className }: ZoomContr
         onClick={onZoomIn}
         disabled={zoom >= ZOOM_MAX}
         aria-label="Zoom in"
-        className="btn-motion rounded-full p-2 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
+        className="icon-btn rounded-full p-2 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <PlusIcon width={18} height={18} />
       </button>

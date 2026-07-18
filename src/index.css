@@ -22,12 +22,18 @@
 }
 
 @layer components {
-  /* One subtle, shared hover/press motion for every button in the app.
-     Applied via .btn (all text buttons) and added to icon-only buttons.
-     Guarded with `enabled:` so disabled buttons don't animate. */
+  /* Shared hover/press motion for larger, clearly-labeled action buttons
+     (icon + visible text, e.g. "Download", "Choose PDF files"). Applied via
+     .btn. Guarded with `enabled:` so disabled buttons don't animate. */
   .btn-motion {
     @apply transition duration-150 ease-out
       enabled:hover:scale-[1.03] enabled:hover:shadow-md enabled:active:scale-[0.97];
+  }
+  /* Small/icon-only/compact controls (rotate/delete on a page thumbnail,
+     zoom +/-, modal close, sidebar thumbnails, menu items): color-only
+     hover, no scale/transform — that motion reads oddly at this size. */
+  .icon-btn {
+    @apply transition-colors duration-150;
   }
   .btn {
     @apply btn-motion inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5

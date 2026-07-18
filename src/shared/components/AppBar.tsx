@@ -113,7 +113,7 @@ export function AppBar({
                 disabled={disabled || !canUndo}
                 title="Undo"
                 aria-label="Undo"
-                className="btn-motion rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+                className="icon-btn rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <UndoIcon width={18} height={18} />
               </button>
@@ -123,7 +123,7 @@ export function AppBar({
                 disabled={disabled || !canRedo}
                 title="Redo"
                 aria-label="Redo"
-                className="btn-motion rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+                className="icon-btn rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <RedoIcon width={18} height={18} />
               </button>

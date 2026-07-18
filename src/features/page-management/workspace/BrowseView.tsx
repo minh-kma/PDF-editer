@@ -150,7 +150,7 @@ function SidebarThumb({ page, source, position, active, onClick }: SidebarThumbP
       onClick={onClick}
       aria-current={active}
       aria-label={`Jump to page ${position}`}
-      className={`flex w-full flex-col items-center gap-1 rounded-lg border-2 p-1 transition-colors ${
+      className={`icon-btn flex w-full flex-col items-center gap-1 rounded-lg border-2 p-1 ${
         active
           ? 'border-brand-500 bg-brand-50'
           : 'border-transparent hover:border-brand-100 hover:bg-cream-soft'

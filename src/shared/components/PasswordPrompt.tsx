@@ -72,7 +72,7 @@ export function PasswordPrompt({
           title={visible ? 'Hide password' : 'Show password'}
           aria-label={visible ? 'Hide password' : 'Show password'}
           disabled={busy}
-          className="btn-motion absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="icon-btn absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {visible ? <EyeOffIcon width={16} height={16} /> : <EyeIcon width={16} height={16} />}
         </button>

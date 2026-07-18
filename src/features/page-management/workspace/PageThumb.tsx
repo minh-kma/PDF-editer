@@ -85,7 +85,7 @@ export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarg
             onClick={() => onRotate(page.id)}
             title="Rotate 90°"
             aria-label={`Rotate page ${position} 90 degrees`}
-            className="btn-motion rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
+            className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
           >
             <RotateIcon width={16} height={16} />
           </button>
@@ -94,7 +94,7 @@ export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarg
             onClick={() => onDelete(page.id)}
             title="Delete page"
             aria-label={`Delete page ${position}`}
-            className="btn-motion rounded-lg p-1.5 text-ink-soft hover:bg-red-50 hover:text-red-600"
+            className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-red-50 hover:text-red-600"
           >
             <TrashIcon width={16} height={16} />
           </button>
