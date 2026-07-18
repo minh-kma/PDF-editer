@@ -1,81 +1,217 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../../shared/state/store'
-import { usePageStage, ZoomControls } from './PageStage'
-import { ChevronLeftIcon, ChevronRightIcon } from '../../../shared/components/icons'
+import { usePageRender, useZoom, ZoomControls } from './PageStage'
+import { getThumbnail } from '../../../shared/lib/thumbnails'
+import type { PageItem, SourceDoc } from '../../../shared/state/types'
+
+// How far a page can be from the viewport and still be rendered ahead of
+// time — big enough that scrolling feels seamless, small enough that a huge
+// document doesn't render every page up front.
+const RENDER_ROOT_MARGIN = '1200px 0px'
 
 /**
- * Default post-upload view: one page at a time, large, with prev/next
- * navigation — the neutral "just look at my file" state. Rendering/zoom
- * logic lives in PageStage.tsx, shared with PageZoom.tsx (the "Manage
- * pages" grid's double-click modal).
+ * Default post-upload view: a thumbnail sidebar (every page, current page
+ * highlighted, click to jump) next to a continuous vertical scroll of every
+ * page — the traditional PDF-reader layout. Rendering logic lives in
+ * PageStage.tsx (`usePageRender`, one call per visible page), shared with
+ * PageZoom.tsx (the "Manage pages" grid's double-click modal, which keeps
+ * its own single-page `usePageStage` and is unaffected by this).
  */
 export function BrowseView() {
   const { pages, getSource } = useStore()
-  const [index, setIndex] = useState(0)
+  const [activeId, setActiveId] = useState<string | null>(pages[0]?.id ?? null)
+  const [rendered, setRendered] = useState<Set<string>>(() => new Set())
+  const { zoom, zoomIn, zoomOut } = useZoom()
 
-  // Stay in range if pages were deleted/reordered elsewhere.
-  const clampedIndex = Math.min(index, Math.max(0, pages.length - 1))
-  const page = pages[clampedIndex]
-  const source = page ? getSource(page.sourceId) : undefined
+  const pageEls = useRef(new Map<string, HTMLDivElement>())
 
-  const { url, zoom, zoomIn, zoomOut } = usePageStage(source, page)
-
+  // Two observers over the same page containers: one decides which page is
+  // "current" (for the sidebar highlight), the other lazily marks pages as
+  // renderable once they're near the viewport. A page that's been rendered
+  // once stays rendered — typical PDFs here aren't large enough to need
+  // unmount-on-scroll-away virtualization.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1))
-      else if (e.key === 'ArrowRight') setIndex((i) => Math.min(pages.length - 1, i + 1))
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [pages.length])
+    const els = Array.from(pageEls.current.values())
+    if (els.length === 0) return
 
-  if (!page) return null
+    const activeObserver = new IntersectionObserver(
+      (entries) => {
+        let best: IntersectionObserverEntry | null = null
+        for (const entry of entries) {
+          if (entry.isIntersecting && (!best || entry.intersectionRatio > best.intersectionRatio)) {
+            best = entry
+          }
+        }
+        const id = best?.target.getAttribute('data-page-id')
+        if (id) setActiveId(id)
+      },
+      { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] },
+    )
+
+    const renderObserver = new IntersectionObserver(
+      (entries) => {
+        const newlyVisible = entries
+          .filter((e) => e.isIntersecting)
+          .map((e) => e.target.getAttribute('data-page-id'))
+          .filter((id): id is string => !!id)
+        if (newlyVisible.length === 0) return
+        setRendered((prev) => {
+          const next = new Set(prev)
+          for (const id of newlyVisible) next.add(id)
+          return next
+        })
+      },
+      { rootMargin: RENDER_ROOT_MARGIN, threshold: 0.01 },
+    )
+
+    for (const el of els) {
+      activeObserver.observe(el)
+      renderObserver.observe(el)
+    }
+    return () => {
+      activeObserver.disconnect()
+      renderObserver.disconnect()
+    }
+  }, [pages])
+
+  const scrollToPage = (id: string) => {
+    pageEls.current.get(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  if (pages.length === 0) return null
 
   return (
-    <div className="card flex flex-col items-center gap-4 p-4 sm:p-6">
-      <p className="text-sm font-semibold text-ink-soft">
-        Page {clampedIndex + 1} of {pages.length}
-      </p>
+    <div className="flex items-start gap-3 sm:gap-4">
+      <aside className="sticky top-24 max-h-[calc(100vh-7rem)] w-16 flex-none space-y-2 overflow-y-auto pb-2 pr-1 sm:w-24">
+        {pages.map((page, i) => (
+          <SidebarThumb
+            key={page.id}
+            page={page}
+            source={getSource(page.sourceId)}
+            position={i + 1}
+            active={page.id === activeId}
+            onClick={() => scrollToPage(page.id)}
+          />
+        ))}
+      </aside>
 
-      <div className="flex w-full items-center justify-center gap-2 sm:gap-4">
-        <button
-          type="button"
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-          disabled={clampedIndex === 0}
-          aria-label="Previous page"
-          className="btn-motion flex-none rounded-full p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          <ChevronLeftIcon width={22} height={22} />
-        </button>
-
-        <div className="flex min-h-[50vh] flex-1 items-center justify-center overflow-hidden rounded-xl bg-cream-soft">
-          {url ? (
-            <img
-              src={url}
-              alt={`Page ${clampedIndex + 1}`}
-              className="max-h-[70vh] max-w-full object-contain"
-              draggable={false}
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-3 text-ink-faint">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
-              <span className="text-sm">Rendering…</span>
-            </div>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIndex((i) => Math.min(pages.length - 1, i + 1))}
-          disabled={clampedIndex === pages.length - 1}
-          aria-label="Next page"
-          className="btn-motion flex-none rounded-full p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          <ChevronRightIcon width={22} height={22} />
-        </button>
+      <div className="min-w-0 flex-1 space-y-4">
+        {pages.map((page, i) => (
+          <PageRow
+            key={page.id}
+            page={page}
+            source={getSource(page.sourceId)}
+            position={i + 1}
+            zoom={zoom}
+            shouldRender={rendered.has(page.id)}
+            registerEl={(el) => {
+              if (el) pageEls.current.set(page.id, el)
+              else pageEls.current.delete(page.id)
+            }}
+          />
+        ))}
       </div>
 
-      <ZoomControls zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} />
+      <ZoomControls
+        zoom={zoom}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        className="fixed bottom-5 left-1/2 z-20 -translate-x-1/2"
+      />
+    </div>
+  )
+}
+
+interface SidebarThumbProps {
+  page: PageItem
+  source: SourceDoc | undefined
+  position: number
+  active: boolean
+  onClick: () => void
+}
+
+function SidebarThumb({ page, source, position, active, onClick }: SidebarThumbProps) {
+  const [thumb, setThumb] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!source) return
+    getThumbnail(source, page.sourceIndex, page.rotation)
+      .then((url) => !cancelled && setThumb(url))
+      .catch(() => !cancelled && setThumb(null))
+    return () => {
+      cancelled = true
+    }
+  }, [source, page.sourceIndex, page.rotation])
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active}
+      aria-label={`Jump to page ${position}`}
+      className={`flex w-full flex-col items-center gap-1 rounded-lg border-2 p-1 transition-colors ${
+        active
+          ? 'border-brand-500 bg-brand-50'
+          : 'border-transparent hover:border-brand-100 hover:bg-cream-soft'
+      }`}
+    >
+      <div className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-md bg-cream-soft">
+        {thumb ? (
+          <img
+            src={thumb}
+            alt={`Page ${position}`}
+            className="max-h-full max-w-full object-contain"
+            draggable={false}
+          />
+        ) : (
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
+        )}
+      </div>
+      <span className={`text-[11px] font-semibold ${active ? 'text-brand-600' : 'text-ink-faint'}`}>
+        {position}
+      </span>
+    </button>
+  )
+}
+
+interface PageRowProps {
+  page: PageItem
+  source: SourceDoc | undefined
+  position: number
+  zoom: number
+  shouldRender: boolean
+  registerEl: (el: HTMLDivElement | null) => void
+}
+
+function PageRow({ page, source, position, zoom, shouldRender, registerEl }: PageRowProps) {
+  // Withholding `page` until the container has scrolled near the viewport is
+  // what makes rendering lazy — usePageRender itself just skips work when
+  // either argument is undefined.
+  const url = usePageRender(source, shouldRender ? page : undefined, zoom)
+
+  return (
+    <div
+      ref={registerEl}
+      data-page-id={page.id}
+      className="card scroll-mt-24 flex flex-col items-center gap-2 p-3 sm:p-4"
+    >
+      <p className="text-xs font-semibold text-ink-faint">Page {position}</p>
+      <div className="flex min-h-[60vh] w-full items-center justify-center overflow-hidden rounded-xl bg-cream-soft">
+        {url ? (
+          <img
+            src={url}
+            alt={`Page ${position}`}
+            className="max-w-full object-contain"
+            draggable={false}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-3 text-ink-faint">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
+            {shouldRender && <span className="text-sm">Rendering…</span>}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
