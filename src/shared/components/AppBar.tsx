@@ -39,9 +39,10 @@ const SHORTCUTS: { intent: ToolIntent; label: string; icon: IconType }[] = [
 
 /**
  * Persistent top bar: branding, a few inline tool shortcuts, the "All tools"
- * mega-menu, and Undo/Redo/Download — always rendered so the layout never
- * jumps; file-dependent controls are disabled (not hidden) until a file is
- * loaded, except Add files/Start over which only make sense once one is.
+ * mega-menu, and Undo/Redo/Download. The tool shortcuts/mega-menu always
+ * render (busy-disabled only) since they're how a tool is picked before any
+ * file exists; Add files/Start over/Undo/Redo/Download only make sense once
+ * a file is loaded, so they render conditionally instead of just disabled.
  */
 export function AppBar({
   hasFile,
@@ -104,35 +105,39 @@ export function AppBar({
             100% in your browser
           </div>
 
-          <button
-            type="button"
-            onClick={onUndo}
-            disabled={disabled || !canUndo}
-            title="Undo"
-            aria-label="Undo"
-            className="btn-motion rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <UndoIcon width={18} height={18} />
-          </button>
-          <button
-            type="button"
-            onClick={onRedo}
-            disabled={disabled || !canRedo}
-            title="Redo"
-            aria-label="Redo"
-            className="btn-motion rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <RedoIcon width={18} height={18} />
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={onDownload}
-            disabled={disabled || !hasFile}
-          >
-            <DownloadIcon width={18} height={18} />
-            Download
-          </button>
+          {hasFile && (
+            <>
+              <button
+                type="button"
+                onClick={onUndo}
+                disabled={disabled || !canUndo}
+                title="Undo"
+                aria-label="Undo"
+                className="btn-motion rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <UndoIcon width={18} height={18} />
+              </button>
+              <button
+                type="button"
+                onClick={onRedo}
+                disabled={disabled || !canRedo}
+                title="Redo"
+                aria-label="Redo"
+                className="btn-motion rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <RedoIcon width={18} height={18} />
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={onDownload}
+                disabled={disabled}
+              >
+                <DownloadIcon width={18} height={18} />
+                Download
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>
