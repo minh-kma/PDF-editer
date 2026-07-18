@@ -34,6 +34,10 @@ interface PreviewState {
 // actions that go straight to a PreviewModal, same as today.
 type MainMode = { kind: 'browse' } | { kind: 'manage' } | { kind: 'split' } | { kind: 'extract' }
 
+// Don't offer to restore a session that's gone stale — past this age, skip
+// the recover banner and proceed as if no session existed.
+const RECOVER_MAX_AGE_MS = 5 * 60 * 1000
+
 export default function App() {
   const store = useStore()
   const {
@@ -86,7 +90,7 @@ export default function App() {
   // -- Reload recovery: look for a saved session on first load ---------------
   useEffect(() => {
     loadSession().then((session) => {
-      if (session) setRecover(session)
+      if (session && Date.now() - session.savedAt <= RECOVER_MAX_AGE_MS) setRecover(session)
     })
   }, [])
 
