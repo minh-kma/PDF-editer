@@ -24,6 +24,7 @@ export function BrowseView() {
   const { zoom, zoomIn, zoomOut } = useZoom()
 
   const pageEls = useRef(new Map<string, HTMLDivElement>())
+  const sidebarThumbEls = useRef(new Map<string, HTMLButtonElement>())
 
   // Two observers over the same page containers: one decides which page is
   // "current" (for the sidebar highlight), the other lazily marks pages as
@@ -74,6 +75,17 @@ export function BrowseView() {
     }
   }, [pages])
 
+  // Keep the sidebar following the main content: whenever the active page
+  // changes (driven by scrolling the main area), bring its thumbnail into
+  // view. `block: 'nearest'` is a no-op if it's already visible, so this
+  // doesn't fight a user who's manually scrolled the sidebar to look ahead —
+  // it only moves the sidebar when the highlighted thumbnail has actually
+  // scrolled out of view.
+  useEffect(() => {
+    if (!activeId) return
+    sidebarThumbEls.current.get(activeId)?.scrollIntoView({ block: 'nearest' })
+  }, [activeId])
+
   const scrollToPage = (id: string) => {
     pageEls.current.get(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -91,6 +103,10 @@ export function BrowseView() {
             position={i + 1}
             active={page.id === activeId}
             onClick={() => scrollToPage(page.id)}
+            registerEl={(el) => {
+              if (el) sidebarThumbEls.current.set(page.id, el)
+              else sidebarThumbEls.current.delete(page.id)
+            }}
           />
         ))}
       </aside>
@@ -128,9 +144,10 @@ interface SidebarThumbProps {
   position: number
   active: boolean
   onClick: () => void
+  registerEl: (el: HTMLButtonElement | null) => void
 }
 
-function SidebarThumb({ page, source, position, active, onClick }: SidebarThumbProps) {
+function SidebarThumb({ page, source, position, active, onClick, registerEl }: SidebarThumbProps) {
   const [thumb, setThumb] = useState<string | null>(null)
 
   useEffect(() => {
@@ -146,6 +163,7 @@ function SidebarThumb({ page, source, position, active, onClick }: SidebarThumbP
 
   return (
     <button
+      ref={registerEl}
       type="button"
       onClick={onClick}
       aria-current={active}
