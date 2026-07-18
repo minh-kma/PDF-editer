@@ -213,3 +213,163 @@ export async function fillFormFields(
 
   return { bytes: await pdfDoc.save(), results }
 }
+
+// ---------------------------------------------------------------------------
+// Creating new fields (decision D10, second half) — for a PDF that has no
+// existing AcroForm field of the given name yet. Kept in this same file:
+// it's the direct complement of extractFormFields/fillFormFields above (same
+// feature, same pdf-lib form API), not a separately-testable pipeline stage
+// the way OCR's recognition/write-back split was.
+// ---------------------------------------------------------------------------
+
+/** normalized rect (top-left origin) -> pdf-lib rect (bottom-left origin). Mirrors annotationBake.ts's toRect, used as-is (not inverted — the opposite direction from fromPdfRect above). */
+function toRect(r: Rect, W: number, H: number) {
+  return { x: r.x * W, y: H - (r.y + r.h) * H, w: r.w * W, h: r.h * H }
+}
+
+interface NewFieldBase {
+  name: string
+  pageIndex: number
+}
+
+export interface NewTextFieldSpec extends NewFieldBase {
+  type: 'text'
+  rect: Rect
+  defaultValue?: string
+  multiline?: boolean
+}
+
+export interface NewCheckboxSpec extends NewFieldBase {
+  type: 'checkbox'
+  rect: Rect
+  defaultChecked?: boolean
+}
+
+/** A radio group is one field with multiple widgets — one per option, each with its own rect, all on the same page. */
+export interface NewRadioGroupSpec extends NewFieldBase {
+  type: 'radioGroup'
+  options: { name: string; rect: Rect }[]
+  defaultSelected?: string
+}
+
+export interface NewListBoxSpec extends NewFieldBase {
+  type: 'listBox'
+  rect: Rect
+  options: string[]
+  multiSelect?: boolean
+  defaultSelected?: string | string[]
+}
+
+export interface NewDropdownSpec extends NewFieldBase {
+  type: 'dropdown'
+  rect: Rect
+  options: string[]
+  /** Allow typing a custom value in addition to the listed options. */
+  editable?: boolean
+  defaultSelected?: string
+}
+
+export type NewFieldSpec =
+  | NewTextFieldSpec
+  | NewCheckboxSpec
+  | NewRadioGroupSpec
+  | NewListBoxSpec
+  | NewDropdownSpec
+
+export interface FieldCreateResult {
+  name: string
+  status: 'created' | 'failed'
+  /** Present when status is 'failed'. */
+  reason?: string
+}
+
+/**
+ * Create new AcroForm fields on a PDF (decision D10's second half — for
+ * fields that don't already exist; see extractFormFields/fillFormFields
+ * above for reading/filling ones that do). Each spec is created
+ * independently and wrapped so one bad spec — a duplicate name, an empty
+ * options list — is reported as a per-field failure in `results` without
+ * aborting the rest of the batch.
+ *
+ * Investigated: every `form.createXxx(name)` method throws
+ * `FieldAlreadyExistsError` synchronously if a field with that name already
+ * exists (checked in `PDFForm`'s internal `addFieldToParent`) — including
+ * across different field types (e.g. a text field named the same as an
+ * existing checkbox). That's exactly the "not a legitimate radio group"
+ * duplicate-name case this function needs to reject: the try/catch below
+ * turns pdf-lib's own thrown error into a normal 'failed' result rather
+ * than letting it abort the whole call. A *legitimate* radio group is one
+ * `NewRadioGroupSpec` with multiple `options` — pdf-lib models that as one
+ * `createRadioGroup` call plus one `addOptionToPage` call per option, not
+ * multiple `createRadioGroup` calls.
+ *
+ * Investigated ordering: `addToPage`/`addOptionToPage` build the widget's
+ * initial appearance stream immediately, from whatever value/options the
+ * field already has at that moment — so values/options are set before
+ * `addToPage` for every type except radio groups, where `select()` first
+ * validates the option against `getOptions()`, which only reflects options
+ * already added via `addOptionToPage` — so for radio groups every option
+ * must be added first, and `select()` (the default) comes last.
+ */
+export async function createFormFields(
+  sourceBytes: Uint8Array,
+  fields: NewFieldSpec[],
+): Promise<{ bytes: Uint8Array; results: FieldCreateResult[] }> {
+  const pdfDoc = await PDFDocument.load(sourceBytes.slice())
+  const form = pdfDoc.getForm()
+  const pages = pdfDoc.getPages()
+  const results: FieldCreateResult[] = []
+
+  for (const spec of fields) {
+    try {
+      const page = pages[spec.pageIndex]
+      if (!page) throw new Error(`No page at index ${spec.pageIndex}.`)
+      const { width: W, height: H } = page.getSize()
+
+      if (spec.type === 'text') {
+        const field = form.createTextField(spec.name)
+        if (spec.multiline) field.enableMultiline()
+        if (spec.defaultValue !== undefined) field.setText(spec.defaultValue)
+        const box = toRect(spec.rect, W, H)
+        field.addToPage(page, { x: box.x, y: box.y, width: box.w, height: box.h })
+      } else if (spec.type === 'checkbox') {
+        const field = form.createCheckBox(spec.name)
+        if (spec.defaultChecked) field.check()
+        const box = toRect(spec.rect, W, H)
+        field.addToPage(page, { x: box.x, y: box.y, width: box.w, height: box.h })
+      } else if (spec.type === 'radioGroup') {
+        if (spec.options.length === 0) throw new Error('A radio group needs at least one option.')
+        const field = form.createRadioGroup(spec.name)
+        for (const option of spec.options) {
+          const box = toRect(option.rect, W, H)
+          field.addOptionToPage(option.name, page, { x: box.x, y: box.y, width: box.w, height: box.h })
+        }
+        if (spec.defaultSelected !== undefined) field.select(spec.defaultSelected)
+      } else if (spec.type === 'listBox') {
+        if (spec.options.length === 0) throw new Error('A list box needs at least one option.')
+        const field = form.createOptionList(spec.name)
+        field.setOptions(spec.options)
+        if (spec.multiSelect) field.enableMultiselect()
+        if (spec.defaultSelected !== undefined) field.select(spec.defaultSelected)
+        const box = toRect(spec.rect, W, H)
+        field.addToPage(page, { x: box.x, y: box.y, width: box.w, height: box.h })
+      } else {
+        if (spec.options.length === 0) throw new Error('A combo box needs at least one option.')
+        const field = form.createDropdown(spec.name)
+        field.setOptions(spec.options)
+        if (spec.editable) field.enableEditing()
+        if (spec.defaultSelected !== undefined) field.select(spec.defaultSelected)
+        const box = toRect(spec.rect, W, H)
+        field.addToPage(page, { x: box.x, y: box.y, width: box.w, height: box.h })
+      }
+
+      results.push({ name: spec.name, status: 'created' })
+    } catch (err) {
+      results.push({ name: spec.name, status: 'failed', reason: err instanceof Error ? err.message : String(err) })
+    }
+  }
+
+  form.updateFieldAppearances()
+
+  return { bytes: await pdfDoc.save(), results }
+}
