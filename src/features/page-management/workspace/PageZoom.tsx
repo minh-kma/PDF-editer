@@ -1,16 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import type { PageItem, SourceDoc } from '../../../shared/state/types'
-import { renderPage } from '../../../shared/lib/pdfjs'
-import { PlusIcon, MinusIcon } from '../../../shared/components/icons'
-
-// Base render width at 1x zoom — well above the 200px grid thumbnail so text is
-// sharp. Zooming in re-renders at a higher width (not a CSS upscale of the same
-// bitmap), so detail stays crisp. Capped to bound memory on a single image.
-const BASE_WIDTH = 1600
-const MAX_RENDER_WIDTH = 3600
-const ZOOM_MIN = 1
-const ZOOM_MAX = 3
-const ZOOM_STEP = 0.5
+import { usePageStage, ZoomControls } from './PageStage'
 
 interface PageZoomProps {
   page: PageItem
@@ -19,12 +9,14 @@ interface PageZoomProps {
   onClose: () => void
 }
 
+/**
+ * Modal single-page enlarge, opened by double-clicking a thumbnail in the
+ * "Manage pages" grid. Rendering/zoom logic lives in PageStage.tsx, shared
+ * with BrowseView.tsx (the default paginated viewer) — this component keeps
+ * only the modal chrome (backdrop, Esc-to-close, scroll-lock).
+ */
 export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
-  const [url, setUrl] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(1)
-
-  // The image is re-rendered at this resolution, so higher zoom => sharper.
-  const renderWidth = Math.min(MAX_RENDER_WIDTH, Math.round(BASE_WIDTH * zoom))
+  const { url, zoom, zoomIn, zoomOut } = usePageStage(source, page)
 
   // Close on Esc, and stop the page behind from scrolling while open.
   useEffect(() => {
@@ -36,23 +28,6 @@ export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
       document.body.style.overflow = ''
     }
   }, [onClose])
-
-  // Render a high-resolution image of just this page. Re-runs when the zoom
-  // level (renderWidth) changes; the previous image stays visible until the
-  // sharper one is ready, so zooming doesn't flicker.
-  useEffect(() => {
-    let cancelled = false
-    if (!source) return
-    renderPage(source.id, source.bytes, page.sourceIndex, page.rotation, renderWidth)
-      .then((u) => !cancelled && setUrl(u))
-      .catch(() => !cancelled && setUrl(null))
-    return () => {
-      cancelled = true
-    }
-  }, [source, page.sourceIndex, page.rotation, renderWidth])
-
-  const zoomIn = () => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP))
-  const zoomOut = () => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP))
 
   return (
     <div
@@ -86,33 +61,12 @@ export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
         )}
       </div>
 
-      {/* Zoom controls — fixed so they stay put while the image scrolls. */}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="fixed bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/70 px-2 py-1.5 text-white shadow-lg"
-      >
-        <button
-          type="button"
-          onClick={zoomOut}
-          disabled={zoom <= ZOOM_MIN}
-          aria-label="Zoom out"
-          className="btn-motion rounded-full p-2 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <MinusIcon width={18} height={18} />
-        </button>
-        <span className="w-12 text-center text-sm font-semibold tabular-nums">
-          {Math.round(zoom * 100)}%
-        </span>
-        <button
-          type="button"
-          onClick={zoomIn}
-          disabled={zoom >= ZOOM_MAX}
-          aria-label="Zoom in"
-          className="btn-motion rounded-full p-2 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <PlusIcon width={18} height={18} />
-        </button>
-      </div>
+      <ZoomControls
+        zoom={zoom}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        className="fixed bottom-5 left-1/2 -translate-x-1/2"
+      />
     </div>
   )
 }

@@ -32,7 +32,7 @@ interface AppBarProps {
 // Shown inline in the bar rather than tucked behind "All tools" — today's
 // most-used, fully-built actions.
 const SHORTCUTS: { intent: ToolIntent; label: string; icon: IconType }[] = [
-  { intent: 'rearrange', label: 'Manage pages', icon: DragIcon },
+  { intent: 'manage', label: 'Manage pages', icon: DragIcon },
   { intent: 'split', label: 'Split', icon: ScissorsIcon },
   { intent: 'compress', label: 'Compress', icon: CompressIcon },
 ]

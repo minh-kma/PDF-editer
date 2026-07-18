@@ -17,9 +17,10 @@ import type { PageItem } from '../../../shared/state/types'
 import { useStore } from '../../../shared/state/store'
 import { PageThumb } from './PageThumb'
 import { PageZoom } from './PageZoom'
+import { RotateIcon } from '../../../shared/components/icons'
 
 export function Workspace() {
-  const { pages, sources, reorder, rotatePage, deletePage, getSource } = useStore()
+  const { pages, sources, reorder, rotateAll, rotatePage, deletePage, getSource } = useStore()
 
   // The page currently shown enlarged (double-click a thumbnail), or null.
   const [zoomed, setZoomed] = useState<PageItem | null>(null)
@@ -42,7 +43,7 @@ export function Workspace() {
 
   return (
     <div className="card p-4 sm:p-6">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold text-ink">
           Your pages{' '}
           <span className="text-sm font-semibold text-ink-faint">
@@ -50,7 +51,13 @@ export function Workspace() {
             {sources.length === 1 ? 'file' : 'files'})
           </span>
         </h2>
-        <p className="hidden text-sm text-ink-soft sm:block">Drag pages to reorder</p>
+        <div className="flex items-center gap-3">
+          <p className="hidden text-sm text-ink-soft sm:block">Drag pages to reorder</p>
+          <button type="button" className="btn-secondary" onClick={() => rotateAll(90)}>
+            <RotateIcon width={18} height={18} />
+            Rotate all
+          </button>
+        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

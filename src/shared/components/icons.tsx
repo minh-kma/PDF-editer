@@ -174,3 +174,15 @@ export const ChevronDownIcon = (p: IconProps) => (
     <polyline points="6 9 12 15 18 9" />
   </svg>
 )
+
+export const ChevronLeftIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+)
+
+export const ChevronRightIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+)

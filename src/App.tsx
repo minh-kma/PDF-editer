@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Header } from './shared/components/Header'
+import { AppBar } from './shared/components/AppBar'
 import { DropZone } from './shared/components/DropZone'
 import { Workspace } from './features/page-management/workspace/Workspace'
-import { Toolbar } from './features/page-management/workspace/Toolbar'
+import { BrowseView } from './features/page-management/workspace/BrowseView'
 import { SplitPanel } from './features/page-management/split/SplitPanel'
 import { ExtractPanel } from './features/page-management/split/ExtractPanel'
 import { PreviewModal } from './shared/components/PreviewModal'
 import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
 import { Toast } from './shared/components/Toast'
-import { ToolGrid, type ToolIntent } from './shared/components/ToolGrid'
+import { ToolGrid } from './shared/components/ToolGrid'
 import { PasswordPrompt } from './shared/components/PasswordPrompt'
 import { ShieldIcon, CompressIcon } from './shared/components/icons'
 import { useStore } from './shared/state/store'
@@ -18,6 +18,7 @@ import { buildPdf } from './features/page-management/workspace/buildPdf'
 import { compressPdf } from './features/page-management/compress/compressPdf'
 import { formatBytes, baseName } from './shared/lib/format'
 import { saveSession, loadSession, clearSession, type SavedSession } from './shared/lib/storage'
+import type { ToolIntent } from './shared/lib/toolCatalog'
 
 interface PreviewState {
   title: string
@@ -25,6 +26,14 @@ interface PreviewState {
   fileName: string
   info?: React.ReactNode
 }
+
+// Which UI the main content area shows. 'browse' (the default, single-page
+// viewer) is what every tool returns to when closed/finished. 'manage' is
+// the combined Rotate+Remove+Rearrange grid (Workspace.tsx, unchanged
+// internally — just now an explicitly-selected tool instead of the
+// default). Compress and Unlock are NOT modes — they're instant one-shot
+// actions that go straight to a PreviewModal, same as today.
+type MainMode = { kind: 'browse' } | { kind: 'manage' } | { kind: 'split' } | { kind: 'extract' }
 
 export default function App() {
   const store = useStore()
@@ -37,7 +46,6 @@ export default function App() {
     busy,
     busyMessage,
     addSource,
-    rotateAll,
     reset,
     restore,
     setBusy,
@@ -49,8 +57,7 @@ export default function App() {
 
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewState | null>(null)
-  const [showSplit, setShowSplit] = useState(false)
-  const [showExtract, setShowExtract] = useState(false)
+  const [mainMode, setMainMode] = useState<MainMode>({ kind: 'browse' })
   const [recover, setRecover] = useState<SavedSession | null>(null)
 
   // A tool the user picked from the landing grid before uploading. Once a file
@@ -303,30 +310,46 @@ export default function App() {
     }
   }, [sources, pages, annotations, docAnnotations, assets, outputName, setBusy])
 
-  // -- Tool discovery (landing grid) -----------------------------------------
-  // Picking a tool remembers the intent, then opens the file picker so the
-  // user drops straight into that tool once a file is loaded.
-  const handleToolSelect = useCallback((intent: ToolIntent) => {
-    setPendingTool(intent)
-    toolFileInput.current?.click()
-  }, [])
+  // -- Tool discovery (persistent bar + landing grid) -------------------------
+  // 'merge' always needs a new file to combine, so it always opens the picker.
+  // Everything else, if a file is already loaded, applies straight to the
+  // current pages (no re-upload); otherwise it remembers the intent and opens
+  // the picker, same as a fresh landing-page pick.
+  const handleToolSelect = useCallback(
+    (intent: ToolIntent) => {
+      if (intent === 'merge' || !hasPages) {
+        setPendingTool(intent)
+        toolFileInput.current?.click()
+        return
+      }
+      if (intent === 'compress') {
+        handleCompress()
+        return
+      }
+      setMainMode({ kind: intent })
+    },
+    [hasPages, handleCompress],
+  )
 
-  // Once pages exist and a tool was requested, open that tool's panel/action.
-  // merge/remove/rearrange have no panel — the workspace itself is the tool.
+  // Once pages exist and a tool was requested, open that tool's mode/action.
+  // A merge upload lands in 'manage' (not the 'browse' default) so the user
+  // immediately sees the combined page order and can fix it.
   useEffect(() => {
-    // Wait until reading finishes (busy false) so panels open after the load
+    // Wait until reading finishes (busy false) so modes open after the load
     // overlay clears and multi-file uploads don't fire a tool mid-read.
     if (!hasPages || !pendingTool || busy) return
     const intent = pendingTool
     setPendingTool(null)
-    if (intent === 'split') setShowSplit(true)
-    else if (intent === 'extract') setShowExtract(true)
+    if (intent === 'split') setMainMode({ kind: 'split' })
+    else if (intent === 'extract') setMainMode({ kind: 'extract' })
     else if (intent === 'compress') handleCompress()
+    else if (intent === 'manage' || intent === 'merge') setMainMode({ kind: 'manage' })
   }, [hasPages, pendingTool, busy, handleCompress])
 
   // -- Start over ------------------------------------------------------------
   const handleReset = useCallback(() => {
     reset()
+    setMainMode({ kind: 'browse' }) // don't carry a stale mode into the next upload
     sessionPassword.current = null // forget the cached password on Start over
     clearSession().catch(() => {})
   }, [reset])
@@ -352,7 +375,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+      <AppBar
+        hasFile={hasPages}
+        busy={busy}
+        onSelectTool={handleToolSelect}
+        onAddFiles={handleFiles}
+        onReset={handleReset}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onDownload={handleDownload}
+      />
 
       <main className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
         {/* Intro headline (only before any pages are loaded). */}
@@ -394,47 +428,33 @@ export default function App() {
           </>
         ) : (
           <div className="space-y-4">
-            <Toolbar
-              onAddFiles={handleFiles}
-              onRotateAll={() => rotateAll(90)}
-              onReset={handleReset}
-              onSplit={() => setShowSplit(true)}
-              onExtract={() => setShowExtract(true)}
-              onCompress={handleCompress}
-              onDownload={handleDownload}
-              onUndo={undo}
-              onRedo={redo}
-              canUndo={canUndo}
-              canRedo={canRedo}
-              disabled={busy}
-            />
-            <Workspace />
+            {mainMode.kind === 'manage' ? <Workspace /> : <BrowseView />}
             <PrivacyNote />
           </div>
         )}
       </main>
 
-      {showSplit && (
+      {mainMode.kind === 'split' && (
         <SplitPanel
           baseName={baseName(outputName())}
-          onClose={() => setShowSplit(false)}
+          onClose={() => setMainMode({ kind: 'browse' })}
           onError={(m) => {
-            setShowSplit(false)
+            setMainMode({ kind: 'browse' })
             setError(m)
           }}
         />
       )}
 
-      {showExtract && (
+      {mainMode.kind === 'extract' && (
         <ExtractPanel
           baseName={baseName(outputName())}
-          onClose={() => setShowExtract(false)}
+          onClose={() => setMainMode({ kind: 'browse' })}
           onError={(m) => {
-            setShowExtract(false)
+            setMainMode({ kind: 'browse' })
             setError(m)
           }}
           onExtracted={(bytes, fileName) => {
-            setShowExtract(false)
+            setMainMode({ kind: 'browse' })
             setPreview({ title: 'Extracted pages', bytes, fileName })
           }}
         />

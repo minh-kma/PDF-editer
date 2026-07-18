@@ -3,18 +3,14 @@
 // shared/components/MegaMenu.tsx). Group headings follow the product
 // roadmap (features.md), NOT the code folder layout.
 import type { ComponentType, SVGProps } from 'react'
-import {
-  PlusIcon,
-  ScissorsIcon,
-  ExpandIcon,
-  TrashIcon,
-  DragIcon,
-  CompressIcon,
-} from '../components/icons'
+import { PlusIcon, ScissorsIcon, ExpandIcon, DragIcon, CompressIcon } from '../components/icons'
 
 // The intent a tool entry carries into the upload flow (or, once a file is
-// already loaded, straight into the matching mode) — see App.tsx.
-export type ToolIntent = 'merge' | 'split' | 'extract' | 'remove' | 'rearrange' | 'compress'
+// already loaded, straight into the matching mode) — see App.tsx. 'manage'
+// is the combined Rotate+Remove+Rearrange tool (formerly two separate
+// intents, 'remove' and 'rearrange' — both already routed to the same
+// underlying Workspace grid, so they're one tool now, not two).
+export type ToolIntent = 'merge' | 'split' | 'extract' | 'manage' | 'compress'
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -38,8 +34,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       { intent: 'merge', label: 'Merge', description: 'Combine several PDFs into one', icon: PlusIcon },
       { intent: 'split', label: 'Split', description: 'Divide a PDF into separate files', icon: ScissorsIcon },
       { intent: 'extract', label: 'Extract pages', description: 'Save chosen pages as a new file', icon: ExpandIcon },
-      { intent: 'remove', label: 'Remove pages', description: 'Delete pages you don’t need', icon: TrashIcon },
-      { intent: 'rearrange', label: 'Rearrange', description: 'Drag pages into a new order', icon: DragIcon },
+      { intent: 'manage', label: 'Manage pages', description: 'Rotate, delete and reorder pages', icon: DragIcon },
     ],
   },
   {
