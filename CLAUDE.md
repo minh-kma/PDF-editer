@@ -67,8 +67,11 @@ npx tsc --noEmit  # typecheck only (use this to verify refactors)
   (locked product decision).
 - Keep `base: './'` in `vite.config.ts` — the build must work from a
   subfolder (e.g. GitHub Pages).
-- Compress must stay **lossless** and honest: keep whichever output is
-  smaller, show before/after sizes, never make the file bigger.
+- Compress is **lossy by explicit user choice** (Low / Medium / High —
+  reversal R4, was lossless-only). It recompresses embedded raster images
+  and nothing else: text, vector graphics and fonts are never altered.
+  It must stay honest: show before/after sizes, and **never make the file
+  bigger** — that floor still holds, both per image and per document.
 - The app must keep working fully offline-capable/static — no runtime
   dependencies on external services.
 - User-facing copy is plain, friendly, non-technical English.

@@ -16,7 +16,7 @@ interface PageZoomProps {
  * only the modal chrome (backdrop, Esc-to-close, scroll-lock).
  */
 export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
-  const { url, zoom, zoomIn, zoomOut } = usePageStage(source, page)
+  const { url, zoom, zoomIn, zoomOut, setZoom } = usePageStage(source, page)
 
   // Close on Esc, and stop the page behind from scrolling while open.
   useEffect(() => {
@@ -65,6 +65,7 @@ export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
         zoom={zoom}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
+        onZoomChange={setZoom}
         className="fixed bottom-5 left-1/2 -translate-x-1/2"
       />
     </div>

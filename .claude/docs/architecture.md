@@ -68,44 +68,60 @@ one feature (the workspace), not four.
 `shared/lib/pdfCore.ts` holds pdf-lib primitives (`loadSources`) used by both
 `workspace/buildPdf.ts` and `split/splitPdf.ts`.
 
-### Other groups already started: `edit`, `optimize`, `security`
+### Other groups: `edit`, `optimize`, `security`, `convert`
 
-Unlike `page-management`, these three groups are logic-only so far: real
-pdf-lib/pdf.js code exists, but nothing is wired into the UI yet (D19:
-logic-first, UI-last). 7 files, 984 lines total:
+These four are a mix: some modules are UI-wired, others are still logic-only
+pending their authoring UI (D19: logic-first, UI-last).
 
 ```
 features/edit/
+  doc-marks/    WatermarkPanel.tsx + PageNumbersPanel.tsx (modal panels),
+                PageRangeFields.tsx, useFirstPagePreview.ts — UI-wired;
+                output is drawn by shared/lib/annotationBake.ts (D11)
   crop/         cropPages.ts — setCropBox per page, degenerate-rect/
                 no-overlap validation, per-page applied/failed results
   edit-text/    editText.ts — extract text runs via pdf.js, redraw via
-                pdf-lib (Eraser-style white cover + new text)
+                pdf-lib (white cover + new text)
   forms/        formFields.ts — read/fill existing AcroForm fields, and
                 create new ones (text/checkbox/radio/listbox/dropdown)
 
 features/optimize/
   ocr/          ocrDocument.ts (Tesseract.js recognition, per-page skip),
                 bakeOcrTextLayer.ts (invisible searchable text layer),
-                ocrWorker.ts (shared Tesseract Web Worker)
+                ocrWorker.ts (shared Tesseract Web Worker),
+                OcrPanel.tsx — UI-wired
 
 features/security/
-  protect/      protectPdf.ts — qpdf-wasm AES-256 encrypt (D8)
+  protect/      protectPdf.ts — qpdf-wasm AES-256 encrypt (D8),
+                ProtectPanel.tsx — UI-wired
+
+features/convert/
+  images-to-pdf/  imagesToPdf.ts (pdf-lib embedPng/embedJpg → pages),
+                  ImagesToPdfView.tsx (drop area + reorderable grid +
+                  options), ImageCard.tsx, ImageZoom.tsx, useImageList.ts
+                  — UI-wired; the JPG/PNG half of D4's conversion exception
 ```
+
+`convert/` is its own group because it shares nothing with the page plan: it
+starts from image files rather than a `SourceDoc`, never touches `buildPdf`,
+and holds its staged images in module-local state (no store slice, no
+autosave, no undo — it's a one-shot tool like Compress).
 
 See `.claude/docs/features.md` for per-tool status.
 
 ### Other roadmap groups: what's still unclaimed
 
-The product roadmap has four feature groups: **Organize**, **Optimize**,
-**Edit**, **Security** (see `.claude/docs/features.md`). `page-management`
-covers the built Organize + workspace features; `edit/`, `optimize/`,
-`security/` (above) hold the Edit/Optimize/Security logic built so far.
-Create a group's folder only when work on it begins (no empty
-placeholders). Still unclaimed within the existing groups:
+The product roadmap has five feature groups: **Organize**, **Optimize**,
+**Edit**, **Security**, **Convert** (see `.claude/docs/features.md`).
+`page-management` covers the built Organize + workspace features; `edit/`,
+`optimize/`, `security/`, `convert/` (above) hold the rest. Create a group's
+folder only when work on it begins (no empty placeholders). Still unclaimed
+within the existing groups:
 
-- `optimize/` — nothing pending beyond OCR (Compress itself lives under `page-management/`, see above)
-- `edit/` — the annotation tools (text, highlights, signatures, shapes) + page numbers/watermark have no module of their own yet — they'll land here once their authoring UI work starts (D19)
-- `security/` — nothing pending beyond Protect PDF (Unlock lives in `shared/lib/pdfUnlock.ts`, since the shared file-load pipeline needs it, not a standalone module)
+- `optimize/` — nothing pending beyond OCR write-back (Compress itself lives under `page-management/`, see above)
+- `edit/` — Crop, PDF Forms and Edit text still need their UI (D19). The annotation tools are gone, not pending — see decisions.md R3
+- `security/` — nothing pending (Unlock lives in `shared/lib/pdfUnlock.ts`, since the shared file-load pipeline needs it, not a standalone module)
+- `convert/` — the reverse direction (PDF → JPG/PNG) is the obvious next module here, still unbuilt (D4)
 
 ### Code location vs. roadmap group
 

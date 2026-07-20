@@ -7,6 +7,7 @@ import { useStore } from '../../../shared/state/store'
 import { CheckIcon, TrashIcon } from '../../../shared/components/icons'
 import { PageRangeFields, type PageRangeValue } from './PageRangeFields'
 import { useFirstPagePreview } from './useFirstPagePreview'
+import { NumberField } from './NumberField'
 import type { DocAnnotation } from '../../../shared/state/types'
 
 interface PageNumbersPanelProps {
@@ -122,7 +123,7 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
           </div>
 
           <p className="mt-4 text-sm font-bold text-ink">Position</p>
-          <div className="mt-1.5 grid w-24 grid-cols-2 gap-1">
+          <div className="mt-1.5 grid w-28 grid-cols-2 gap-1.5">
             {CORNERS.map(({ corner: c, label }) => (
               <button
                 key={c}
@@ -131,44 +132,48 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
                 aria-label={label}
                 aria-pressed={corner === c}
                 title={label}
-                className={`icon-btn flex h-10 items-center rounded-lg border p-1.5 ${
-                  c === 'tl' || c === 'bl' ? 'justify-start' : 'justify-end'
-                } ${c === 'tl' || c === 'tr' ? 'items-start' : 'items-end'} ${
+                className={`icon-btn flex h-12 items-center justify-center rounded-lg border ${
                   corner === c
                     ? 'border-brand-300 bg-brand-50'
                     : 'border-black/10 bg-white hover:border-brand-200'
                 }`}
               >
+                {/* A page-shaped sheet with the number's mark in the actual
+                    corner, so each of the four reads at a glance. */}
                 <span
-                  className={`h-1.5 w-3 rounded-sm ${corner === c ? 'bg-brand-500' : 'bg-ink-faint'}`}
-                />
+                  className={`flex h-8 w-6 flex-col rounded-[3px] border p-1 ${
+                    c === 'tl' || c === 'tr' ? 'justify-start' : 'justify-end'
+                  } ${c === 'tl' || c === 'bl' ? 'items-start' : 'items-end'} ${
+                    corner === c ? 'border-brand-400 bg-white' : 'border-ink-faint/50 bg-white'
+                  }`}
+                >
+                  <span
+                    className={`h-1 w-2.5 rounded-sm ${
+                      corner === c ? 'bg-brand-500' : 'bg-ink-faint'
+                    }`}
+                  />
+                </span>
               </button>
             ))}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-              Size
-              <input
-                type="number"
-                min={6}
-                max={36}
-                value={fontSize}
-                onChange={(e) => setFontSize(Math.min(36, Math.max(6, Number(e.target.value) || 12)))}
-                className="w-16 rounded-lg border border-brand-100 bg-white px-2 py-1 text-center font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
-              />
-            </label>
-            <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-              Margin
-              <input
-                type="number"
-                min={4}
-                max={96}
-                value={margin}
-                onChange={(e) => setMargin(Math.min(96, Math.max(4, Number(e.target.value) || 24)))}
-                className="w-16 rounded-lg border border-brand-100 bg-white px-2 py-1 text-center font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
-              />
-            </label>
+            <NumberField
+              label="Size"
+              min={6}
+              max={36}
+              fallback={12}
+              value={fontSize}
+              onChange={setFontSize}
+            />
+            <NumberField
+              label="Margin"
+              min={4}
+              max={96}
+              fallback={24}
+              value={margin}
+              onChange={setMargin}
+            />
             <label className="flex items-center gap-1.5 text-sm text-ink-soft">
               Color
               <input

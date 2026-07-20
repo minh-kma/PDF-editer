@@ -13,6 +13,7 @@ import {
   LockIcon,
   WatermarkIcon,
   HashIcon,
+  ImageIcon,
 } from '../components/icons'
 
 // The intent a tool entry carries into the upload flow (or, once a file is
@@ -20,9 +21,9 @@ import {
 // is the combined Rotate+Remove+Rearrange tool (formerly two separate
 // intents, 'remove' and 'rearrange' — both already routed to the same
 // underlying Workspace grid, so they're one tool now, not two). 'unlock' is
-// a one-shot action with no mode of its own (like 'compress') — it always
-// operates on a freshly-picked file, never the current session, so it
-// bypasses mainMode entirely; see App.tsx's handleToolSelect.
+// a one-shot action with no mode of its own — it always operates on a
+// freshly-picked file, never the current session, so it bypasses mainMode
+// entirely; see App.tsx's handleToolSelect.
 export type ToolIntent =
   | 'merge'
   | 'split'
@@ -34,6 +35,7 @@ export type ToolIntent =
   | 'protect'
   | 'watermark'
   | 'pageNumbers'
+  | 'imagesToPdf'
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -63,7 +65,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
   {
     heading: 'Optimize PDF',
     tools: [
-      { intent: 'compress', label: 'Compress', description: 'Shrink the file size, losslessly', icon: CompressIcon },
+      { intent: 'compress', label: 'Compress', description: 'Make the file smaller — you choose how much', icon: CompressIcon },
       { intent: 'ocr', label: 'OCR', description: 'Make scanned pages searchable', icon: ScanIcon },
     ],
   },
@@ -79,6 +81,12 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     tools: [
       { intent: 'unlock', label: 'Unlock', description: "Remove a PDF's password", icon: UnlockIcon },
       { intent: 'protect', label: 'Protect', description: 'Add a password to a PDF', icon: LockIcon },
+    ],
+  },
+  {
+    heading: 'Convert',
+    tools: [
+      { intent: 'imagesToPdf', label: 'Images to PDF', description: 'Combine JPG or PNG images into a PDF', icon: ImageIcon },
     ],
   },
 ]

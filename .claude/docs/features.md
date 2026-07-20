@@ -17,7 +17,7 @@ no database, no file uploads. Ad-funded (decisions.md D12).
 
 | Feature | Status | Notes |
 |---|---|---|
-| Compress | Built | |
+| Compress | Built | `src/features/page-management/compress/`: `CompressPanel.tsx` (level picker + progress), `compressPdf.ts` (worker driver + lossless fallback), `compressWorker.ts`, `recompressImages.ts` (the image pass). **Lossy by user choice — R4/D22.** Recompresses embedded raster images (Low 0.82 quality/220 DPI, Medium 0.65/150 default, High 0.45/110) and re-saves with object streams; text, vectors and fonts are never touched. Images with transparency, JPEG 2000, bitonal/CCITT/JBIG2, Indexed/CMYK, filter chains, and anything under 64px or 16KB are skipped. Never ships a bigger file: per-image (a re-encode that isn't smaller is discarded) and per-document (the `pristine`/`baseline` comparison). Runs in a Web Worker with per-image progress; falls back to the lossless re-save where `OffscreenCanvas.convertToBlob` is missing (Safari < 16.4), saying so in the result. |
 | OCR | Recognition built, no UI yet (D19) | `src/features/optimize/ocr/`: `ocrWorker.ts` (Tesseract Web Worker, per-language worker cache) + `ocrDocument.ts` (per-page pipeline). Skips pages that already have text via `hasTextLayer` (≥20 non-whitespace chars from pdf.js `getTextContent`). Word bboxes normalized 0..1, reusing the `Rect` type — ready for the write-back into an invisible searchable layer, which is a separate, not-started sub-task. Progress contract: skipped pages fire `onProgress` once (`'skipped'`), recognized pages twice (`'recognizing'`, then `'done'`) — confirm this matches expectations before building a progress UI on it. Language models from Tesseract's CDN (D7); worker/wasm engine assets self-hosted via Vite `?url`. Verified 4/4 by a temporary script (text-page skip, recognition accuracy, worker cache hit, progress counts). `shared/lib/pdfjs.ts` changes were additive only (`getTextContent`, `renderPageForOcr`). |
 
 ## Group 3: Edit
@@ -49,6 +49,13 @@ unaffected.
 Cross-feature: opening a password-protected file in any tool must prompt
 for the password first.
 
+## Group 5: Convert
+
+| Feature | Status | Notes |
+|---|---|---|
+| Images to PDF | Built | `src/features/convert/images-to-pdf/` — `imagesToPdf.ts` (logic) + `ImagesToPdfView.tsx` / `ImageCard.tsx` / `ImageZoom.tsx` / `useImageList.ts`. PNG + JPEG only, sniffed from magic bytes (D4). Dashed drop area wrapping a dnd-kit reorderable thumbnail grid; per-image rotate left/right, enlarge, remove; sort by name A→Z / Z→A (numeric-aware, so `img2` precedes `img10`). Options: Merge (default on), page size `Fit to image / A4 (default) / Letter / Legal / A3 / A5`, orientation `Auto (default) / Portrait / Landscape` (disabled for Fit to image), margin `No margin (default, 0pt) / Small (18pt) / Big (36pt)`. Merge on → one PDF via the preview modal; merge off → one PDF per image, previewing the first and downloading all as `PDFdemo_images.zip` (PreviewModal's `onDownload`/`downloadLabel` props). **Fit to image maps 1px → 1pt but caps the longer edge at 2384pt (A0's short side, 33.1in), scaling down proportionally** — never cropped or stretched; well inside PDF's ~14400pt per-page maximum. One-shot tool: module-local state, no IndexedDB autosave, no undo/redo, and it never touches the page plan — an open PDF session survives switching in and out. |
+| PDF to images | Not started | The reverse half of D4's exception. |
+
 ## Out of scope
 
 - Office ↔ PDF conversion (Word/Excel/PowerPoint) — D4
@@ -75,8 +82,13 @@ for the password first.
 
 - Tool discovery is the AppBar's "All tools" mega-menu
   (`shared/components/MegaMenu.tsx`, driven by
-  `shared/lib/toolCatalog.ts`): a fixed 4-column layout — Organize PDF,
-  Optimize PDF, Edit PDF, Security, in that order — so a short category
-  never wraps under a taller one. Drops to 2 columns below the `sm`
-  breakpoint. Edit PDF holds only Watermark and Page numbers (R3); don't
-  pad it out.
+  `shared/lib/toolCatalog.ts`): a fixed 5-column layout — Organize PDF,
+  Optimize PDF, Edit PDF, Security, Convert, in that order — so a short
+  category never wraps under a taller one. Panel is `min(92vw, 46rem)`,
+  dropping to 2 columns below the `sm` breakpoint. Edit PDF holds only
+  Watermark and Page numbers (R3) and Convert only Images to PDF; don't
+  pad either out.
+- Every tool except Images to PDF assumes a PDF is already loaded, and
+  `App.handleToolSelect` forces a file picker when none is. Images to PDF
+  brings its own images, so it returns early *before* that check and takes
+  over the main content area as its own `MainMode`.

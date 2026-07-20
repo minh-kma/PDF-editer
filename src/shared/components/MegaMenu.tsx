@@ -56,14 +56,14 @@ export function MegaMenu({ onSelect, disabled }: MegaMenuProps) {
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full z-50 mt-2 w-[min(92vw,40rem)] rounded-2xl border border-black/5 bg-white p-3 shadow-card"
+          className="absolute left-0 top-full z-50 mt-2 w-[min(92vw,46rem)] rounded-2xl border border-black/5 bg-white p-3 shadow-card"
         >
           {/* A fixed column per category, in catalog order: Organize PDF,
-              Optimize PDF, Edit PDF, Security. Fixed (not auto-fit) so every
-              category — including short ones like Security — always gets its
-              own column instead of wrapping underneath a taller neighbour.
-              Falls back to two columns on phones, where four don't fit. */}
-          <div className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
+              Optimize PDF, Edit PDF, Security, Convert. Fixed (not auto-fit) so
+              every category — including short ones like Convert — always gets
+              its own column instead of wrapping underneath a taller neighbour.
+              Falls back to two columns on phones, where five don't fit. */}
+          <div className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-5">
             {TOOL_CATEGORIES.map((category) => (
               <div key={category.heading}>
                 <h3 className="text-xs font-extrabold uppercase tracking-wide text-ink-faint">

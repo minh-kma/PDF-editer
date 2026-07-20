@@ -7,20 +7,21 @@ import { SplitPanel } from './features/page-management/split/SplitPanel'
 import { ExtractPanel } from './features/page-management/split/ExtractPanel'
 import { ProtectPanel } from './features/security/protect/ProtectPanel'
 import { OcrPanel } from './features/optimize/ocr/OcrPanel'
+import { CompressPanel } from './features/page-management/compress/CompressPanel'
 import { WatermarkPanel } from './features/edit/doc-marks/WatermarkPanel'
 import { PageNumbersPanel } from './features/edit/doc-marks/PageNumbersPanel'
+import { ImagesToPdfView } from './features/convert/images-to-pdf/ImagesToPdfView'
 import { PreviewModal } from './shared/components/PreviewModal'
 import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
 import { Toast } from './shared/components/Toast'
 import { PasswordPrompt } from './shared/components/PasswordPrompt'
 import { ConfirmDialog } from './shared/components/ConfirmDialog'
-import { ShieldIcon, CompressIcon, LockIcon } from './shared/components/icons'
+import { ShieldIcon, LockIcon } from './shared/components/icons'
 import { useStore } from './shared/state/store'
 import { probePdf, decryptPdf, WrongPasswordError } from './shared/lib/pdfUnlock'
 import { buildPdf } from './features/page-management/workspace/buildPdf'
-import { compressPdf } from './features/page-management/compress/compressPdf'
-import { formatBytes, baseName } from './shared/lib/format'
+import { baseName } from './shared/lib/format'
 import { saveSession, loadSession, clearSession, type SavedSession } from './shared/lib/storage'
 import type { ToolIntent } from './shared/lib/toolCatalog'
 
@@ -33,18 +34,24 @@ interface PreviewState {
    * result can't render in the preview frame, so this covers it with a
    * confirmation instead of the browser's native password prompt. */
   overlay?: React.ReactNode
+  /** Images to PDF's one-PDF-per-image mode only — `bytes` previews the first
+   * PDF while the download hands over the whole .zip. */
+  onDownload?: () => void
+  downloadLabel?: string
 }
 
 // Which UI the main content area shows. 'browse' (the default, single-page
 // viewer) is what every tool returns to when closed/finished. 'manage' is
 // the combined Rotate+Remove+Rearrange grid (Workspace.tsx, unchanged
 // internally — just now an explicitly-selected tool instead of the
-// default). Compress and Unlock are NOT modes — they're instant one-shot
-// actions that go straight to a PreviewModal, same as today. 'protect' and
-// 'ocr' need user input first (a password; a language pick), so — unlike
-// Compress/Unlock — they're modal-form panels, same pattern as split/extract.
+// default). Unlock is NOT a mode — it's an instant one-shot action that goes
+// straight to a PreviewModal. 'protect', 'ocr' and 'compress' need user input
+// first (a password; a language pick; a compression level), so — unlike
+// Unlock — they're modal-form panels, same pattern as split/extract.
 // 'watermark' and 'pageNumbers' are modal-form panels over Browse, same
-// pattern as split/extract.
+// pattern as split/extract. 'imagesToPdf' is the odd one out: it starts from
+// images rather than a PDF, so it takes over the main content area and needs
+// no file loaded at all.
 type MainMode =
   | { kind: 'browse' }
   | { kind: 'manage' }
@@ -52,8 +59,10 @@ type MainMode =
   | { kind: 'extract' }
   | { kind: 'protect' }
   | { kind: 'ocr' }
+  | { kind: 'compress' }
   | { kind: 'watermark' }
   | { kind: 'pageNumbers' }
+  | { kind: 'imagesToPdf' }
 
 // Don't offer to restore a session that's gone stale — past this age, skip
 // the recover banner and proceed as if no session existed.
@@ -219,8 +228,8 @@ export default function App() {
 
   // -- Unlock (mega-menu tool): pick a file, decrypt it, preview the result —
   // never touches the page-plan store, never lands the user in Browse.
-  // Mirrors handleCompress's one-shot shape: setBusy while working, end at
-  // setPreview (CLAUDE.md: never auto-download, always preview first).
+  // A one-shot shape: setBusy while working, end at setPreview (CLAUDE.md:
+  // never auto-download, always preview first).
   const handleUnlockTool = useCallback(
     async (file: File) => {
       try {
@@ -308,72 +317,6 @@ export default function App() {
     }
   }, [sources, pages, docAnnotations, assets, outputName, setBusy])
 
-  // -- Compress --------------------------------------------------------------
-  const handleCompress = useCallback(async () => {
-    try {
-      setBusy(true, 'Compressing…')
-      const assembled = await buildPdf(sources, pages, { docAnnotations, assets })
-      const compressed = await compressPdf(assembled)
-
-      // Is the current plan exactly the uploaded file, untouched? Only then is
-      // the original upload a faithful stand-in for the user's document, so we
-      // may fall back to it. Any delete/rotate/reorder/merge — or a watermark
-      // / page numbers — makes it not pristine (re-assembly is the baseline).
-      const pristine =
-        docAnnotations.length === 0 &&
-        sources.length === 1 &&
-        pages.length === sources[0].pageCount &&
-        pages.every(
-          (p, i) => p.sourceId === sources[0].id && p.sourceIndex === i && p.rotation === 0,
-        )
-
-      // The document as it stands WITHOUT our compression — i.e. what the user
-      // would otherwise download. For an untouched upload that's the original
-      // file itself; pdf-lib re-assembly can duplicate shared resources (a font
-      // or image reused across pages) and actually inflate the file.
-      const baseline = pristine ? sources[0].bytes : assembled
-
-      // Safety rule: never ship a result larger than that input. Pick the
-      // smallest faithful representation of the document.
-      let best = baseline
-      if (assembled.length < best.length) best = assembled
-      if (compressed.length < best.length) best = compressed
-
-      const saved = baseline.length - best.length
-      const pct = baseline.length > 0 ? Math.round((saved / baseline.length) * 100) : 0
-
-      const info = (
-        <div className="rounded-xl bg-cream-soft p-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-ink-soft">Before</span>
-            <span className="font-bold text-ink">{formatBytes(baseline.length)}</span>
-          </div>
-          <div className="mt-1 flex items-center justify-between">
-            <span className="text-ink-soft">After</span>
-            <span className="font-bold text-brand-600">{formatBytes(best.length)}</span>
-          </div>
-          <p className="mt-2 flex items-start gap-1.5 text-xs text-ink-faint">
-            <CompressIcon width={14} height={14} className="mt-0.5 flex-none" />
-            {saved > 0
-              ? `Reduced by ${pct}%. Savings depend on the file — image-heavy PDFs shrink less.`
-              : `This PDF is already well optimised, so there's little to trim. Your file is unchanged.`}
-          </p>
-        </div>
-      )
-
-      setPreview({
-        title: 'Compressed PDF',
-        bytes: best,
-        fileName: `${baseName(outputName())}_compressed.pdf`,
-        info,
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not compress the PDF.')
-    } finally {
-      setBusy(false)
-    }
-  }, [sources, pages, docAnnotations, assets, outputName, setBusy])
-
   // -- Tool discovery (persistent bar + landing grid) -------------------------
   // 'unlock' always needs a freshly-picked file (never the current session —
   // uploaded files are already decrypted by the time they're in the store),
@@ -388,18 +331,20 @@ export default function App() {
         unlockFileInput.current?.click()
         return
       }
+      // Images to PDF brings its own images — it must never demand a PDF
+      // upload first, so it opens ahead of the !hasPages check below.
+      if (intent === 'imagesToPdf') {
+        setMainMode({ kind: 'imagesToPdf' })
+        return
+      }
       if (intent === 'merge' || !hasPages) {
         setPendingTool(intent)
         toolFileInput.current?.click()
         return
       }
-      if (intent === 'compress') {
-        handleCompress()
-        return
-      }
       setMainMode({ kind: intent })
     },
-    [hasPages, handleCompress],
+    [hasPages],
   )
 
   // Once pages exist and a tool was requested, open that tool's mode/action.
@@ -417,11 +362,11 @@ export default function App() {
     else if (intent === 'ocr') setMainMode({ kind: 'ocr' })
     else if (intent === 'watermark') setMainMode({ kind: 'watermark' })
     else if (intent === 'pageNumbers') setMainMode({ kind: 'pageNumbers' })
-    else if (intent === 'compress') handleCompress()
+    else if (intent === 'compress') setMainMode({ kind: 'compress' })
     else if (intent === 'manage' || intent === 'merge') setMainMode({ kind: 'manage' })
     // 'unlock' never reaches here — handleToolSelect routes it to its own
     // file input before pendingTool is ever set.
-  }, [hasPages, pendingTool, busy, handleCompress])
+  }, [hasPages, pendingTool, busy])
 
   // -- Start over ------------------------------------------------------------
   const handleReset = useCallback(() => {
@@ -460,7 +405,10 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <AppBar
-        hasFile={hasPages}
+        // While converting images there's no PDF session in play, so the
+        // page-plan actions (Download / Undo / Redo / Add more PDFs / Start
+        // over) would act on the wrong thing — hide them for that mode.
+        hasFile={hasPages && mainMode.kind !== 'imagesToPdf'}
         busy={busy}
         onSelectTool={handleToolSelect}
         onAddFiles={handleFiles}
@@ -475,7 +423,7 @@ export default function App() {
 
       <main className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
         {/* Intro headline (only before any pages are loaded). */}
-        {!hasPages && !recover && (
+        {!hasPages && !recover && mainMode.kind !== 'imagesToPdf' && (
           <div className="mb-6 mt-2 text-center">
             <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
               Edit your PDFs, right in your browser
@@ -497,7 +445,13 @@ export default function App() {
           </div>
         )}
 
-        {!hasPages ? (
+        {mainMode.kind === 'imagesToPdf' ? (
+          <ImagesToPdfView
+            onClose={() => setMainMode({ kind: 'browse' })}
+            onError={setError}
+            onCreated={setPreview}
+          />
+        ) : !hasPages ? (
           <>
             <DropZone
               onFiles={(files) => {
@@ -600,6 +554,21 @@ export default function App() {
         />
       )}
 
+      {mainMode.kind === 'compress' && (
+        <CompressPanel
+          baseName={baseName(outputName())}
+          onClose={() => setMainMode({ kind: 'browse' })}
+          onError={(m) => {
+            setMainMode({ kind: 'browse' })
+            setError(m)
+          }}
+          onDone={(bytes, fileName, info) => {
+            setMainMode({ kind: 'browse' })
+            setPreview({ title: 'Compressed PDF', bytes, fileName, info })
+          }}
+        />
+      )}
+
       {confirmReset && (
         <ConfirmDialog
           title="Start over?"
@@ -631,6 +600,8 @@ export default function App() {
           fileName={preview.fileName}
           info={preview.info}
           overlay={preview.overlay}
+          onDownload={preview.onDownload}
+          downloadLabel={preview.downloadLabel}
           onClose={() => setPreview(null)}
         />
       )}

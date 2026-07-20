@@ -8,6 +8,7 @@ import { useStore } from '../../../shared/state/store'
 import { CheckIcon, TrashIcon } from '../../../shared/components/icons'
 import { PageRangeFields, type PageRangeValue } from './PageRangeFields'
 import { useFirstPagePreview } from './useFirstPagePreview'
+import { NumberField } from './NumberField'
 import type { Asset, DocAnnotation } from '../../../shared/state/types'
 
 interface WatermarkPanelProps {
@@ -152,17 +153,14 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
               />
 
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
-                <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-                  Size
-                  <input
-                    type="number"
-                    min={8}
-                    max={144}
-                    value={fontSize}
-                    onChange={(e) => setFontSize(Math.min(144, Math.max(8, Number(e.target.value) || 48)))}
-                    className="w-16 rounded-lg border border-brand-100 bg-white px-2 py-1 text-center font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
-                  />
-                </label>
+                <NumberField
+                  label="Size"
+                  min={8}
+                  max={144}
+                  fallback={48}
+                  value={fontSize}
+                  onChange={setFontSize}
+                />
                 <label className="flex items-center gap-1.5 text-sm text-ink-soft">
                   Color
                   <input

@@ -232,3 +232,39 @@ export const HashIcon = (p: IconProps) => (
     <line x1="16" y1="3" x2="14" y2="21" />
   </svg>
 )
+
+export const ImageIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <polyline points="21 15 16 10 5 21" />
+  </svg>
+)
+
+/** Mirror of RotateIcon, for the counter-clockwise direction. */
+export const RotateLeftIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <polyline points="1 4 1 10 7 10" />
+    <path d="M3.51 15a9 9 0 1 0 2.12-9.36L1 10" />
+  </svg>
+)
+
+export const SortAzIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <line x1="11" y1="6" x2="21" y2="6" />
+    <line x1="11" y1="12" x2="18" y2="12" />
+    <line x1="11" y1="18" x2="15" y2="18" />
+    <polyline points="3 9 6 6 9 9" />
+    <line x1="6" y1="6" x2="6" y2="19" />
+  </svg>
+)
+
+export const SortZaIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <line x1="11" y1="6" x2="15" y2="6" />
+    <line x1="11" y1="12" x2="18" y2="12" />
+    <line x1="11" y1="18" x2="21" y2="18" />
+    <polyline points="3 15 6 18 9 15" />
+    <line x1="6" y1="5" x2="6" y2="18" />
+  </svg>
+)

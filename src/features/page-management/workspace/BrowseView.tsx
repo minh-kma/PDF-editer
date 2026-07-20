@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../../shared/state/store'
 import { usePageRender, useZoom, ZoomControls } from './PageStage'
 import { getThumbnail } from '../../../shared/lib/thumbnails'
+import { DocMarksOverlay } from '../../../shared/components/DocMarksOverlay'
 import type { PageItem, SourceDoc } from '../../../shared/state/types'
 
 // How far a page can be from the viewport and still be rendered ahead of
@@ -21,7 +22,7 @@ export function BrowseView() {
   const { pages, getSource } = useStore()
   const [activeId, setActiveId] = useState<string | null>(pages[0]?.id ?? null)
   const [rendered, setRendered] = useState<Set<string>>(() => new Set())
-  const { zoom, zoomIn, zoomOut } = useZoom()
+  const { zoom, zoomIn, zoomOut, setZoom } = useZoom()
 
   const pageEls = useRef(new Map<string, HTMLDivElement>())
   const sidebarThumbEls = useRef(new Map<string, HTMLButtonElement>())
@@ -101,6 +102,7 @@ export function BrowseView() {
             page={page}
             source={getSource(page.sourceId)}
             position={i + 1}
+            total={pages.length}
             active={page.id === activeId}
             onClick={() => scrollToPage(page.id)}
             registerEl={(el) => {
@@ -118,6 +120,7 @@ export function BrowseView() {
             page={page}
             source={getSource(page.sourceId)}
             position={i + 1}
+            total={pages.length}
             zoom={zoom}
             shouldRender={rendered.has(page.id)}
             registerEl={(el) => {
@@ -132,6 +135,7 @@ export function BrowseView() {
         zoom={zoom}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
+        onZoomChange={setZoom}
         className="fixed bottom-5 left-1/2 z-20 -translate-x-1/2"
       />
     </div>
@@ -142,12 +146,21 @@ interface SidebarThumbProps {
   page: PageItem
   source: SourceDoc | undefined
   position: number
+  total: number
   active: boolean
   onClick: () => void
   registerEl: (el: HTMLButtonElement | null) => void
 }
 
-function SidebarThumb({ page, source, position, active, onClick, registerEl }: SidebarThumbProps) {
+function SidebarThumb({
+  page,
+  source,
+  position,
+  total,
+  active,
+  onClick,
+  registerEl,
+}: SidebarThumbProps) {
   const [thumb, setThumb] = useState<string | null>(null)
 
   useEffect(() => {
@@ -174,14 +187,22 @@ function SidebarThumb({ page, source, position, active, onClick, registerEl }: S
           : 'border-transparent hover:border-brand-100 hover:bg-cream-soft'
       }`}
     >
-      <div className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-md bg-cream-soft">
+      <div className="relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-md bg-cream-soft">
         {thumb ? (
-          <img
-            src={thumb}
-            alt={`Page ${position}`}
-            className="max-h-full max-w-full object-contain"
-            draggable={false}
-          />
+          <>
+            <img
+              src={thumb}
+              alt={`Page ${position}`}
+              className="max-h-full max-w-full object-contain"
+              draggable={false}
+            />
+            <DocMarksOverlay
+              page={page}
+              source={source}
+              pageNumber={position}
+              totalPages={total}
+            />
+          </>
         ) : (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
         )}
@@ -197,12 +218,13 @@ interface PageRowProps {
   page: PageItem
   source: SourceDoc | undefined
   position: number
+  total: number
   zoom: number
   shouldRender: boolean
   registerEl: (el: HTMLDivElement | null) => void
 }
 
-function PageRow({ page, source, position, zoom, shouldRender, registerEl }: PageRowProps) {
+function PageRow({ page, source, position, total, zoom, shouldRender, registerEl }: PageRowProps) {
   // Withholding `page` until the container has scrolled near the viewport is
   // what makes rendering lazy — usePageRender itself just skips work when
   // either argument is undefined.
@@ -221,13 +243,14 @@ function PageRow({ page, source, position, zoom, shouldRender, registerEl }: Pag
           // wrapper) so the page visibly grows/shrinks — usePageRender's
           // resolution bump is about sharpness, not display size, so without
           // this the page never actually looked different when zoomed.
-          <div className="max-w-none flex-none" style={{ width: `${zoom * 100}%` }}>
+          <div className="relative max-w-none flex-none" style={{ width: `${zoom * 100}%` }}>
             <img
               src={url}
               alt={`Page ${position}`}
-              className="w-full object-contain"
+              className="block w-full object-contain"
               draggable={false}
             />
+            <DocMarksOverlay page={page} source={source} pageNumber={position} totalPages={total} />
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-ink-faint">

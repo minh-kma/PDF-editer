@@ -26,7 +26,11 @@ survives reload without a server.
 
 **D4. No Office ↔ PDF conversion.** JS-only libraries are too weak;
 server/API paths would break D1. Optional low-priority exception:
-PDF ↔ JPG/PNG, which is easy and high-quality client-side.
+PDF ↔ JPG/PNG, which is easy and high-quality client-side. The
+images-to-PDF half of that exception is now built —
+`features/convert/images-to-pdf/`, PNG + JPEG in (exactly what pdf-lib
+embeds natively), PDF out. The reverse direction, PDF → JPG/PNG, is
+still unbuilt. The Office rule itself is unchanged.
 
 **D5. No Redact.** The one feature with intrinsic risk — imperfect
 redaction creates a false sense of security. Recommend Adobe Acrobat Pro
@@ -134,6 +138,37 @@ needed to confirm the `?url` worker/wasm assets actually bundle, since
 performs every git operation. Read-only inspection (`status`, `diff`,
 `log`) is fine when explicitly asked for.
 
+**D22. Compress recompresses images by object-layer substitution, not by
+a page-copy pipeline.** pdf-lib's `embedJpg`/`embedPng` only ADD a new
+image to a document; they cannot swap one that existing page content
+already draws. So `recompressImages.ts` works at the object layer:
+`context.enumerateIndirectObjects()` → find `PDFRawStream`s with
+`/Subtype /Image` → decode → re-encode via canvas →
+`context.assign(ref, PDFRawStream.of(dict, jpeg))` onto the **same
+`PDFRef`**. Because the ref is unchanged, every page that draws the image
+keeps working with no page copying and no resource-dictionary rewriting.
+A copy pipeline was considered and rejected: it would risk the
+shared-resource duplication that already forces the `pristine`/`baseline`
+fallback in the compress flow, and would need `pdfCore.copyPagesToPdf`
+(shared with build/split/extract) to grow a hook nothing else uses.
+
+Only raster image XObjects are ever assigned over, so non-image content
+is untouchable by construction. Images with `/SMask`, `/Mask` or
+`/ImageMask` are skipped entirely — JPEG has no alpha channel and
+flattening a cut-out logo onto white visibly wrecks it. Also skipped:
+JPXDecode (browsers can't decode it), bitonal/CCITT/JBIG2 (already
+smaller than any JPEG we'd produce), Indexed/CMYK/Separation (colour
+would shift), filter chains, and anything under 64px or 16KB.
+
+Levels are quality + a DPI cap, applied together: Low 0.82/220,
+Medium 0.65/150 (default), High 0.45/110. 150 DPI matches Ghostscript's
+`/ebook` and Acrobat's screen preset. Low caps at 220 rather than 300 on
+purpose — a level that visibly does nothing to an ordinary 300 DPI scan
+reads as broken. Displayed resolution is estimated as "the image spans
+the widest page that references it", which is near-exact for scans and
+under-estimates DPI for small logos, i.e. it errs toward downsampling
+less. Verified against pdf-lib 1.17.1 under plain Node per D20.
+
 ## Reversals
 
 **R1. Edit Text was dropped, then reinstated.** See D6 — assessment
@@ -163,3 +198,33 @@ substance. Watermark and Page numbers are explicitly NOT part of this
 reversal: their panels moved to `features/edit/doc-marks/`, and the
 `DocAnnotation` model, `docAnnotations` store slice and bake pipeline are
 unchanged in behaviour.
+
+**R4. Compress was lossless-only; it is now lossy by user choice
+(2026-07-21).** The original rule — "Compress must stay lossless and
+honest: keep whichever output is smaller, never make the file bigger" —
+is half-reversed by the product owner.
+
+Why: the lossless implementation was a two-line re-save with object
+streams. That rewrites the PDF's bookkeeping (cross-reference tables,
+object headers, unreferenced objects) and leaves every content stream
+byte-identical — including the embedded JPEGs that are 95%+ of a scan.
+So on exactly the files people want to shrink, it saved ~nothing, and
+the safety net usually handed the original file straight back. The tool
+was honest but useless.
+
+What changed: quality loss is now accepted, chosen explicitly by the
+user via Low/Medium/High (see D22). What did NOT change: the
+before/after display, and the **never make the file bigger** floor,
+which now holds at two levels — a re-encoded image that isn't smaller
+keeps its original stream, and a document that isn't smaller is
+discarded in favour of the baseline. Quality loss is a deliberate trade;
+a size increase never is.
+
+Consequences: `compressPdf` gained a level argument and moved its work
+into a Web Worker (`compressWorker.ts`) with per-image progress, which
+makes the long-standing features.md UX invariant true for compress for
+the first time. Compress stopped being a one-shot action and became a
+modal panel (`CompressPanel.tsx`), taking the before/after and
+`pristine`/`baseline` logic out of `App.tsx` with it. CLAUDE.md's Key
+Constraints bullet and the mega-menu's "losslessly" description were
+both rewritten — they had become false.

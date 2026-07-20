@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import type { PageItem, SourceDoc } from '../../../shared/state/types'
 import { renderPage } from '../../../shared/lib/pdfjs'
 import { PlusIcon, MinusIcon } from '../../../shared/components/icons'
@@ -10,7 +11,10 @@ const BASE_WIDTH = 1600
 const MAX_RENDER_WIDTH = 3600
 const ZOOM_MIN = 0.2
 const ZOOM_MAX = 3
-const ZOOM_STEP = 0.5
+const ZOOM_STEP = 0.1
+
+/** Zoom is stored as a fraction; keep it clean to whole percents. */
+const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100))
 
 /**
  * Low-level render core: given a page and a caller-controlled zoom, renders
@@ -59,8 +63,9 @@ export function usePageStage(source: SourceDoc | undefined, page: PageItem | und
   return {
     url,
     zoom,
-    zoomIn: () => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP)),
-    zoomOut: () => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP)),
+    zoomIn: () => setZoom((z) => clampZoom(z + ZOOM_STEP)),
+    zoomOut: () => setZoom((z) => clampZoom(z - ZOOM_STEP)),
+    setZoom: (z: number) => setZoom(clampZoom(z)),
   }
 }
 
@@ -73,8 +78,9 @@ export function useZoom(initial = 1) {
   const [zoom, setZoom] = useState(initial)
   return {
     zoom,
-    zoomIn: () => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP)),
-    zoomOut: () => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP)),
+    zoomIn: () => setZoom((z) => clampZoom(z + ZOOM_STEP)),
+    zoomOut: () => setZoom((z) => clampZoom(z - ZOOM_STEP)),
+    setZoom: (z: number) => setZoom(clampZoom(z)),
   }
 }
 
@@ -82,11 +88,38 @@ interface ZoomControlsProps {
   zoom: number
   onZoomIn: () => void
   onZoomOut: () => void
+  /** Commit a typed percentage (already clamped by the hook's setZoom). */
+  onZoomChange: (zoom: number) => void
   className?: string
 }
 
 /** The floating -/percentage/+ pill, shared between PageZoom and BrowseView. */
-export function ZoomControls({ zoom, onZoomIn, onZoomOut, className }: ZoomControlsProps) {
+export function ZoomControls({
+  zoom,
+  onZoomIn,
+  onZoomOut,
+  onZoomChange,
+  className,
+}: ZoomControlsProps) {
+  // The percentage is a free-form text box while focused (so it can be cleared
+  // and retyped) and snaps back to the real zoom on commit — an unparsable or
+  // out-of-range entry just clamps.
+  const [draft, setDraft] = useState<string | null>(null)
+
+  function commit() {
+    const n = parseFloat((draft ?? '').replace('%', '').trim())
+    if (Number.isFinite(n)) onZoomChange(n / 100)
+    setDraft(null)
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') e.currentTarget.blur()
+    else if (e.key === 'Escape') {
+      setDraft(null)
+      e.currentTarget.blur()
+    }
+  }
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -101,9 +134,21 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, className }: ZoomContr
       >
         <MinusIcon width={18} height={18} />
       </button>
-      <span className="w-12 text-center text-sm font-semibold tabular-nums">
-        {Math.round(zoom * 100)}%
-      </span>
+      <input
+        type="text"
+        inputMode="numeric"
+        aria-label="Zoom level, in percent"
+        title="Type a zoom percentage"
+        value={draft ?? `${Math.round(zoom * 100)}%`}
+        onChange={(e) => setDraft(e.target.value)}
+        onFocus={(e) => {
+          setDraft(String(Math.round(zoom * 100)))
+          e.target.select()
+        }}
+        onBlur={commit}
+        onKeyDown={onKeyDown}
+        className="w-14 cursor-text rounded-md bg-transparent px-1 py-0.5 text-center text-sm font-semibold tabular-nums outline-none hover:bg-white/15 focus:bg-white/20"
+      />
       <button
         type="button"
         onClick={onZoomIn}

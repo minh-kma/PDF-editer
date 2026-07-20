@@ -14,10 +14,25 @@ interface PreviewModalProps {
    * Optional and unused by every other tool; the frame renders normally
    * when omitted. */
   overlay?: ReactNode
+  /** Custom download action, used instead of saving `bytes` as a PDF — for
+   * results that aren't a single PDF (e.g. a multi-file .zip, where `bytes` is
+   * just the first file, shown so there's still something to preview). */
+  onDownload?: () => void
+  /** Download button label; defaults to "Download". */
+  downloadLabel?: string
   onClose: () => void
 }
 
-export function PreviewModal({ title, bytes, fileName, info, overlay, onClose }: PreviewModalProps) {
+export function PreviewModal({
+  title,
+  bytes,
+  fileName,
+  info,
+  overlay,
+  onDownload,
+  downloadLabel,
+  onClose,
+}: PreviewModalProps) {
   const [fullscreen, setFullscreen] = useState(false)
 
   // A temporary in-memory URL just for showing the PDF in the preview frame.
@@ -57,10 +72,10 @@ export function PreviewModal({ title, bytes, fileName, info, overlay, onClose }:
           <button
             type="button"
             className="btn-primary"
-            onClick={() => void savePdf(bytes, fileName)}
+            onClick={() => (onDownload ? onDownload() : void savePdf(bytes, fileName))}
           >
             <DownloadIcon width={18} height={18} />
-            Download
+            {downloadLabel ?? 'Download'}
           </button>
         </>
       }
