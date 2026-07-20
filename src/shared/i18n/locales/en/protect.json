@@ -1,0 +1,24 @@
+{
+  "prompt": {
+    "title": "This PDF is password-protected",
+    "body": "<0>{{fileName}}</0> needs a password before it can be edited. It's unlocked here on your device — the password is never sent anywhere.",
+    "skip": "Skip this file",
+    "unlock": "Unlock",
+    "unlocking": "Unlocking…",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "wrongPassword": "That password didn't work — please try again."
+  },
+  "panel": {
+    "title": "Protect this PDF",
+    "intro": "Choose a password. Anyone opening this file — including you — will need it. It's applied here on your device; the password is never sent anywhere.",
+    "password": "Password",
+    "confirm": "Confirm password",
+    "enterPassword": "Please enter a password.",
+    "mismatch": "Passwords don't match.",
+    "button": "Protect PDF",
+    "working": "Protecting…",
+    "failed": "Could not protect this PDF."
+  }
+}

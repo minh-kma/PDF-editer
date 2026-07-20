@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CloseIcon } from './icons'
 
 interface ToastProps {
@@ -7,6 +8,8 @@ interface ToastProps {
 }
 
 export function Toast({ message, onClose }: ToastProps) {
+  const { t } = useTranslation('common')
+
   useEffect(() => {
     const t = setTimeout(onClose, 6000)
     return () => clearTimeout(t)
@@ -22,7 +25,7 @@ export function Toast({ message, onClose }: ToastProps) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Dismiss"
+          aria-label={t('dismiss')}
           className="icon-btn rounded-lg p-1 text-ink-faint hover:text-ink"
         >
           <CloseIcon width={16} height={16} />

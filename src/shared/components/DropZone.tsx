@@ -1,4 +1,5 @@
 import { useRef, useState, type DragEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { UploadIcon, PlusIcon } from './icons'
 
 interface DropZoneProps {
@@ -15,6 +16,7 @@ function onlyPdfs(list: FileList | null): File[] {
 }
 
 export function DropZone({ onFiles, variant = 'hero', disabled }: DropZoneProps) {
+  const { t } = useTranslation('landing')
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
 
@@ -62,7 +64,7 @@ export function DropZone({ onFiles, variant = 'hero', disabled }: DropZoneProps)
           className={`btn-secondary ${dragging ? 'ring-2 ring-brand-300' : ''}`}
         >
           <PlusIcon width={18} height={18} />
-          Add more PDFs
+          {t('addMorePdfs')}
         </button>
       </>
     )
@@ -91,15 +93,13 @@ export function DropZone({ onFiles, variant = 'hero', disabled }: DropZoneProps)
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-500">
           <UploadIcon width={30} height={30} />
         </div>
-        <p className="text-lg font-extrabold text-ink">Drop PDF files here</p>
-        <p className="mt-1 text-sm text-ink-soft">or click to browse your device</p>
+        <p className="text-lg font-extrabold text-ink">{t('dropTitle')}</p>
+        <p className="mt-1 text-sm text-ink-soft">{t('dropSubtitle')}</p>
         <span className="mt-5 btn-primary pointer-events-none">
           <UploadIcon width={18} height={18} />
-          Choose PDF files
+          {t('choosePdfFiles')}
         </span>
-        <p className="mt-4 text-xs text-ink-faint">
-          You can add several files. Everything stays on your device.
-        </p>
+        <p className="mt-4 text-xs text-ink-faint">{t('dropFootnote')}</p>
       </div>
     </div>
   )

@@ -1,0 +1,62 @@
+{
+  "title": "Ảnh sang PDF",
+  "intro": "Chuyển ảnh JPG và PNG của bạn thành file PDF — sắp xếp lại, xoay ảnh và chọn khổ trang. Ảnh của bạn không bao giờ rời khỏi thiết bị.",
+  "badges": {
+    "free": "Miễn phí",
+    "online": "Trực tuyến",
+    "unlimited": "Không giới hạn",
+    "private": "Riêng tư"
+  },
+  "dropTitle": "Kéo thả ảnh vào đây",
+  "dropSubtitle": "hoặc bấm để chọn từ thiết bị của bạn",
+  "chooseImages": "Chọn ảnh",
+  "dropFootnote": "JPG và PNG. Mọi thứ đều nằm trên thiết bị của bạn.",
+  "dragToReorder": "Kéo các thẻ để thay đổi thứ tự",
+  "sortAz": "Sắp xếp theo tên, A đến Z",
+  "sortAzAria": "Sắp xếp ảnh theo tên, A đến Z",
+  "sortZa": "Sắp xếp theo tên, Z đến A",
+  "sortZaAria": "Sắp xếp ảnh theo tên, Z đến A",
+  "addMore": "Thêm ảnh",
+  "mergeIntoOne": "Gộp thành một file PDF",
+  "pageSize": "Khổ trang",
+  "orientation": "Hướng trang",
+  "orientationFitTitle": "Trang sẽ theo đúng từng ảnh khi bật \"Vừa với ảnh\"",
+  "margin": "Lề",
+  "sizes": {
+    "fit": "Vừa với ảnh",
+    "a4": "A4",
+    "letter": "Letter",
+    "legal": "Legal",
+    "a3": "A3",
+    "a5": "A5"
+  },
+  "orientations": {
+    "auto": "Tự động",
+    "portrait": "Dọc",
+    "landscape": "Ngang"
+  },
+  "margins": {
+    "none": "Không lề",
+    "small": "Lề nhỏ",
+    "big": "Lề lớn"
+  },
+  "create": "Tạo file PDF",
+  "creating": "Đang tạo file PDF…",
+  "readyOne": "File PDF của bạn đã sẵn sàng",
+  "readyMany": "Các file PDF của bạn đã sẵn sàng",
+  "downloadZip": "Tải về .zip",
+  "multiInfo": "Đang hiển thị file đầu tiên trong <0>{{count}} file PDF</0> — mỗi ảnh một file. Tất cả sẽ được tải về chung trong một file .zip.",
+  "onlyJpgPng": "Chỉ có thể thêm ảnh JPG và PNG.",
+  "failed": "Không thể tạo file PDF.",
+  "card": {
+    "rotateLeft": "Xoay trái",
+    "rotateLeftAria": "Xoay ảnh {{position}} sang trái",
+    "rotateRight": "Xoay phải",
+    "rotateRightAria": "Xoay ảnh {{position}} sang phải",
+    "enlarge": "Phóng to",
+    "enlargeAria": "Phóng to ảnh {{position}}",
+    "remove": "Xóa",
+    "removeAria": "Xóa ảnh {{position}}",
+    "enlargedViewAria": "Xem phóng to {{name}}"
+  }
+}

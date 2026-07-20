@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { PageItem, SourceDoc } from '../../../shared/state/types'
 import { usePageStage, ZoomControls } from './PageStage'
 
@@ -16,6 +17,7 @@ interface PageZoomProps {
  * only the modal chrome (backdrop, Esc-to-close, scroll-lock).
  */
 export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
+  const { t } = useTranslation('workspace')
   const { url, zoom, zoomIn, zoomOut, setZoom } = usePageStage(source, page)
 
   // Close on Esc, and stop the page behind from scrolling while open.
@@ -35,7 +37,7 @@ export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={`Enlarged view of page ${position}`}
+      aria-label={t('enlargedViewAria', { position })}
     >
       {/* Grows with the zoomed image and scrolls when it exceeds the viewport,
           while still centring the image when it fits. */}
@@ -48,7 +50,7 @@ export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
           >
             <img
               src={url}
-              alt={`Page ${position}, enlarged`}
+              alt={t('pageEnlargedAlt', { position })}
               className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
               draggable={false}
             />
@@ -56,7 +58,7 @@ export function PageZoom({ page, source, position, onClose }: PageZoomProps) {
         ) : (
           <div className="flex flex-col items-center gap-3 text-white">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-            <span className="text-sm">Rendering…</span>
+            <span className="text-sm">{t('rendering')}</span>
           </div>
         )}
       </div>

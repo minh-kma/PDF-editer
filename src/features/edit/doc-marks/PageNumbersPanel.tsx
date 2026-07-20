@@ -2,6 +2,7 @@
 // pageNumber DocAnnotation at a time; reopening edits it. `format` uses the
 // {n}/{total} tokens the bake substitutes per page.
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '../../../shared/components/Modal'
 import { useStore } from '../../../shared/state/store'
 import { CheckIcon, TrashIcon } from '../../../shared/components/icons'
@@ -16,16 +17,19 @@ interface PageNumbersPanelProps {
 
 const PREVIEW_WIDTH_PX = 280
 
-const FORMATS = ['{n}', '{n} / {total}', 'Page {n} of {total}']
+// These are NOT UI labels: whichever the user picks is stored on the
+// DocAnnotation and printed into the output PDF by annotationBake.ts. The
+// first two are language-neutral; the third is a real sentence, so it follows
+// the UI language ('Trang {n} / {total}' in Vietnamese). Whatever is picked is
+// stored verbatim and never re-translated afterwards.
+function formats(longFormat: string) {
+  return ['{n}', '{n} / {total}', longFormat]
+}
 
-const CORNERS: { corner: 'tl' | 'tr' | 'bl' | 'br'; label: string }[] = [
-  { corner: 'tl', label: 'Top left' },
-  { corner: 'tr', label: 'Top right' },
-  { corner: 'bl', label: 'Bottom left' },
-  { corner: 'br', label: 'Bottom right' },
-]
+const CORNERS = ['tl', 'tr', 'bl', 'br'] as const
 
 export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
+  const { t } = useTranslation(['docMarks', 'common'])
   const { pages, docAnnotations, addDocAnnotation, updateDocAnnotation, deleteDocAnnotation } =
     useStore()
   const existing = docAnnotations.find((d) => d.type === 'pageNumber')
@@ -72,7 +76,7 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
 
   return (
     <Modal
-      title={existing ? 'Edit page numbers' : 'Add page numbers'}
+      title={existing ? t('pageNumbers.editTitle') : t('pageNumbers.addTitle')}
       onClose={onClose}
       footer={
         <>
@@ -83,11 +87,11 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
               onClick={handleRemove}
             >
               <TrashIcon width={16} height={16} />
-              Remove page numbers
+              {t('pageNumbers.remove')}
             </button>
           )}
           <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
+            {t('common:cancel')}
           </button>
           <button
             type="button"
@@ -96,16 +100,16 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
             disabled={rangeInvalid}
           >
             <CheckIcon width={18} height={18} />
-            {existing ? 'Save changes' : 'Add page numbers'}
+            {existing ? t('pageNumbers.save') : t('pageNumbers.add')}
           </button>
         </>
       }
     >
       <div className="flex flex-wrap gap-5">
         <div className="min-w-[15rem] flex-1">
-          <p className="text-sm font-bold text-ink">Style</p>
+          <p className="text-sm font-bold text-ink">{t('pageNumbers.style')}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {FORMATS.map((f) => (
+            {formats(t('pageNumbers.longFormat')).map((f) => (
               <button
                 key={f}
                 type="button"
@@ -122,16 +126,16 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
             ))}
           </div>
 
-          <p className="mt-4 text-sm font-bold text-ink">Position</p>
+          <p className="mt-4 text-sm font-bold text-ink">{t('pageNumbers.position')}</p>
           <div className="mt-1.5 grid w-28 grid-cols-2 gap-1.5">
-            {CORNERS.map(({ corner: c, label }) => (
+            {CORNERS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setCorner(c)}
-                aria-label={label}
+                aria-label={t(`pageNumbers.corners.${c}`)}
                 aria-pressed={corner === c}
-                title={label}
+                title={t(`pageNumbers.corners.${c}`)}
                 className={`icon-btn flex h-12 items-center justify-center rounded-lg border ${
                   corner === c
                     ? 'border-brand-300 bg-brand-50'
@@ -159,7 +163,7 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
 
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
             <NumberField
-              label="Size"
+              label={t('pageNumbers.size')}
               min={6}
               max={36}
               fallback={12}
@@ -167,7 +171,7 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
               onChange={setFontSize}
             />
             <NumberField
-              label="Margin"
+              label={t('pageNumbers.margin')}
               min={4}
               max={96}
               fallback={24}
@@ -175,12 +179,12 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
               onChange={setMargin}
             />
             <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-              Color
+              {t('pageNumbers.color')}
               <input
                 type="color"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                aria-label="Page number color"
+                aria-label={t('pageNumbers.colorAria')}
                 className="h-7 w-7 cursor-pointer rounded-md border border-black/10 p-0.5"
               />
             </label>
@@ -191,13 +195,13 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
 
         {/* Live preview on page 1, mirroring how annotationBake places it. */}
         <div className="flex-none">
-          <p className="mb-1.5 text-xs font-semibold text-ink-faint">Preview (page 1)</p>
+          <p className="mb-1.5 text-xs font-semibold text-ink-faint">{t('preview')}</p>
           <div
             className="relative overflow-hidden rounded-lg border border-black/10 bg-cream-soft"
             style={{ width: PREVIEW_WIDTH_PX }}
           >
             {url ? (
-              <img src={url} alt="Page 1" className="w-full" draggable={false} />
+              <img src={url} alt={t('previewPageAlt')} className="w-full" draggable={false} />
             ) : (
               <div className="flex h-72 items-center justify-center">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />

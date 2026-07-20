@@ -3,6 +3,7 @@
 // deleteDocAnnotation directly; the bake pipeline draws it on export. Only one
 // watermark exists at a time — reopening the panel edits it.
 import { useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '../../../shared/components/Modal'
 import { useStore } from '../../../shared/state/store'
 import { CheckIcon, TrashIcon } from '../../../shared/components/icons'
@@ -18,6 +19,7 @@ interface WatermarkPanelProps {
 const PREVIEW_WIDTH_PX = 280
 
 export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
+  const { t } = useTranslation(['docMarks', 'common'])
   const {
     pages,
     docAnnotations,
@@ -89,7 +91,7 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
 
   return (
     <Modal
-      title={existing ? 'Edit watermark' : 'Add a watermark'}
+      title={existing ? t('watermark.editTitle') : t('watermark.addTitle')}
       onClose={onClose}
       footer={
         <>
@@ -100,15 +102,15 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
               onClick={handleRemove}
             >
               <TrashIcon width={16} height={16} />
-              Remove watermark
+              {t('watermark.remove')}
             </button>
           )}
           <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
+            {t('common:cancel')}
           </button>
           <button type="button" className="btn-primary" onClick={handleApply} disabled={!canApply}>
             <CheckIcon width={18} height={18} />
-            {existing ? 'Save changes' : 'Add watermark'}
+            {existing ? t('watermark.save') : t('watermark.add')}
           </button>
         </>
       }
@@ -124,7 +126,7 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
                 tab === 'text' ? 'bg-white text-ink shadow-sm' : 'text-ink-faint'
               }`}
             >
-              Text
+              {t('watermark.tabText')}
             </button>
             <button
               type="button"
@@ -134,27 +136,27 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
                 tab === 'image' ? 'bg-white text-ink shadow-sm' : 'text-ink-faint'
               }`}
             >
-              Image
+              {t('watermark.tabImage')}
             </button>
           </div>
 
           {tab === 'text' ? (
             <>
               <label className="mt-4 block text-sm font-bold text-ink" htmlFor="watermark-text">
-                Watermark text
+                {t('watermark.textLabel')}
               </label>
               <input
                 id="watermark-text"
                 type="text"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="e.g. CONFIDENTIAL"
+                placeholder={t('watermark.textPlaceholder')}
                 className="mt-1 w-full rounded-xl border border-brand-100 bg-white px-3 py-2.5 font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
               />
 
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
                 <NumberField
-                  label="Size"
+                  label={t('watermark.size')}
                   min={8}
                   max={144}
                   fallback={48}
@@ -162,24 +164,24 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
                   onChange={setFontSize}
                 />
                 <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-                  Color
+                  {t('watermark.color')}
                   <input
                     type="color"
                     value={color}
                     onChange={(e) => setColor(e.target.value)}
-                    aria-label="Watermark color"
+                    aria-label={t('watermark.colorAria')}
                     className="h-7 w-7 cursor-pointer rounded-md border border-black/10 p-0.5"
                   />
                 </label>
                 <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-                  Angle
+                  {t('watermark.angle')}
                   <input
                     type="range"
                     min={-90}
                     max={90}
                     value={rotationDeg}
                     onChange={(e) => setRotationDeg(Number(e.target.value))}
-                    aria-label="Watermark angle"
+                    aria-label={t('watermark.angleAria')}
                     className="w-24"
                   />
                   <span className="w-9 text-right text-xs font-semibold tabular-nums">{rotationDeg}°</span>
@@ -200,12 +202,12 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
                 }}
               />
               <button type="button" className="btn-secondary" onClick={() => fileInput.current?.click()}>
-                {assetId ? 'Choose a different image' : 'Choose an image (PNG or JPG)'}
+                {assetId ? t('watermark.changeImage') : t('watermark.chooseImage')}
               </button>
               {assetUrl && (
                 <img
                   src={assetUrl}
-                  alt="Watermark preview"
+                  alt={t('watermark.imageAlt')}
                   className="mt-3 max-h-24 rounded-lg border border-black/10 object-contain"
                 />
               )}
@@ -213,14 +215,14 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
           )}
 
           <label className="mt-3 flex items-center gap-1.5 text-sm text-ink-soft">
-            Opacity
+            {t('watermark.opacity')}
             <input
               type="range"
               min={5}
               max={100}
               value={opacityPct}
               onChange={(e) => setOpacityPct(Number(e.target.value))}
-              aria-label="Watermark opacity"
+              aria-label={t('watermark.opacityAria')}
               className="w-24"
             />
             <span className="w-9 text-right text-xs font-semibold tabular-nums">{opacityPct}%</span>
@@ -231,13 +233,13 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
 
         {/* Live preview on page 1, mirroring how annotationBake draws it. */}
         <div className="flex-none">
-          <p className="mb-1.5 text-xs font-semibold text-ink-faint">Preview (page 1)</p>
+          <p className="mb-1.5 text-xs font-semibold text-ink-faint">{t('preview')}</p>
           <div
             className="relative overflow-hidden rounded-lg border border-black/10 bg-cream-soft"
             style={{ width: PREVIEW_WIDTH_PX }}
           >
             {url ? (
-              <img src={url} alt="Page 1" className="w-full" draggable={false} />
+              <img src={url} alt={t('previewPageAlt')} className="w-full" draggable={false} />
             ) : (
               <div className="flex h-72 items-center justify-center">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />

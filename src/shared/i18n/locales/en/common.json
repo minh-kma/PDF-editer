@@ -1,0 +1,15 @@
+{
+  "close": "Close",
+  "cancel": "Cancel",
+  "download": "Download",
+  "dismiss": "Dismiss",
+  "working": "Working…",
+  "backToEditing": "Back to editing",
+  "previewIntro": "Here's your result. Check it looks right, then download it.",
+  "pdfPreview": "PDF preview",
+  "fullscreen": "Fullscreen",
+  "exitFullscreen": "Exit fullscreen",
+  "expandFullscreen": "Expand to fullscreen",
+  "privacyNote": "All processing happens on your device. Nothing is uploaded to any server.",
+  "privacyFull": "Everything happens in your browser. Nothing is uploaded to any server."
+}

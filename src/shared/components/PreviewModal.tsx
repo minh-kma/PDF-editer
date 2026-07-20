@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from './Modal'
 import { savePdf } from '../lib/download'
 import { DownloadIcon, ExpandIcon, CollapseIcon } from './icons'
@@ -33,6 +34,7 @@ export function PreviewModal({
   downloadLabel,
   onClose,
 }: PreviewModalProps) {
+  const { t } = useTranslation('common')
   const [fullscreen, setFullscreen] = useState(false)
 
   // A temporary in-memory URL just for showing the PDF in the preview frame.
@@ -53,8 +55,8 @@ export function PreviewModal({
         <button
           type="button"
           onClick={() => setFullscreen((v) => !v)}
-          aria-label={fullscreen ? 'Exit fullscreen' : 'Expand to fullscreen'}
-          title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          aria-label={fullscreen ? t('exitFullscreen') : t('expandFullscreen')}
+          title={fullscreen ? t('exitFullscreen') : t('fullscreen')}
           className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
         >
           {fullscreen ? (
@@ -67,7 +69,7 @@ export function PreviewModal({
       footer={
         <>
           <button type="button" className="btn-secondary" onClick={onClose}>
-            Back to editing
+            {t('backToEditing')}
           </button>
           <button
             type="button"
@@ -75,18 +77,16 @@ export function PreviewModal({
             onClick={() => (onDownload ? onDownload() : void savePdf(bytes, fileName))}
           >
             <DownloadIcon width={18} height={18} />
-            {downloadLabel ?? 'Download'}
+            {downloadLabel ?? t('download')}
           </button>
         </>
       }
     >
       {info && <div className="mb-3">{info}</div>}
-      <p className="mb-2 text-sm text-ink-soft">
-        Here's your result. Check it looks right, then download it.
-      </p>
+      <p className="mb-2 text-sm text-ink-soft">{t('previewIntro')}</p>
       <div className="relative overflow-hidden rounded-xl border border-black/10 bg-cream-soft">
         <iframe
-          title="PDF preview"
+          title={t('pdfPreview')}
           src={url}
           className={`w-full ${fullscreen ? 'h-[calc(100vh-12rem)]' : 'h-[66vh]'}`}
         />

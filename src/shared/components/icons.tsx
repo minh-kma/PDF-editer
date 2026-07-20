@@ -268,3 +268,11 @@ export const SortZaIcon = (p: IconProps) => (
     <line x1="6" y1="5" x2="6" y2="18" />
   </svg>
 )
+
+export const GlobeIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18Z" />
+  </svg>
+)

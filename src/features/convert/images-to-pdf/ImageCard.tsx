@@ -3,6 +3,7 @@
 // pattern from page-management's PageThumb without importing it — that one is
 // PDF-page specific (pdf.js thumbnails, PageItem/SourceDoc) and lives in a
 // sibling module, which modules must not import from (architecture.md).
+import { useTranslation } from 'react-i18next'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ImageItem } from './useImageList'
@@ -23,6 +24,7 @@ interface ImageCardProps {
 }
 
 export function ImageCard({ image, position, onRotate, onEnlarge, onRemove }: ImageCardProps) {
+  const { t } = useTranslation('imagesToPdf')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: image.id,
   })
@@ -42,8 +44,8 @@ export function ImageCard({ image, position, onRotate, onEnlarge, onRemove }: Im
         <button
           type="button"
           onClick={() => onRotate(image.id, -90)}
-          title="Rotate left"
-          aria-label={`Rotate image ${position} left`}
+          title={t('card.rotateLeft')}
+          aria-label={t('card.rotateLeftAria', { position })}
           className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
         >
           <RotateLeftIcon width={16} height={16} />
@@ -51,8 +53,8 @@ export function ImageCard({ image, position, onRotate, onEnlarge, onRemove }: Im
         <button
           type="button"
           onClick={() => onRotate(image.id, 90)}
-          title="Rotate right"
-          aria-label={`Rotate image ${position} right`}
+          title={t('card.rotateRight')}
+          aria-label={t('card.rotateRightAria', { position })}
           className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
         >
           <RotateIcon width={16} height={16} />
@@ -60,8 +62,8 @@ export function ImageCard({ image, position, onRotate, onEnlarge, onRemove }: Im
         <button
           type="button"
           onClick={() => onEnlarge(image)}
-          title="Enlarge"
-          aria-label={`Enlarge image ${position}`}
+          title={t('card.enlarge')}
+          aria-label={t('card.enlargeAria', { position })}
           className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
         >
           <ExpandIcon width={16} height={16} />
@@ -69,8 +71,8 @@ export function ImageCard({ image, position, onRotate, onEnlarge, onRemove }: Im
         <button
           type="button"
           onClick={() => onRemove(image.id)}
-          title="Remove"
-          aria-label={`Remove image ${position}`}
+          title={t('card.remove')}
+          aria-label={t('card.removeAria', { position })}
           className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-red-50 hover:text-red-600"
         >
           <TrashIcon width={16} height={16} />

@@ -1,0 +1,23 @@
+{
+  "title": "Nén file PDF này",
+  "intro": "Ảnh và các trang scan là thứ làm file PDF nặng, nên chúng sẽ được lưu lại ở dung lượng nhỏ hơn. Chữ và hình vẽ vẫn giữ nguyên như cũ.",
+  "howMuch": "Nén nhỏ đến mức nào?",
+  "levels": {
+    "low": { "label": "Thấp", "blurb": "Chất lượng tốt nhất, vẫn nhỏ hơn" },
+    "medium": { "label": "Vừa", "blurb": "Cân bằng — nên dùng" },
+    "high": { "label": "Cao", "blurb": "File nhỏ nhất, ảnh mờ hơn" }
+  },
+  "footnote": "Mức nén càng cao thì ảnh càng mờ. Nếu việc nén khiến file to hơn, bạn sẽ nhận lại file gốc còn nguyên vẹn.",
+  "button": "Nén file PDF",
+  "scanning": "Đang xem qua các trang…",
+  "progress": "Ảnh {{current}} trên {{total}}…",
+  "finishing": "Đang hoàn tất…",
+  "before": "Trước",
+  "after": "Sau",
+  "reducedBy": "Đã giảm {{pct}}%.",
+  "alreadyOptimised": "File PDF này đã được tối ưu tốt nên gần như không còn gì để giảm. File của bạn được giữ nguyên.",
+  "detailRecompressed_other": "Đã nén lại {{count}} ảnh ở mức {{level}}. Ảnh và trang scan có thể trông hơi mờ hơn — chữ và hình vẽ vẫn giữ nguyên.",
+  "detailEfficient": "Ảnh trong file vốn đã tối ưu, nên chỉ có cấu trúc file được dọn gọn lại.",
+  "detailUnsupported": "Trình duyệt này không nén lại được ảnh, nên chỉ có cấu trúc file được dọn gọn lại.",
+  "failed": "Không thể nén file PDF này."
+}

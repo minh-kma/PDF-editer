@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '../../../shared/components/Modal'
 import { ProgressBar } from '../../../shared/components/ProgressBar'
 import { useStore } from '../../../shared/state/store'
 import { buildPdf } from '../../page-management/workspace/buildPdf'
-import { ocrDocument, OCR_SPEED_DISCLOSURE, type OcrProgressInfo } from './ocrDocument'
+import { ocrDocument, type OcrProgressInfo } from './ocrDocument'
 import { bakeOcrTextLayer } from './bakeOcrTextLayer'
 import { ShieldIcon, ScanIcon } from '../../../shared/components/icons'
 
@@ -17,10 +18,9 @@ interface OcrPanelProps {
 
 // D24: language picker limited to English and Vietnamese. Tesseract language
 // codes — ocrDocument.ts joins these with '+' for a multi-language pass.
-const LANGUAGES = [
-  { code: 'eng', label: 'English' },
-  { code: 'vie', label: 'Vietnamese' },
-]
+// These name the DOCUMENT's language, so they're translated like any other
+// UI label (the codes themselves are Tesseract's and never change).
+const LANGUAGES = ['eng', 'vie'] as const
 
 type Phase = 'config' | 'running'
 
@@ -31,6 +31,7 @@ type Phase = 'config' | 'running'
  * component only sequences and displays them, no changes to either.
  */
 export function OcrPanel({ baseName, onClose, onError, onDone }: OcrPanelProps) {
+  const { t } = useTranslation(['ocr', 'common'])
   const { sources, pages, docAnnotations, assets } = useStore()
   const [phase, setPhase] = useState<Phase>('config')
   const [languages, setLanguages] = useState<string[]>(['eng'])
@@ -65,9 +66,10 @@ export function OcrPanel({ baseName, onClose, onError, onDone }: OcrPanelProps) 
       if (cancelledRef.current) return
 
       onDone(baked, `${baseName}_ocr.pdf`)
-    } catch (err) {
+    } catch {
       if (cancelledRef.current) return
-      onError(err instanceof Error ? err.message : 'Something went wrong while running OCR.')
+      // Logic-layer errors stay English as diagnostics; show a translated one.
+      onError(t('failed'))
     }
   }
 
@@ -82,13 +84,13 @@ export function OcrPanel({ baseName, onClose, onError, onDone }: OcrPanelProps) 
 
   return (
     <Modal
-      title="OCR — make scanned pages searchable"
+      title={t('title')}
       onClose={handleClose}
       footer={
         phase === 'config' ? (
           <>
             <button type="button" className="btn-secondary" onClick={handleClose}>
-              Cancel
+              {t('common:cancel')}
             </button>
             <button
               type="button"
@@ -97,45 +99,45 @@ export function OcrPanel({ baseName, onClose, onError, onDone }: OcrPanelProps) 
               disabled={languages.length === 0}
             >
               <ScanIcon width={18} height={18} />
-              Start OCR
+              {t('start')}
             </button>
           </>
         ) : (
           <button type="button" className="btn-secondary" onClick={handleClose}>
-            Cancel
+            {t('common:cancel')}
           </button>
         )
       }
     >
       {phase === 'config' ? (
         <>
-          <p className="text-sm text-ink-soft">{OCR_SPEED_DISCLOSURE}</p>
+          <p className="text-sm text-ink-soft">{t('disclosure')}</p>
 
-          <p className="mt-4 text-sm font-bold text-ink">Document language</p>
-          <p className="text-xs text-ink-faint">Pick the language(s) this document is written in.</p>
+          <p className="mt-4 text-sm font-bold text-ink">{t('documentLanguage')}</p>
+          <p className="text-xs text-ink-faint">{t('languageHint')}</p>
           <div className="mt-2 space-y-2">
-            {LANGUAGES.map((lang) => (
+            {LANGUAGES.map((code) => (
               <label
-                key={lang.code}
+                key={code}
                 className="flex items-center gap-2.5 rounded-xl border border-brand-100 bg-white px-3 py-2.5"
               >
                 <input
                   type="checkbox"
-                  checked={languages.includes(lang.code)}
-                  onChange={() => toggleLanguage(lang.code)}
+                  checked={languages.includes(code)}
+                  onChange={() => toggleLanguage(code)}
                   className="h-4 w-4 accent-brand-500"
                 />
-                <span className="text-sm font-semibold text-ink">{lang.label}</span>
+                <span className="text-sm font-semibold text-ink">{t(`languages.${code}`)}</span>
               </label>
             ))}
           </div>
           {languages.length === 0 && (
-            <p className="mt-1.5 text-xs font-semibold text-red-600">Pick at least one language.</p>
+            <p className="mt-1.5 text-xs font-semibold text-red-600">{t('pickAtLeastOne')}</p>
           )}
 
           <p className="mt-4 flex items-start gap-1.5 text-xs text-ink-faint">
             <ShieldIcon width={14} height={14} className="mt-0.5 flex-none text-brand-400" />
-            Nothing is uploaded to any server.
+            {t('privacyShort')}
           </p>
         </>
       ) : (
@@ -143,12 +145,13 @@ export function OcrPanel({ baseName, onClose, onError, onDone }: OcrPanelProps) 
           <ProgressBar value={completed} max={progress?.pageCount ?? pages.length} className="max-w-sm" />
           <p className="text-sm font-semibold text-ink-soft">
             {finishing
-              ? 'Finishing up…'
+              ? t('finishing')
               : progress
-                ? `Page ${progress.pageIndex + 1} of ${progress.pageCount} — ${
-                    progress.status === 'skipped' ? 'already has text, skipping…' : 'recognizing…'
-                  }`
-                : 'Starting…'}
+                ? t(progress.status === 'skipped' ? 'progressSkipped' : 'progressRecognizing', {
+                    current: progress.pageIndex + 1,
+                    total: progress.pageCount,
+                  })
+                : t('starting')}
           </p>
         </div>
       )}

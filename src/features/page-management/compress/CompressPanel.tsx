@@ -6,6 +6,7 @@
 // here rather than in App.tsx: it's compress-specific, and it needs the level
 // the user picked.
 import { useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '../../../shared/components/Modal'
 import { ProgressBar } from '../../../shared/components/ProgressBar'
 import { useStore } from '../../../shared/state/store'
@@ -22,15 +23,12 @@ interface CompressPanelProps {
   onDone: (bytes: Uint8Array, fileName: string, info: ReactNode) => void
 }
 
-const LEVELS: { level: CompressLevel; label: string; blurb: string }[] = [
-  { level: 'low', label: 'Low', blurb: 'Best quality, still smaller' },
-  { level: 'medium', label: 'Medium', blurb: 'Balanced — recommended' },
-  { level: 'high', label: 'High', blurb: 'Smallest file, softer images' },
-]
+const LEVELS: CompressLevel[] = ['low', 'medium', 'high']
 
 type Phase = 'config' | 'running'
 
 export function CompressPanel({ baseName, onClose, onError, onDone }: CompressPanelProps) {
+  const { t } = useTranslation(['compress', 'common'])
   const { sources, pages, docAnnotations, assets } = useStore()
   const [phase, setPhase] = useState<Phase>('config')
   const [level, setLevel] = useState<CompressLevel>('medium')
@@ -82,76 +80,72 @@ export function CompressPanel({ baseName, onClose, onError, onDone }: CompressPa
       const usedOurs = best === result.bytes
       const saved = baseline.length - best.length
       const pct = baseline.length > 0 ? Math.round((saved / baseline.length) * 100) : 0
-      const levelLabel = LEVELS.find((l) => l.level === level)!.label
+      const levelLabel = t(`levels.${level}.label`)
 
       const detail = !result.imagesSupported
-        ? "This browser can't recompress images, so only the file's structure was tidied."
+        ? t('detailUnsupported')
         : !usedOurs || result.replaced === 0
-          ? 'The images here were already efficient, so only the file’s structure was tidied.'
-          : `${result.replaced} image${result.replaced === 1 ? '' : 's'} recompressed at ${levelLabel}. Photos and scans may look slightly softer — text and graphics are unchanged.`
+          ? t('detailEfficient')
+          : t('detailRecompressed', { count: result.replaced, level: levelLabel })
 
       const info = (
         <div className="rounded-xl bg-cream-soft p-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-ink-soft">Before</span>
+            <span className="text-ink-soft">{t('before')}</span>
             <span className="font-bold text-ink">{formatBytes(baseline.length)}</span>
           </div>
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-ink-soft">After</span>
+            <span className="text-ink-soft">{t('after')}</span>
             <span className="font-bold text-brand-600">{formatBytes(best.length)}</span>
           </div>
           <p className="mt-2 flex items-start gap-1.5 text-xs text-ink-faint">
             <CompressIcon width={14} height={14} className="mt-0.5 flex-none" />
-            {saved > 0
-              ? `Reduced by ${pct}%. ${detail}`
-              : `This PDF is already well optimised, so there's little to trim. Your file is unchanged.`}
+            {saved > 0 ? `${t('reducedBy', { pct })} ${detail}` : t('alreadyOptimised')}
           </p>
         </div>
       )
 
       onDone(best, `${baseName}_compressed.pdf`, info)
-    } catch (err) {
+    } catch {
       if (cancelledRef.current) return
-      onError(err instanceof Error ? err.message : 'Could not compress the PDF.')
+      // Logic-layer errors stay English as diagnostics; show a translated one.
+      onError(t('failed'))
     }
   }
 
   return (
     <Modal
-      title="Compress this PDF"
+      title={t('title')}
       onClose={handleClose}
       footer={
         phase === 'config' ? (
           <>
             <button type="button" className="btn-secondary" onClick={handleClose}>
-              Cancel
+              {t('common:cancel')}
             </button>
             <button type="button" className="btn-primary" onClick={handleStart}>
               <CompressIcon width={18} height={18} />
-              Compress PDF
+              {t('button')}
             </button>
           </>
         ) : (
           <button type="button" className="btn-secondary" onClick={handleClose}>
-            Cancel
+            {t('common:cancel')}
           </button>
         )
       }
     >
       {phase === 'config' ? (
         <>
-          <p className="text-sm text-ink-soft">
-            Photos and scanned pages are what make a PDF big, so they get re-saved at a smaller
-            size. Text and graphics stay exactly as they are.
-          </p>
+          <p className="text-sm text-ink-soft">{t('intro')}</p>
 
-          <p className="mt-4 text-sm font-bold text-ink">How much smaller?</p>
+          <p className="mt-4 text-sm font-bold text-ink">{t('howMuch')}</p>
           <div className="mt-2 space-y-2">
             {LEVELS.map((option) => (
               <label
-                key={option.level}
+                key={option}
                 className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
-                  level === option.level
+                  level === option
                     ? 'border-brand-300 bg-brand-50'
                     : 'border-brand-100 bg-white hover:border-brand-200'
                 }`}
@@ -159,24 +153,23 @@ export function CompressPanel({ baseName, onClose, onError, onDone }: CompressPa
                 <input
                   type="radio"
                   name="compress-level"
-                  checked={level === option.level}
-                  onChange={() => setLevel(option.level)}
+                  checked={level === option}
+                  onChange={() => setLevel(option)}
                   className="h-4 w-4 accent-brand-500"
                 />
-                <span className="text-sm font-semibold text-ink">{option.label}</span>
-                <span className="text-xs text-ink-faint">{option.blurb}</span>
+                <span className="text-sm font-semibold text-ink">
+                  {t(`levels.${option}.label`)}
+                </span>
+                <span className="text-xs text-ink-faint">{t(`levels.${option}.blurb`)}</span>
               </label>
             ))}
           </div>
 
-          <p className="mt-3 text-xs text-ink-faint">
-            Stronger levels make photos softer. If compressing would make this file bigger, you'll
-            get your original back untouched.
-          </p>
+          <p className="mt-3 text-xs text-ink-faint">{t('footnote')}</p>
 
           <p className="mt-4 flex items-start gap-1.5 text-xs text-ink-faint">
             <ShieldIcon width={14} height={14} className="mt-0.5 flex-none text-brand-400" />
-            Everything happens in your browser. Nothing is uploaded to any server.
+            {t('common:privacyFull')}
           </p>
         </>
       ) : (
@@ -188,10 +181,13 @@ export function CompressPanel({ baseName, onClose, onError, onDone }: CompressPa
           />
           <p className="text-sm font-semibold text-ink-soft">
             {finishing
-              ? 'Finishing up…'
+              ? t('finishing')
               : progress && progress.total > 0
-                ? `Image ${Math.min(progress.done + 1, progress.total)} of ${progress.total}…`
-                : 'Looking through the pages…'}
+                ? t('progress', {
+                    current: Math.min(progress.done + 1, progress.total),
+                    total: progress.total,
+                  })
+                : t('scanning')}
           </p>
         </div>
       )}

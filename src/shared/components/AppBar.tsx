@@ -1,19 +1,15 @@
-import type { ComponentType, SVGProps } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DropZone } from './DropZone'
 import { MegaMenu } from './MegaMenu'
-import type { ToolIntent } from '../lib/toolCatalog'
+import { LanguageSwitcher } from './LanguageSwitcher'
+import { TOOL_CATEGORIES, type ToolEntry, type ToolIntent } from '../lib/toolCatalog'
 import {
   ShieldIcon,
   DownloadIcon,
   UndoIcon,
   RedoIcon,
   RefreshIcon,
-  DragIcon,
-  ScissorsIcon,
-  CompressIcon,
 } from './icons'
-
-type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
 interface AppBarProps {
   /** Whether a file is currently loaded (gates Add files / Start over). */
@@ -34,12 +30,13 @@ interface AppBarProps {
 }
 
 // Shown inline in the bar rather than tucked behind "All tools" — today's
-// most-used, fully-built actions.
-const SHORTCUTS: { intent: ToolIntent; label: string; icon: IconType }[] = [
-  { intent: 'manage', label: 'Manage pages', icon: DragIcon },
-  { intent: 'split', label: 'Split', icon: ScissorsIcon },
-  { intent: 'compress', label: 'Compress', icon: CompressIcon },
-]
+// most-used, fully-built actions. Pulled from the catalog rather than
+// re-declared, so each shortcut's icon and label key stay defined in one place.
+const SHORTCUT_INTENTS: ToolIntent[] = ['manage', 'split', 'compress']
+const ALL_TOOLS = TOOL_CATEGORIES.flatMap((category) => category.tools)
+const SHORTCUTS = SHORTCUT_INTENTS.map(
+  (intent) => ALL_TOOLS.find((entry) => entry.intent === intent)!,
+) satisfies ToolEntry[]
 
 /**
  * Persistent top bar: branding, a few inline tool shortcuts, the "All tools"
@@ -61,6 +58,9 @@ export function AppBar({
   canRedo,
   onDownload,
 }: AppBarProps) {
+  // Array form: 'appbar' stays the default namespace, and 'common' is
+  // addressable as 'common:…' for strings shared with other screens.
+  const { t } = useTranslation(['appbar', 'common'])
   const disabled = !!busy
 
   return (
@@ -72,7 +72,7 @@ export function AppBar({
           type="button"
           onClick={onLogoClick}
           disabled={disabled}
-          aria-label="PDFdemo — start over"
+          aria-label={t('logoAria')}
           className="icon-btn flex items-center gap-2.5 rounded-xl hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-brand-500 font-extrabold text-white shadow-soft">
@@ -94,7 +94,7 @@ export function AppBar({
               onClick={() => onSelectTool(tool.intent)}
             >
               <tool.icon width={18} height={18} />
-              {tool.label}
+              {t(tool.labelKey)}
             </button>
           ))}
         </div>
@@ -106,15 +106,19 @@ export function AppBar({
             <DropZone onFiles={onAddFiles} variant="compact" disabled={disabled} />
             <button type="button" className="btn-ghost" onClick={onReset} disabled={disabled}>
               <RefreshIcon width={18} height={18} />
-              Start over
+              {t('startOver')}
             </button>
           </>
         )}
 
         <div className="ml-auto flex items-center gap-1.5">
+          {/* Always rendered (unlike Undo/Redo/Download, which need a file), so
+              the switcher is reachable from the landing screen too. */}
+          <LanguageSwitcher disabled={disabled} />
+
           <div className="hidden items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-sm font-semibold text-ink-soft shadow-soft sm:flex">
             <ShieldIcon width={16} height={16} className="text-brand-400" />
-            100% in your browser
+            {t('inBrowser')}
           </div>
 
           {hasFile && (
@@ -123,8 +127,8 @@ export function AppBar({
                 type="button"
                 onClick={onUndo}
                 disabled={disabled || !canUndo}
-                title="Undo"
-                aria-label="Undo"
+                title={t('undo')}
+                aria-label={t('undo')}
                 className="icon-btn rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <UndoIcon width={18} height={18} />
@@ -133,8 +137,8 @@ export function AppBar({
                 type="button"
                 onClick={onRedo}
                 disabled={disabled || !canRedo}
-                title="Redo"
-                aria-label="Redo"
+                title={t('redo')}
+                aria-label={t('redo')}
                 className="icon-btn rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <RedoIcon width={18} height={18} />
@@ -146,7 +150,7 @@ export function AppBar({
                 disabled={disabled}
               >
                 <DownloadIcon width={18} height={18} />
-                Download
+                {t('common:download')}
               </button>
             </>
           )}

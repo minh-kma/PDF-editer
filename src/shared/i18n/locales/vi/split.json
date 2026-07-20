@@ -1,0 +1,34 @@
+{
+  "split": {
+    "title": "Tách thành nhiều file riêng",
+    "intro": "Tài liệu của bạn có <0>{{count}} trang</0>. Hãy nhập số trang mà sau đó một <1>file mới</1> sẽ bắt đầu.",
+    "example": "Ví dụ: nhập <0>3, 7</0> cho file PDF 10 trang sẽ tạo ra 3 file: trang 1–3, 4–7 và 8–10.",
+    "label": "Tách sau trang",
+    "placeholder": "ví dụ: 3, 7",
+    "invalid": "Bỏ qua {{invalid}} — điểm tách phải nằm trong khoảng từ 1 đến {{max}}.",
+    "willCreate_other": "Thao tác này sẽ tạo ra {{count}} file:",
+    "rangeSingle": "Trang {{page}}",
+    "rangeSpan": "Trang {{start}}–{{end}}",
+    "rangeCount_other": "({{count}} trang)",
+    "button": "Tách & tải về .zip",
+    "needPoints": "Hãy thêm ít nhất một điểm tách để chia file PDF thành 2 file trở lên.",
+    "working": "Đang tách file PDF…",
+    "failed": "Đã xảy ra lỗi khi tách file."
+  },
+  "extract": {
+    "title": "Trích xuất trang thành file mới",
+    "intro": "Tài liệu của bạn có <0>{{count}} trang</0>. Hãy nhập những trang bạn muốn lấy ra — chúng sẽ được lưu thành một file mới. Tài liệu đang làm việc vẫn giữ nguyên.",
+    "example": "Dùng dấu phẩy cho từng trang và dấu gạch ngang cho một khoảng. Ví dụ: <0>1-3, 5, 8</0> sẽ lấy các trang 1, 2, 3, 5 và 8. Thứ tự bạn nhập cũng là thứ tự các trang xuất hiện.",
+    "label": "Các trang cần trích xuất",
+    "placeholder": "ví dụ: 1-3, 5, 8",
+    "button_other": "Trích xuất {{count}} trang",
+    "buttonEmpty": "Trích xuất trang",
+    "summary_other": "Đang trích xuất {{count}} trang:",
+    "noneSelected": "Chưa chọn trang nào.",
+    "selectedPages": "Trang {{list}}",
+    "hint": "Nhập số trang ở trên (từ 1 đến {{max}}) để chọn nội dung cần trích xuất.",
+    "needPages": "Hãy chọn ít nhất một trang để trích xuất.",
+    "working": "Đang trích xuất trang…",
+    "failed": "Đã xảy ra lỗi khi trích xuất."
+  }
+}

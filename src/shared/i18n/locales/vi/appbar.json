@@ -1,0 +1,64 @@
+{
+  "logoAria": "PDFdemo — bắt đầu lại",
+  "startOver": "Bắt đầu lại",
+  "inBrowser": "100% trong trình duyệt",
+  "undo": "Hoàn tác",
+  "redo": "Làm lại",
+  "allTools": "Tất cả công cụ",
+  "language": "Ngôn ngữ",
+  "languageEnglish": "English",
+  "languageVietnamese": "Tiếng Việt",
+  "categories": {
+    "organize": "Sắp xếp PDF",
+    "optimize": "Tối ưu PDF",
+    "edit": "Chỉnh sửa PDF",
+    "security": "Bảo mật",
+    "convert": "Chuyển đổi"
+  },
+  "tools": {
+    "merge": {
+      "label": "Gộp file",
+      "description": "Kết hợp nhiều file PDF thành một"
+    },
+    "split": {
+      "label": "Tách file",
+      "description": "Chia một file PDF thành nhiều file riêng"
+    },
+    "extract": {
+      "label": "Trích xuất trang",
+      "description": "Lưu các trang đã chọn thành file mới"
+    },
+    "manage": {
+      "label": "Quản lý trang",
+      "description": "Xoay, xóa và sắp xếp lại các trang"
+    },
+    "compress": {
+      "label": "Nén file",
+      "description": "Làm file nhỏ lại — bạn chọn mức độ"
+    },
+    "ocr": {
+      "label": "OCR",
+      "description": "Giúp tìm kiếm được chữ trong trang scan"
+    },
+    "unlock": {
+      "label": "Mở khóa",
+      "description": "Gỡ mật khẩu khỏi file PDF"
+    },
+    "protect": {
+      "label": "Bảo vệ",
+      "description": "Đặt mật khẩu cho file PDF"
+    },
+    "watermark": {
+      "label": "Hình mờ",
+      "description": "Đóng dấu chữ hoặc logo lên các trang"
+    },
+    "pageNumbers": {
+      "label": "Số trang",
+      "description": "Đánh số trang cho file PDF của bạn"
+    },
+    "imagesToPdf": {
+      "label": "Ảnh sang PDF",
+      "description": "Ghép ảnh JPG hoặc PNG thành một file PDF"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "preview": "Preview (page 1)",
+  "previewPageAlt": "Page 1",
+  "watermark": {
+    "addTitle": "Add a watermark",
+    "editTitle": "Edit watermark",
+    "tabText": "Text",
+    "tabImage": "Image",
+    "textLabel": "Watermark text",
+    "textPlaceholder": "e.g. CONFIDENTIAL",
+    "size": "Size",
+    "color": "Color",
+    "colorAria": "Watermark color",
+    "angle": "Angle",
+    "angleAria": "Watermark angle",
+    "opacity": "Opacity",
+    "opacityAria": "Watermark opacity",
+    "chooseImage": "Choose an image (PNG or JPG)",
+    "changeImage": "Choose a different image",
+    "imageAlt": "Watermark preview",
+    "remove": "Remove watermark",
+    "add": "Add watermark",
+    "save": "Save changes"
+  },
+  "pageNumbers": {
+    "addTitle": "Add page numbers",
+    "editTitle": "Edit page numbers",
+    "style": "Style",
+    "position": "Position",
+    "corners": {
+      "tl": "Top left",
+      "tr": "Top right",
+      "bl": "Bottom left",
+      "br": "Bottom right"
+    },
+    "size": "Size",
+    "margin": "Margin",
+    "color": "Color",
+    "colorAria": "Page number color",
+    "remove": "Remove page numbers",
+    "add": "Add page numbers",
+    "save": "Save changes",
+    "longFormat": "Page {n} of {total}"
+  },
+  "range": {
+    "allPages": "All pages",
+    "pageRange": "Page range",
+    "from": "from",
+    "to": "to",
+    "firstPageAria": "First page",
+    "lastPageAria": "Last page",
+    "invalid": "The first page must come before the last page."
+  }
+}

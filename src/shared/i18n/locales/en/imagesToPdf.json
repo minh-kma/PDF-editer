@@ -1,0 +1,62 @@
+{
+  "title": "Images to PDF",
+  "intro": "Turn your JPG and PNG images into a PDF — reorder them, rotate them, and pick the page size. Your images never leave your device.",
+  "badges": {
+    "free": "Free",
+    "online": "Online",
+    "unlimited": "Unlimited",
+    "private": "Private"
+  },
+  "dropTitle": "Drop images here",
+  "dropSubtitle": "or click to browse your device",
+  "chooseImages": "Choose images",
+  "dropFootnote": "JPG and PNG. Everything stays on your device.",
+  "dragToReorder": "Drag the cards to change the order",
+  "sortAz": "Sort by name, A to Z",
+  "sortAzAria": "Sort images by name, A to Z",
+  "sortZa": "Sort by name, Z to A",
+  "sortZaAria": "Sort images by name, Z to A",
+  "addMore": "Add more images",
+  "mergeIntoOne": "Merge into one PDF",
+  "pageSize": "Page size",
+  "orientation": "Orientation",
+  "orientationFitTitle": "The page follows each image when \"Fit to image\" is on",
+  "margin": "Margin",
+  "sizes": {
+    "fit": "Fit to image",
+    "a4": "A4",
+    "letter": "Letter",
+    "legal": "Legal",
+    "a3": "A3",
+    "a5": "A5"
+  },
+  "orientations": {
+    "auto": "Auto",
+    "portrait": "Portrait",
+    "landscape": "Landscape"
+  },
+  "margins": {
+    "none": "No margin",
+    "small": "Small margin",
+    "big": "Big margin"
+  },
+  "create": "Create PDF",
+  "creating": "Creating your PDF…",
+  "readyOne": "Your PDF is ready",
+  "readyMany": "Your PDFs are ready",
+  "downloadZip": "Download .zip",
+  "multiInfo": "Showing the first of <0>{{count}} PDFs</0> — one per image. They download together as a single .zip.",
+  "onlyJpgPng": "Only JPG and PNG images can be added.",
+  "failed": "Could not create the PDF.",
+  "card": {
+    "rotateLeft": "Rotate left",
+    "rotateLeftAria": "Rotate image {{position}} left",
+    "rotateRight": "Rotate right",
+    "rotateRightAria": "Rotate image {{position}} right",
+    "enlarge": "Enlarge",
+    "enlargeAria": "Enlarge image {{position}}",
+    "remove": "Remove",
+    "removeAria": "Remove image {{position}}",
+    "enlargedViewAria": "Enlarged view of {{name}}"
+  }
+}

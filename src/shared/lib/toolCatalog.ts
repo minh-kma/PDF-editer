@@ -39,54 +39,56 @@ export type ToolIntent =
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
+// This is a module-level const, so it can't call useTranslation() — it carries
+// i18n KEYS and the consumers (MegaMenu, AppBar) resolve them with t() at
+// render time. Keys live in the `appbar` namespace.
 export interface ToolEntry {
   intent: ToolIntent
-  label: string
-  description: string
+  labelKey: `tools.${ToolIntent}.label`
+  descriptionKey: `tools.${ToolIntent}.description`
   icon: IconType
 }
 
 export interface ToolCategory {
-  /** Heading text — matches the roadmap category names in features.md. */
-  heading: string
+  /** Heading key — matches the roadmap category names in features.md. */
+  headingKey: `categories.${'organize' | 'optimize' | 'edit' | 'security' | 'convert'}`
   tools: ToolEntry[]
+}
+
+/** Every tool entry's keys follow the same shape, so build them once. */
+function tool(intent: ToolIntent, icon: IconType): ToolEntry {
+  return {
+    intent,
+    labelKey: `tools.${intent}.label`,
+    descriptionKey: `tools.${intent}.description`,
+    icon,
+  }
 }
 
 export const TOOL_CATEGORIES: ToolCategory[] = [
   {
-    heading: 'Organize PDF',
+    headingKey: 'categories.organize',
     tools: [
-      { intent: 'merge', label: 'Merge', description: 'Combine several PDFs into one', icon: PlusIcon },
-      { intent: 'split', label: 'Split', description: 'Divide a PDF into separate files', icon: ScissorsIcon },
-      { intent: 'extract', label: 'Extract pages', description: 'Save chosen pages as a new file', icon: ExpandIcon },
-      { intent: 'manage', label: 'Manage pages', description: 'Rotate, delete and reorder pages', icon: DragIcon },
+      tool('merge', PlusIcon),
+      tool('split', ScissorsIcon),
+      tool('extract', ExpandIcon),
+      tool('manage', DragIcon),
     ],
   },
   {
-    heading: 'Optimize PDF',
-    tools: [
-      { intent: 'compress', label: 'Compress', description: 'Make the file smaller — you choose how much', icon: CompressIcon },
-      { intent: 'ocr', label: 'OCR', description: 'Make scanned pages searchable', icon: ScanIcon },
-    ],
+    headingKey: 'categories.optimize',
+    tools: [tool('compress', CompressIcon), tool('ocr', ScanIcon)],
   },
   {
-    heading: 'Edit PDF',
-    tools: [
-      { intent: 'watermark', label: 'Watermark', description: 'Stamp text or a logo across pages', icon: WatermarkIcon },
-      { intent: 'pageNumbers', label: 'Page numbers', description: 'Number the pages of your PDF', icon: HashIcon },
-    ],
+    headingKey: 'categories.edit',
+    tools: [tool('watermark', WatermarkIcon), tool('pageNumbers', HashIcon)],
   },
   {
-    heading: 'Security',
-    tools: [
-      { intent: 'unlock', label: 'Unlock', description: "Remove a PDF's password", icon: UnlockIcon },
-      { intent: 'protect', label: 'Protect', description: 'Add a password to a PDF', icon: LockIcon },
-    ],
+    headingKey: 'categories.security',
+    tools: [tool('unlock', UnlockIcon), tool('protect', LockIcon)],
   },
   {
-    heading: 'Convert',
-    tools: [
-      { intent: 'imagesToPdf', label: 'Images to PDF', description: 'Combine JPG or PNG images into a PDF', icon: ImageIcon },
-    ],
+    headingKey: 'categories.convert',
+    tools: [tool('imagesToPdf', ImageIcon)],
   },
 ]

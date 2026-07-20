@@ -1,0 +1,24 @@
+{
+  "title": "Compress this PDF",
+  "intro": "Photos and scanned pages are what make a PDF big, so they get re-saved at a smaller size. Text and graphics stay exactly as they are.",
+  "howMuch": "How much smaller?",
+  "levels": {
+    "low": { "label": "Low", "blurb": "Best quality, still smaller" },
+    "medium": { "label": "Medium", "blurb": "Balanced — recommended" },
+    "high": { "label": "High", "blurb": "Smallest file, softer images" }
+  },
+  "footnote": "Stronger levels make photos softer. If compressing would make this file bigger, you'll get your original back untouched.",
+  "button": "Compress PDF",
+  "scanning": "Looking through the pages…",
+  "progress": "Image {{current}} of {{total}}…",
+  "finishing": "Finishing up…",
+  "before": "Before",
+  "after": "After",
+  "reducedBy": "Reduced by {{pct}}%.",
+  "alreadyOptimised": "This PDF is already well optimised, so there's little to trim. Your file is unchanged.",
+  "detailRecompressed_one": "{{count}} image recompressed at {{level}}. Photos and scans may look slightly softer — text and graphics are unchanged.",
+  "detailRecompressed_other": "{{count}} images recompressed at {{level}}. Photos and scans may look slightly softer — text and graphics are unchanged.",
+  "detailEfficient": "The images here were already efficient, so only the file's structure was tidied.",
+  "detailUnsupported": "This browser can't recompress images, so only the file's structure was tidied.",
+  "failed": "Could not compress the PDF."
+}

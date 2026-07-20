@@ -1,0 +1,23 @@
+{
+  "heroTitle": "Edit your PDFs, right in your browser",
+  "heroSubtitle": "Merge, split, rotate, delete, reorder and compress — free, and completely private. Your files never leave your device.",
+  "dropTitle": "Drop PDF files here",
+  "dropSubtitle": "or click to browse your device",
+  "choosePdfFiles": "Choose PDF files",
+  "dropFootnote": "You can add several files. Everything stays on your device.",
+  "addMorePdfs": "Add more PDFs",
+  "recover": {
+    "title": "Restore your previous work?",
+    "body": "We found an editing session from {{time}}, saved on this device.",
+    "restore": "Restore",
+    "startFresh": "Start fresh",
+    "dismissAria": "Dismiss and start fresh",
+    "justNow": "just now"
+  },
+  "confirmReset": {
+    "title": "Start over?",
+    "message": "This will discard your current session and take you back to the upload screen. This can't be undone.",
+    "confirm": "Discard and start over",
+    "cancel": "Keep working"
+  }
+}

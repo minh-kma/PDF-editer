@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TOOL_CATEGORIES, type ToolIntent } from '../lib/toolCatalog'
 import { GridIcon, ChevronDownIcon } from './icons'
 
@@ -14,6 +15,7 @@ interface MegaMenuProps {
  * rather than a full page.
  */
 export function MegaMenu({ onSelect, disabled }: MegaMenuProps) {
+  const { t } = useTranslation('appbar')
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -49,7 +51,7 @@ export function MegaMenu({ onSelect, disabled }: MegaMenuProps) {
         aria-haspopup="true"
       >
         <GridIcon width={18} height={18} />
-        All tools
+        {t('allTools')}
         <ChevronDownIcon width={14} height={14} />
       </button>
 
@@ -65,9 +67,9 @@ export function MegaMenu({ onSelect, disabled }: MegaMenuProps) {
               Falls back to two columns on phones, where five don't fit. */}
           <div className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-5">
             {TOOL_CATEGORIES.map((category) => (
-              <div key={category.heading}>
+              <div key={category.headingKey}>
                 <h3 className="text-xs font-extrabold uppercase tracking-wide text-ink-faint">
-                  {category.heading}
+                  {t(category.headingKey)}
                 </h3>
                 <div className="mt-1 space-y-0.5">
                   {category.tools.map((tool) => (
@@ -84,7 +86,7 @@ export function MegaMenu({ onSelect, disabled }: MegaMenuProps) {
                       <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-brand-100 text-brand-500">
                         <tool.icon width={13} height={13} />
                       </span>
-                      <span className="text-sm font-semibold text-ink">{tool.label}</span>
+                      <span className="text-sm font-semibold text-ink">{t(tool.labelKey)}</span>
                     </button>
                   ))}
                 </div>

@@ -1,0 +1,64 @@
+{
+  "logoAria": "PDFdemo — start over",
+  "startOver": "Start over",
+  "inBrowser": "100% in your browser",
+  "undo": "Undo",
+  "redo": "Redo",
+  "allTools": "All tools",
+  "language": "Language",
+  "languageEnglish": "English",
+  "languageVietnamese": "Tiếng Việt",
+  "categories": {
+    "organize": "Organize PDF",
+    "optimize": "Optimize PDF",
+    "edit": "Edit PDF",
+    "security": "Security",
+    "convert": "Convert"
+  },
+  "tools": {
+    "merge": {
+      "label": "Merge",
+      "description": "Combine several PDFs into one"
+    },
+    "split": {
+      "label": "Split",
+      "description": "Divide a PDF into separate files"
+    },
+    "extract": {
+      "label": "Extract pages",
+      "description": "Save chosen pages as a new file"
+    },
+    "manage": {
+      "label": "Manage pages",
+      "description": "Rotate, delete and reorder pages"
+    },
+    "compress": {
+      "label": "Compress",
+      "description": "Make the file smaller — you choose how much"
+    },
+    "ocr": {
+      "label": "OCR",
+      "description": "Make scanned pages searchable"
+    },
+    "unlock": {
+      "label": "Unlock",
+      "description": "Remove a PDF's password"
+    },
+    "protect": {
+      "label": "Protect",
+      "description": "Add a password to a PDF"
+    },
+    "watermark": {
+      "label": "Watermark",
+      "description": "Stamp text or a logo across pages"
+    },
+    "pageNumbers": {
+      "label": "Page numbers",
+      "description": "Number the pages of your PDF"
+    },
+    "imagesToPdf": {
+      "label": "Images to PDF",
+      "description": "Combine JPG or PNG images into a PDF"
+    }
+  }
+}

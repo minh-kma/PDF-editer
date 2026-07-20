@@ -2,6 +2,7 @@
 // Esc-to-close, scroll-lock) without importing it — that one renders a pdf.js
 // page from a sibling module.
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ImageItem } from './useImageList'
 
 interface ImageZoomProps {
@@ -10,6 +11,8 @@ interface ImageZoomProps {
 }
 
 export function ImageZoom({ image, onClose }: ImageZoomProps) {
+  const { t } = useTranslation('imagesToPdf')
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -26,7 +29,7 @@ export function ImageZoom({ image, onClose }: ImageZoomProps) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={`Enlarged view of ${image.name}`}
+      aria-label={t('card.enlargedViewAria', { name: image.name })}
     >
       <div className="flex min-h-full min-w-full flex-col items-center justify-center gap-3 p-4 sm:p-8">
         <img

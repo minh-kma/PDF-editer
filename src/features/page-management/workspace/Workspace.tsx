@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   DndContext,
   PointerSensor,
@@ -20,6 +21,7 @@ import { PageZoom } from './PageZoom'
 import { RotateIcon } from '../../../shared/components/icons'
 
 export function Workspace() {
+  const { t } = useTranslation('workspace')
   const { pages, sources, reorder, rotateAll, rotatePage, deletePage, getSource } = useStore()
 
   // The page currently shown enlarged (double-click a thumbnail), or null.
@@ -45,17 +47,19 @@ export function Workspace() {
     <div className="card p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold text-ink">
-          Your pages{' '}
+          {t('title')}{' '}
           <span className="text-sm font-semibold text-ink-faint">
-            ({pages.length} {pages.length === 1 ? 'page' : 'pages'} from {sources.length}{' '}
-            {sources.length === 1 ? 'file' : 'files'})
+            {t('summary', {
+              pages: t('pageCount', { count: pages.length }),
+              files: t('fileCount', { count: sources.length }),
+            })}
           </span>
         </h2>
         <div className="flex items-center gap-3">
-          <p className="hidden text-sm text-ink-soft sm:block">Drag pages to reorder</p>
+          <p className="hidden text-sm text-ink-soft sm:block">{t('dragToReorder')}</p>
           <button type="button" className="btn-secondary" onClick={() => rotateAll(90)}>
             <RotateIcon width={18} height={18} />
-            Rotate all
+            {t('rotateAll')}
           </button>
         </div>
       </div>

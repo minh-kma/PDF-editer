@@ -1,0 +1,54 @@
+{
+  "preview": "Xem trước (trang 1)",
+  "previewPageAlt": "Trang 1",
+  "watermark": {
+    "addTitle": "Thêm hình mờ",
+    "editTitle": "Sửa hình mờ",
+    "tabText": "Chữ",
+    "tabImage": "Ảnh",
+    "textLabel": "Nội dung hình mờ",
+    "textPlaceholder": "ví dụ: MẬT",
+    "size": "Cỡ chữ",
+    "color": "Màu",
+    "colorAria": "Màu hình mờ",
+    "angle": "Góc nghiêng",
+    "angleAria": "Góc nghiêng của hình mờ",
+    "opacity": "Độ mờ",
+    "opacityAria": "Độ mờ của hình mờ",
+    "chooseImage": "Chọn ảnh (PNG hoặc JPG)",
+    "changeImage": "Chọn ảnh khác",
+    "imageAlt": "Xem trước hình mờ",
+    "remove": "Xóa hình mờ",
+    "add": "Thêm hình mờ",
+    "save": "Lưu thay đổi"
+  },
+  "pageNumbers": {
+    "addTitle": "Thêm số trang",
+    "editTitle": "Sửa số trang",
+    "style": "Kiểu",
+    "position": "Vị trí",
+    "corners": {
+      "tl": "Trên bên trái",
+      "tr": "Trên bên phải",
+      "bl": "Dưới bên trái",
+      "br": "Dưới bên phải"
+    },
+    "size": "Cỡ chữ",
+    "margin": "Lề",
+    "color": "Màu",
+    "colorAria": "Màu của số trang",
+    "remove": "Xóa số trang",
+    "add": "Thêm số trang",
+    "save": "Lưu thay đổi",
+    "longFormat": "Trang {n} / {total}"
+  },
+  "range": {
+    "allPages": "Tất cả các trang",
+    "pageRange": "Khoảng trang",
+    "from": "từ",
+    "to": "đến",
+    "firstPageAria": "Trang đầu",
+    "lastPageAria": "Trang cuối",
+    "invalid": "Trang đầu phải đứng trước trang cuối."
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CloseIcon } from './icons'
 
 interface ModalProps {
@@ -22,6 +23,8 @@ export function Modal({
   fullscreen,
   headerAction,
 }: ModalProps) {
+  const { t } = useTranslation('common')
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -58,7 +61,7 @@ export function Modal({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t('close')}
               className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
             >
               <CloseIcon width={20} height={20} />

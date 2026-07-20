@@ -1,5 +1,6 @@
 // Shared "which pages does this apply to" picker for the doc-level panels
 // (Watermark / Page numbers) — maps to DocAnnotation.range (omitted = all).
+import { useTranslation } from 'react-i18next'
 
 export interface PageRangeValue {
   mode: 'all' | 'custom'
@@ -21,6 +22,8 @@ function clampPage(raw: string, total: number, fallback: number): number {
 }
 
 export function PageRangeFields({ total, value, onChange }: PageRangeFieldsProps) {
+  const { t } = useTranslation('docMarks')
+
   return (
     <div className="mt-4">
       <p className="text-sm font-bold text-ink">Apply to</p>
@@ -34,7 +37,7 @@ export function PageRangeFields({ total, value, onChange }: PageRangeFieldsProps
               value.mode === 'all' ? 'bg-white text-ink shadow-sm' : 'text-ink-faint'
             }`}
           >
-            All pages
+            {t('range.allPages')}
           </button>
           <button
             type="button"
@@ -44,30 +47,30 @@ export function PageRangeFields({ total, value, onChange }: PageRangeFieldsProps
               value.mode === 'custom' ? 'bg-white text-ink shadow-sm' : 'text-ink-faint'
             }`}
           >
-            Page range
+            {t('range.pageRange')}
           </button>
         </div>
 
         {value.mode === 'custom' && (
           <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-            from
+            {t('range.from')}
             <input
               type="number"
               min={1}
               max={total}
               value={value.from}
               onChange={(e) => onChange({ ...value, from: clampPage(e.target.value, total, 1) })}
-              aria-label="First page"
+              aria-label={t('range.firstPageAria')}
               className="w-16 rounded-lg border border-brand-100 bg-white px-2 py-1 text-center font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
             />
-            to
+            {t('range.to')}
             <input
               type="number"
               min={1}
               max={total}
               value={value.to}
               onChange={(e) => onChange({ ...value, to: clampPage(e.target.value, total, total) })}
-              aria-label="Last page"
+              aria-label={t('range.lastPageAria')}
               className="w-16 rounded-lg border border-brand-100 bg-white px-2 py-1 text-center font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
             />
           </label>
@@ -75,7 +78,7 @@ export function PageRangeFields({ total, value, onChange }: PageRangeFieldsProps
       </div>
       {value.mode === 'custom' && value.from > value.to && (
         <p className="mt-1 text-xs font-semibold text-red-600">
-          The first page must come before the last page.
+          {t('range.invalid')}
         </p>
       )}
     </div>

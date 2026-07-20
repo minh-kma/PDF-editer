@@ -1,0 +1,18 @@
+{
+  "title": "OCR — giúp tìm kiếm được chữ trong trang scan",
+  "disclosure": "OCR chạy hoàn toàn trên thiết bị của bạn nên chậm hơn và kém chính xác hơn các dịch vụ OCR trên đám mây — nhận dạng một tài liệu dài có thể mất khá lâu. File của bạn không bao giờ rời khỏi trình duyệt.",
+  "documentLanguage": "Ngôn ngữ của tài liệu",
+  "languageHint": "Hãy chọn (các) ngôn ngữ được dùng trong tài liệu này.",
+  "languages": {
+    "eng": "Tiếng Anh",
+    "vie": "Tiếng Việt"
+  },
+  "pickAtLeastOne": "Hãy chọn ít nhất một ngôn ngữ.",
+  "privacyShort": "Không có gì được tải lên máy chủ.",
+  "start": "Bắt đầu OCR",
+  "starting": "Đang bắt đầu…",
+  "finishing": "Đang hoàn tất…",
+  "progressSkipped": "Trang {{current}} trên {{total}} — đã có sẵn chữ, bỏ qua…",
+  "progressRecognizing": "Trang {{current}} trên {{total}} — đang nhận dạng…",
+  "failed": "Đã xảy ra lỗi khi chạy OCR."
+}

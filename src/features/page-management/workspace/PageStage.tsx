@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { KeyboardEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { PageItem, SourceDoc } from '../../../shared/state/types'
 import { renderPage } from '../../../shared/lib/pdfjs'
 import { PlusIcon, MinusIcon } from '../../../shared/components/icons'
@@ -101,6 +102,7 @@ export function ZoomControls({
   onZoomChange,
   className,
 }: ZoomControlsProps) {
+  const { t } = useTranslation('workspace')
   // The percentage is a free-form text box while focused (so it can be cleared
   // and retyped) and snaps back to the real zoom on commit — an unparsable or
   // out-of-range entry just clamps.
@@ -129,7 +131,7 @@ export function ZoomControls({
         type="button"
         onClick={onZoomOut}
         disabled={zoom <= ZOOM_MIN}
-        aria-label="Zoom out"
+        aria-label={t('zoomOut')}
         className="icon-btn rounded-full p-2 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <MinusIcon width={18} height={18} />
@@ -137,8 +139,8 @@ export function ZoomControls({
       <input
         type="text"
         inputMode="numeric"
-        aria-label="Zoom level, in percent"
-        title="Type a zoom percentage"
+        aria-label={t('zoomLevelAria')}
+        title={t('zoomLevelTitle')}
         value={draft ?? `${Math.round(zoom * 100)}%`}
         onChange={(e) => setDraft(e.target.value)}
         onFocus={(e) => {
@@ -153,7 +155,7 @@ export function ZoomControls({
         type="button"
         onClick={onZoomIn}
         disabled={zoom >= ZOOM_MAX}
-        aria-label="Zoom in"
+        aria-label={t('zoomIn')}
         className="icon-btn rounded-full p-2 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <PlusIcon width={18} height={18} />

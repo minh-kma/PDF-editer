@@ -1,0 +1,15 @@
+{
+  "close": "Đóng",
+  "cancel": "Hủy",
+  "download": "Tải xuống",
+  "dismiss": "Bỏ qua",
+  "working": "Đang xử lý…",
+  "backToEditing": "Quay lại chỉnh sửa",
+  "previewIntro": "Đây là kết quả của bạn. Hãy kiểm tra lại rồi tải xuống.",
+  "pdfPreview": "Xem trước PDF",
+  "fullscreen": "Toàn màn hình",
+  "exitFullscreen": "Thoát toàn màn hình",
+  "expandFullscreen": "Mở rộng toàn màn hình",
+  "privacyNote": "Mọi xử lý đều diễn ra trên thiết bị của bạn. Không có gì được tải lên máy chủ.",
+  "privacyFull": "Mọi thứ đều diễn ra trong trình duyệt của bạn. Không có gì được tải lên máy chủ."
+}

@@ -13,6 +13,8 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@neslinesli93/qpdf-wasm": "^0.3.0",
+    "i18next": "^26.3.6",
+    "i18next-browser-languagedetector": "^8.2.1",
     "idb-keyval": "^6.2.1",
     "immer": "^11.1.15",
     "jszip": "^3.10.1",
@@ -20,6 +22,7 @@
     "pdfjs-dist": "^4.7.76",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-i18next": "^17.0.10",
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {

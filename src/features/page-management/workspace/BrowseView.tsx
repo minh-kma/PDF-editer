@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../../../shared/state/store'
 import { usePageRender, useZoom, ZoomControls } from './PageStage'
 import { getThumbnail } from '../../../shared/lib/thumbnails'
@@ -161,6 +162,7 @@ function SidebarThumb({
   onClick,
   registerEl,
 }: SidebarThumbProps) {
+  const { t } = useTranslation('workspace')
   const [thumb, setThumb] = useState<string | null>(null)
 
   useEffect(() => {
@@ -180,7 +182,7 @@ function SidebarThumb({
       type="button"
       onClick={onClick}
       aria-current={active}
-      aria-label={`Jump to page ${position}`}
+      aria-label={t('jumpToPage', { position })}
       className={`icon-btn flex w-full flex-col items-center gap-1 rounded-lg border-2 p-1 ${
         active
           ? 'border-brand-500 bg-brand-50'
@@ -192,7 +194,7 @@ function SidebarThumb({
           <>
             <img
               src={thumb}
-              alt={`Page ${position}`}
+              alt={t('pageAlt', { position })}
               className="max-h-full max-w-full object-contain"
               draggable={false}
             />
@@ -225,6 +227,7 @@ interface PageRowProps {
 }
 
 function PageRow({ page, source, position, total, zoom, shouldRender, registerEl }: PageRowProps) {
+  const { t } = useTranslation('workspace')
   // Withholding `page` until the container has scrolled near the viewport is
   // what makes rendering lazy — usePageRender itself just skips work when
   // either argument is undefined.
@@ -236,7 +239,7 @@ function PageRow({ page, source, position, total, zoom, shouldRender, registerEl
       data-page-id={page.id}
       className="card scroll-mt-24 flex flex-col items-center gap-2 p-3 sm:p-4"
     >
-      <p className="text-xs font-semibold text-ink-faint">Page {position}</p>
+      <p className="text-xs font-semibold text-ink-faint">{t('pageAlt', { position })}</p>
       <div className="flex min-h-[60vh] w-full items-center justify-center overflow-x-auto rounded-xl bg-cream-soft">
         {url ? (
           // Width is driven by `zoom` directly (same technique as PageZoom.tsx's
@@ -246,7 +249,7 @@ function PageRow({ page, source, position, total, zoom, shouldRender, registerEl
           <div className="relative max-w-none flex-none" style={{ width: `${zoom * 100}%` }}>
             <img
               src={url}
-              alt={`Page ${position}`}
+              alt={t('pageAlt', { position })}
               className="block w-full object-contain"
               draggable={false}
             />
@@ -255,7 +258,7 @@ function PageRow({ page, source, position, total, zoom, shouldRender, registerEl
         ) : (
           <div className="flex flex-col items-center gap-3 text-ink-faint">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
-            {shouldRender && <span className="text-sm">Rendering…</span>}
+            {shouldRender && <span className="text-sm">{t('rendering')}</span>}
           </div>
         )}
       </div>

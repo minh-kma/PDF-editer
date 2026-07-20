@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppBar } from './shared/components/AppBar'
 import { DropZone } from './shared/components/DropZone'
 import { Workspace } from './features/page-management/workspace/Workspace'
@@ -69,6 +70,7 @@ type MainMode =
 const RECOVER_MAX_AGE_MS = 5 * 60 * 1000
 
 export default function App() {
+  const { t } = useTranslation('landing')
   const store = useStore()
   const {
     sources,
@@ -426,12 +428,9 @@ export default function App() {
         {!hasPages && !recover && mainMode.kind !== 'imagesToPdf' && (
           <div className="mb-6 mt-2 text-center">
             <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Edit your PDFs, right in your browser
+              {t('heroTitle')}
             </h1>
-            <p className="mx-auto mt-2 max-w-2xl text-ink-soft">
-              Merge, split, rotate, delete, reorder and compress — free, and completely private.
-              Your files never leave your device.
-            </p>
+            <p className="mx-auto mt-2 max-w-2xl text-ink-soft">{t('heroSubtitle')}</p>
           </div>
         )}
 
@@ -571,10 +570,10 @@ export default function App() {
 
       {confirmReset && (
         <ConfirmDialog
-          title="Start over?"
-          message="This will discard your current session and take you back to the upload screen. This can't be undone."
-          confirmLabel="Discard and start over"
-          cancelLabel="Keep working"
+          title={t('confirmReset.title')}
+          message={t('confirmReset.message')}
+          confirmLabel={t('confirmReset.confirm')}
+          cancelLabel={t('confirmReset.cancel')}
           onConfirm={() => {
             setConfirmReset(false)
             handleReset()
@@ -644,10 +643,11 @@ export default function App() {
 }
 
 function PrivacyNote() {
+  const { t } = useTranslation('common')
   return (
     <p className="mx-auto mt-5 flex max-w-2xl items-center justify-center gap-2 text-center text-xs text-ink-faint">
       <ShieldIcon width={14} height={14} className="flex-none text-brand-400" />
-      All processing happens on your device. Nothing is uploaded to any server.
+      {t('privacyNote')}
     </p>
   )
 }

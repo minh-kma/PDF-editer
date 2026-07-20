@@ -1,0 +1,23 @@
+{
+  "heroTitle": "Chỉnh sửa PDF ngay trong trình duyệt",
+  "heroSubtitle": "Gộp, tách, xoay, xóa, sắp xếp và nén — miễn phí và hoàn toàn riêng tư. File của bạn không bao giờ rời khỏi thiết bị.",
+  "dropTitle": "Kéo thả file PDF vào đây",
+  "dropSubtitle": "hoặc bấm để chọn từ thiết bị của bạn",
+  "choosePdfFiles": "Chọn file PDF",
+  "dropFootnote": "Bạn có thể thêm nhiều file. Mọi thứ đều nằm trên thiết bị của bạn.",
+  "addMorePdfs": "Thêm file PDF",
+  "recover": {
+    "title": "Khôi phục công việc trước đó?",
+    "body": "Chúng tôi tìm thấy một phiên chỉnh sửa từ {{time}}, được lưu trên thiết bị này.",
+    "restore": "Khôi phục",
+    "startFresh": "Bắt đầu mới",
+    "dismissAria": "Bỏ qua và bắt đầu mới",
+    "justNow": "vừa xong"
+  },
+  "confirmReset": {
+    "title": "Bắt đầu lại?",
+    "message": "Thao tác này sẽ hủy phiên làm việc hiện tại và đưa bạn về màn hình tải file lên. Không thể hoàn tác.",
+    "confirm": "Hủy và bắt đầu lại",
+    "cancel": "Tiếp tục làm việc"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "title": "OCR — make scanned pages searchable",
+  "disclosure": "OCR runs entirely on your device, which is slower and less accurate than cloud-based OCR services — recognizing a large document can take a while. Your file never leaves your browser.",
+  "documentLanguage": "Document language",
+  "languageHint": "Pick the language(s) this document is written in.",
+  "languages": {
+    "eng": "English",
+    "vie": "Vietnamese"
+  },
+  "pickAtLeastOne": "Pick at least one language.",
+  "privacyShort": "Nothing is uploaded to any server.",
+  "start": "Start OCR",
+  "starting": "Starting…",
+  "finishing": "Finishing up…",
+  "progressSkipped": "Page {{current}} of {{total}} — already has text, skipping…",
+  "progressRecognizing": "Page {{current}} of {{total}} — recognizing…",
+  "failed": "Something went wrong while running OCR."
+}

@@ -3,6 +3,7 @@
 // of the main content area (App.tsx) rather than as a modal panel, since it's
 // the whole workspace for this tool and needs no PDF loaded.
 import { useRef, useState, type DragEvent, type ReactNode } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import JSZip from 'jszip'
 import {
   DndContext,
@@ -49,33 +50,22 @@ interface ImagesToPdfViewProps {
   }) => void
 }
 
-const SIZE_OPTIONS: { id: PageSizeId; label: string }[] = [
-  { id: 'fit', label: 'Fit to image' },
-  { id: 'a4', label: 'A4' },
-  { id: 'letter', label: 'Letter' },
-  { id: 'legal', label: 'Legal' },
-  { id: 'a3', label: 'A3' },
-  { id: 'a5', label: 'A5' },
-]
+// Option ids only — the visible labels come from the locale files. A4/Letter/
+// Legal/A3/A5 are paper-size names and read the same in both languages, but
+// they still live in the locale files so the whole list stays in one place.
+const SIZE_OPTIONS: PageSizeId[] = ['fit', 'a4', 'letter', 'legal', 'a3', 'a5']
 
-const ORIENTATION_OPTIONS: { id: OrientationId; label: string }[] = [
-  { id: 'auto', label: 'Auto' },
-  { id: 'portrait', label: 'Portrait' },
-  { id: 'landscape', label: 'Landscape' },
-]
+const ORIENTATION_OPTIONS: OrientationId[] = ['auto', 'portrait', 'landscape']
 
-const MARGIN_OPTIONS: { id: MarginId; label: string }[] = [
-  { id: 'none', label: 'No margin' },
-  { id: 'small', label: 'Small margin' },
-  { id: 'big', label: 'Big margin' },
-]
+const MARGIN_OPTIONS: MarginId[] = ['none', 'small', 'big']
 
-const BADGES = ['Free', 'Online', 'Unlimited', 'Private']
+const BADGES = ['free', 'online', 'unlimited', 'private'] as const
 
 const selectClass =
   'rounded-lg border border-brand-100 bg-white px-2.5 py-1.5 text-sm font-semibold text-ink outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:opacity-50'
 
 export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfViewProps) {
+  const { t } = useTranslation(['imagesToPdf', 'common'])
   const { setBusy } = useStore()
   const { images, add, remove, rotate, reorder, sort } = useImageList()
 
@@ -109,7 +99,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
     if (files.length === 0) return
     const supported = files.filter(isSupportedImage)
     if (supported.length < files.length) {
-      onError('Only JPG and PNG images can be added.')
+      onError(t('onlyJpgPng'))
     }
     if (supported.length) add(supported)
   }
@@ -124,7 +114,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
     if (images.length === 0) return
     try {
       setWorking(true)
-      setBusy(true, 'Creating your PDF…')
+      setBusy(true, t('creating'))
 
       const inputs = await Promise.all(
         images.map(async (image) => ({
@@ -137,7 +127,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
 
       if (results.length === 1) {
         onCreated({
-          title: 'Your PDF is ready',
+          title: t('readyOne'),
           bytes: results[0].bytes,
           fileName: results[0].name,
         })
@@ -150,21 +140,25 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
       const blob = await zip.generateAsync({ type: 'blob' })
 
       onCreated({
-        title: 'Your PDFs are ready',
+        title: t('readyMany'),
         bytes: results[0].bytes,
         fileName: results[0].name,
         info: (
           <div className="rounded-xl bg-cream-soft p-3 text-sm text-ink-soft">
-            Showing the first of{' '}
-            <strong className="text-ink">{results.length} PDFs</strong> — one per image. They
-            download together as a single .zip.
+            <Trans
+              i18nKey="multiInfo"
+              ns="imagesToPdf"
+              count={results.length}
+              components={[<strong className="text-ink" key="count" />]}
+            />
           </div>
         ),
-        downloadLabel: 'Download .zip',
+        downloadLabel: t('downloadZip'),
         onDownload: () => downloadBlob(blob, 'PDFdemo_images.zip'),
       })
-    } catch (err) {
-      onError(err instanceof Error ? err.message : 'Could not create the PDF.')
+    } catch {
+      // Logic-layer errors stay English as diagnostics; show a translated one.
+      onError(t('failed'))
     } finally {
       setWorking(false)
       setBusy(false)
@@ -175,17 +169,16 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
     <div className="space-y-4">
       <div className="mt-2 text-center">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-          Images to PDF
+          {t('title')}
         </h1>
         <p className="mx-auto mt-2 max-w-2xl text-ink-soft">
-          Turn your JPG and PNG images into a PDF — reorder them, rotate them, and pick the page
-          size. Your images never leave your device.
+          {t('intro')}
         </p>
         <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm font-semibold text-ink-soft">
           {BADGES.map((badge) => (
             <li key={badge} className="flex items-center gap-1.5">
               <CheckIcon width={15} height={15} className="text-brand-500" />
-              {badge}
+              {t(`badges.${badge}`)}
             </li>
           ))}
         </ul>
@@ -228,21 +221,17 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-500">
               <UploadIcon width={30} height={30} />
             </div>
-            <p className="text-lg font-extrabold text-ink">Drop images here</p>
-            <p className="mt-1 text-sm text-ink-soft">or click to browse your device</p>
+            <p className="text-lg font-extrabold text-ink">{t('dropTitle')}</p>
+            <p className="mt-1 text-sm text-ink-soft">{t('dropSubtitle')}</p>
             <span className="btn-primary pointer-events-none mt-5">
               <UploadIcon width={18} height={18} />
-              Choose images
+              {t('chooseImages')}
             </span>
-            <p className="mt-4 text-xs text-ink-faint">
-              JPG and PNG. Everything stays on your device.
-            </p>
+            <p className="mt-4 text-xs text-ink-faint">{t('dropFootnote')}</p>
           </div>
         ) : (
           <>
-            <p className="mb-3 text-center text-sm text-ink-soft">
-              Drag the cards to change the order
-            </p>
+            <p className="mb-3 text-center text-sm text-ink-soft">{t('dragToReorder')}</p>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -272,8 +261,8 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
               type="button"
               onClick={() => sort('asc')}
               disabled={images.length < 2}
-              title="Sort by name, A to Z"
-              aria-label="Sort images by name, A to Z"
+              title={t('sortAz')}
+              aria-label={t('sortAzAria')}
               className="icon-btn rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <SortAzIcon width={18} height={18} />
@@ -282,8 +271,8 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
               type="button"
               onClick={() => sort('desc')}
               disabled={images.length < 2}
-              title="Sort by name, Z to A"
-              aria-label="Sort images by name, Z to A"
+              title={t('sortZa')}
+              aria-label={t('sortZaAria')}
               className="icon-btn rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <SortZaIcon width={18} height={18} />
@@ -291,7 +280,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
           </div>
           <button type="button" className="btn-secondary" onClick={() => fileInput.current?.click()}>
             <PlusIcon width={18} height={18} />
-            Add more images
+            {t('addMore')}
           </button>
         </div>
       </div>
@@ -305,52 +294,52 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
             onChange={(e) => setMerge(e.target.checked)}
             className="h-4 w-4 cursor-pointer accent-brand-500"
           />
-          Merge into one PDF
+          {t('mergeIntoOne')}
         </label>
 
         <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-          Page size
+          {t('pageSize')}
           <select
             value={pageSize}
             onChange={(e) => setPageSize(e.target.value as PageSizeId)}
             className={selectClass}
           >
-            {SIZE_OPTIONS.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
+            {SIZE_OPTIONS.map((id) => (
+              <option key={id} value={id}>
+                {t(`sizes.${id}`)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-          Orientation
+          {t('orientation')}
           <select
             value={orientation}
             onChange={(e) => setOrientation(e.target.value as OrientationId)}
             // Meaningless when the page is cut to the image's own shape.
             disabled={pageSize === 'fit'}
-            title={pageSize === 'fit' ? 'The page follows each image when "Fit to image" is on' : undefined}
+            title={pageSize === 'fit' ? t('orientationFitTitle') : undefined}
             className={selectClass}
           >
-            {ORIENTATION_OPTIONS.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
+            {ORIENTATION_OPTIONS.map((id) => (
+              <option key={id} value={id}>
+                {t(`orientations.${id}`)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="flex items-center gap-1.5 text-sm text-ink-soft">
-          Margin
+          {t('margin')}
           <select
             value={margin}
             onChange={(e) => setMargin(e.target.value as MarginId)}
             className={selectClass}
           >
-            {MARGIN_OPTIONS.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
+            {MARGIN_OPTIONS.map((id) => (
+              <option key={id} value={id}>
+                {t(`margins.${id}`)}
               </option>
             ))}
           </select>
@@ -359,7 +348,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         <button type="button" className="btn-secondary" onClick={onClose}>
-          Cancel
+          {t('common:cancel')}
         </button>
         <button
           type="button"
@@ -368,7 +357,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
           disabled={images.length === 0 || working}
         >
           <ImageIcon width={18} height={18} />
-          Create PDF
+          {t('create')}
         </button>
       </div>
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Modal } from '../../../shared/components/Modal'
 import { useStore } from '../../../shared/state/store'
 import { extractPdf } from './splitPdf'
@@ -42,6 +43,7 @@ function parseSelection(raw: string, total: number): number[] {
 }
 
 export function ExtractPanel({ baseName, onClose, onError, onExtracted }: ExtractPanelProps) {
+  const { t } = useTranslation(['split', 'common'])
   const { sources, pages, docAnnotations, assets, setBusy } = useStore()
   const total = pages.length
   const [raw, setRaw] = useState('')
@@ -51,16 +53,17 @@ export function ExtractPanel({ baseName, onClose, onError, onExtracted }: Extrac
 
   async function handleExtract() {
     if (selection.length === 0) {
-      onError('Choose at least one page to extract.')
+      onError(t('extract.needPages'))
       return
     }
     try {
       setWorking(true)
-      setBusy(true, 'Extracting pages…')
+      setBusy(true, t('extract.working'))
       const bytes = await extractPdf(sources, pages, selection, { docAnnotations, assets })
       onExtracted(bytes, `${baseName}_extracted.pdf`)
-    } catch (err) {
-      onError(err instanceof Error ? err.message : 'Something went wrong while extracting.')
+    } catch {
+      // Logic-layer errors stay English as diagnostics; show a translated one.
+      onError(t('extract.failed'))
     } finally {
       setWorking(false)
       setBusy(false)
@@ -69,12 +72,12 @@ export function ExtractPanel({ baseName, onClose, onError, onExtracted }: Extrac
 
   return (
     <Modal
-      title="Extract pages to a new file"
+      title={t('extract.title')}
       onClose={onClose}
       footer={
         <>
           <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
+            {t('common:cancel')}
           </button>
           <button
             type="button"
@@ -83,24 +86,33 @@ export function ExtractPanel({ baseName, onClose, onError, onExtracted }: Extrac
             disabled={working || selection.length === 0}
           >
             <ExpandIcon width={18} height={18} />
-            Extract {selection.length > 0 ? `${selection.length} ` : ''}
-            {selection.length === 1 ? 'page' : 'pages'}
+            {selection.length > 0
+              ? t('extract.button', { count: selection.length })
+              : t('extract.buttonEmpty')}
           </button>
         </>
       }
     >
+      {/* Trans, not t(): inline markup inside a sentence whose word order
+          differs between languages. */}
       <p className="text-sm text-ink-soft">
-        Your document has <strong className="text-ink">{total} pages</strong>. Type the pages you
-        want to pull out — they'll be saved as a new file. Your working set stays unchanged.
+        <Trans
+          i18nKey="extract.intro"
+          ns="split"
+          count={total}
+          components={[<strong className="text-ink" key="count" />]}
+        />
       </p>
       <p className="mt-1 text-xs text-ink-faint">
-        Use commas for single pages and a dash for a range. Example:{' '}
-        <code className="rounded bg-cream-soft px-1">1-3, 5, 8</code> keeps pages 1, 2, 3, 5 and 8.
-        The order you type is the order they'll appear.
+        <Trans
+          i18nKey="extract.example"
+          ns="split"
+          components={[<code className="rounded bg-cream-soft px-1" key="code" />]}
+        />
       </p>
 
       <label className="mt-4 block text-sm font-bold text-ink" htmlFor="extract-pages">
-        Pages to extract
+        {t('extract.label')}
       </label>
       <input
         id="extract-pages"
@@ -108,7 +120,7 @@ export function ExtractPanel({ baseName, onClose, onError, onExtracted }: Extrac
         inputMode="numeric"
         value={raw}
         onChange={(e) => setRaw(e.target.value)}
-        placeholder="e.g. 1-3, 5, 8"
+        placeholder={t('extract.placeholder')}
         className="mt-1 w-full rounded-xl border border-brand-100 bg-white px-3 py-2.5 font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
       />
 
@@ -116,16 +128,16 @@ export function ExtractPanel({ baseName, onClose, onError, onExtracted }: Extrac
         <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-ink">
           <ExpandIcon width={16} height={16} className="text-brand-500" />
           {selection.length > 0
-            ? `Extracting ${selection.length} ${selection.length === 1 ? 'page' : 'pages'}:`
-            : 'No pages selected yet.'}
+            ? t('extract.summary', { count: selection.length })
+            : t('extract.noneSelected')}
         </p>
         {selection.length > 0 && (
-          <p className="text-sm text-ink-soft">Pages {selection.join(', ')}</p>
+          <p className="text-sm text-ink-soft">
+            {t('extract.selectedPages', { list: selection.join(', ') })}
+          </p>
         )}
         {selection.length === 0 && (
-          <p className="text-xs text-ink-faint">
-            Enter page numbers above (between 1 and {total}) to choose what to extract.
-          </p>
+          <p className="text-xs text-ink-faint">{t('extract.hint', { max: total })}</p>
         )}
       </div>
     </Modal>

@@ -1,0 +1,24 @@
+{
+  "prompt": {
+    "title": "File PDF này được bảo vệ bằng mật khẩu",
+    "body": "<0>{{fileName}}</0> cần mật khẩu trước khi có thể chỉnh sửa. File được mở khóa ngay trên thiết bị của bạn — mật khẩu không bao giờ được gửi đi đâu.",
+    "skip": "Bỏ qua file này",
+    "unlock": "Mở khóa",
+    "unlocking": "Đang mở khóa…",
+    "password": "Mật khẩu",
+    "showPassword": "Hiện mật khẩu",
+    "hidePassword": "Ẩn mật khẩu",
+    "wrongPassword": "Mật khẩu không đúng — vui lòng thử lại."
+  },
+  "panel": {
+    "title": "Bảo vệ file PDF này",
+    "intro": "Hãy chọn một mật khẩu. Bất kỳ ai mở file này — kể cả bạn — đều sẽ cần đến nó. Mật khẩu được đặt ngay trên thiết bị của bạn và không bao giờ được gửi đi đâu.",
+    "password": "Mật khẩu",
+    "confirm": "Xác nhận mật khẩu",
+    "enterPassword": "Vui lòng nhập mật khẩu.",
+    "mismatch": "Mật khẩu không khớp.",
+    "button": "Bảo vệ file PDF",
+    "working": "Đang bảo vệ…",
+    "failed": "Không thể bảo vệ file PDF này."
+  }
+}

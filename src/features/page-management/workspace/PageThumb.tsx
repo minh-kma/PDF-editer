@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { PageItem, SourceDoc } from '../../../shared/state/types'
@@ -15,6 +16,7 @@ interface PageThumbProps {
 }
 
 export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarge }: PageThumbProps) {
+  const { t } = useTranslation('workspace')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: page.id })
 
@@ -49,20 +51,20 @@ export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarg
         {...attributes}
         {...listeners}
         onDoubleClick={() => onEnlarge(page)}
-        title="Double-click to enlarge"
+        title={t('doubleClickToEnlarge')}
         className="relative flex aspect-[3/4] cursor-grab items-center justify-center bg-cream-soft active:cursor-grabbing"
       >
         {thumb ? (
           <img
             src={thumb}
-            alt={`Page ${position}`}
+            alt={t('pageAlt', { position })}
             className="max-h-full max-w-full object-contain"
             draggable={false}
           />
         ) : (
           <div className="flex flex-col items-center gap-2 text-ink-faint">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
-            <span className="text-xs">Loading…</span>
+            <span className="text-xs">{t('loading')}</span>
           </div>
         )}
 
@@ -77,14 +79,15 @@ export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarg
       {/* Per-page controls. */}
       <div className="flex items-center justify-between gap-1 border-t border-black/5 px-2 py-1.5">
         <span className="truncate text-[11px] text-ink-faint" title={source?.name}>
-          {source?.name ?? 'Unknown'}
+          {/* The file name is the user's own content — shown verbatim. */}
+          {source?.name ?? t('unknownFile')}
         </span>
         <div className="flex items-center gap-0.5">
           <button
             type="button"
             onClick={() => onRotate(page.id)}
-            title="Rotate 90°"
-            aria-label={`Rotate page ${position} 90 degrees`}
+            title={t('rotate90')}
+            aria-label={t('rotatePageAria', { position })}
             className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-brand-600"
           >
             <RotateIcon width={16} height={16} />
@@ -92,8 +95,8 @@ export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarg
           <button
             type="button"
             onClick={() => onDelete(page.id)}
-            title="Delete page"
-            aria-label={`Delete page ${position}`}
+            title={t('deletePage')}
+            aria-label={t('deletePageAria', { position })}
             className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-red-50 hover:text-red-600"
           >
             <TrashIcon width={16} height={16} />
