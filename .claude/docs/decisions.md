@@ -1,185 +1,165 @@
 # PDFdemo — Decisions Log
 
-Design decisions made during development. Reference before proposing
-changes that touch these areas — don't re-litigate settled questions.
+Settled decisions. Read before proposing changes in these areas; don't
+re-litigate. Superseded entries stay in place, marked with the reversal
+that changed them.
 
 ## Architecture
 
-**D1. Client-side only.** All PDF processing in the browser. No backend,
-no database, no server-side file handling. Preserves "files never
-uploaded" guarantee, keeps ops cost near zero.
+**D1. Client-side only.** All PDF processing in the browser — no backend,
+database, or server-side file handling. Preserves the "files never
+uploaded" guarantee and keeps ops cost near zero.
 
-**D2. Feature-based structure with product groupings.** `src/features/
-<group>/<module>/`. Group at outer layer mirrors product roadmap; inner
-modules split by real code coupling, not by product-name hierarchy.
-Example: merge/delete/reorder/rotate share `buildPdf()` and stay
-together as `workspace/`, not four separate folders. See architecture.md.
-
-> Precedent: on-demand, one-shot transforms with no ongoing app-state
-> involvement get their own feature folder instead of `shared/lib/`,
-> even when they reuse `shared/lib/annotationBake.ts`'s drawing
-> techniques — e.g. `optimize/ocr/` (`ocrDocument.ts` +
-> `bakeOcrTextLayer.ts`) and `edit/edit-text/` (`editText.ts`). They're
-> not part of D11's universal `pdfCore.copyPagesToPdf` export pipeline.
-> See architecture.md's "planned future groups".
+**D2. Feature-based structure with product groupings.**
+`src/features/<group>/<module>/`. Groups mirror the product roadmap;
+modules split by real code coupling, not product naming —
+merge/delete/reorder/rotate share `buildPdf()` so they stay one
+`workspace/` module, not four. Precedent: OCR gets its own `optimize/`
+folder (not `page-management/`, where Compress lives) because it works
+on raw bytes via pdf.js + Tesseract, not the page plan. See
+architecture.md.
 
 **D3. IndexedDB autosave + beforeunload warning.** In-progress work
 survives reload without a server.
 
 ## Product scope
 
-**D4. No Office ↔ PDF conversion.** Microsoft already solves this well
-for most users. JS-only libraries are too weak; server/API paths break
-client-side guarantee. Exception (optional, low priority): PDF ↔ JPG/PNG,
-which is easy and high-quality client-side.
+**D4. No Office ↔ PDF conversion.** JS-only libraries are too weak;
+server/API paths would break D1. Optional low-priority exception:
+PDF ↔ JPG/PNG, which is easy and high-quality client-side.
 
-**D5. No Redact.** Only feature with intrinsic risk: imperfect
-implementation creates false sense of security. Users can visually
-cover content with Eraser (white box) or Shapes (black box), but the
-UI must state these are visual only and do not remove underlying data.
-Recommend Adobe Acrobat Pro for genuine redaction needs.
+**D5. No Redact.** The one feature with intrinsic risk — imperfect
+redaction creates a false sense of security. Recommend Adobe Acrobat Pro
+for genuine needs. (The Eraser/Shapes visual cover-up workaround this
+originally pointed to no longer exists — see R3.)
 
-**D6. Edit Text is in scope.** Ships PDFAid-style: extract text objects
-via pdf.js, allow inline editing, write back with pdf-lib. Accept
-limitations: font may be substituted, layout may shift with length
-changes, scanned PDFs need OCR first. UI must disclose these.
-
-> Implementation note (confirmed decision, not open for
-> reconsideration without discussion): edits use the same visual-only
-> technique as Eraser (D5) — draw an opaque white cover over the
-> original text's region, draw new text on top. The original text's
-> operators are NOT removed from the content stream; old text remains
-> present/extractable underneath. `editText.ts` exports
-> `EDIT_TEXT_DISCLOSURE` for a future UI to surface this, same pattern
-> as `OCR_SPEED_DISCLOSURE`.
+**D6. Edit Text is in scope.** PDFAid-style: extract text objects via
+pdf.js, inline edit, write back with pdf-lib. UI must disclose the
+limits: font may be substituted, layout may shift when length changes,
+scanned PDFs need OCR first. See R1.
 
 ## Technology
 
-**D7. OCR: Tesseract.js, client-side.** Trade-offs are real (slower,
-lower accuracy vs. paid cloud APIs) but preserve the privacy guarantee.
-Required implementation details:
-- Web Worker to keep the UI thread free
-- Lazy per-language model loading; cache after first fetch
-- Sequential per-page processing with a progress bar
-- Skip OCR for pages that already have a text layer (check per-page,
-  not just per-file — mixed documents are common)
-- In-UI disclosure of the trade-off before starting
+**D7. OCR: Tesseract.js, client-side.** Slower and less accurate than
+paid cloud APIs, but preserves the privacy guarantee. Required: Web
+Worker; lazy per-language model loading, cached after first fetch;
+sequential per-page processing with a progress bar; skip pages that
+already have a text layer (check per page, not per file — mixed
+documents are common); disclose the trade-off in-UI before starting.
+Language model files (`langPath`) come from Tesseract's CDN — the one
+intentional network exception, and only model assets, never user file
+content. pdf.js's worker and qpdf's wasm stay same-origin via Vite
+`?url`. See R2.
 
-> Implementation note: Tesseract's language model files (`langPath`) are
-> fetched from Tesseract's default CDN, not self-hosted like pdf.js's
-> worker or qpdf's wasm (which are bundled same-origin via Vite `?url`).
-> This is the one intentional network exception per D7 — only language
-> model assets, never user file content, ever leave the browser.
-
-**D8. Protect PDF: user password only.** No owner password / permissions.
-qpdf-wasm (or equivalent) client-side, AES-256. Any other feature
-receiving a password-protected file must prompt for the password first.
-
-> Implementation note: `protectPdf.ts` invokes qpdf as
-> `qpdf --encrypt <password> <password> 256 -- in out` — owner password
-> is deliberately set equal to the user password, since there's no
-> separate owner secret in this product (see D8 above). Any future code
-> calling qpdf's encrypt path should follow this same pattern.
+**D8. Protect PDF: user password only.** No owner password or
+permissions. qpdf-wasm client-side, AES-256. Any feature receiving a
+password-protected file must prompt for the password first.
+`protectPdf.ts` calls `qpdf --encrypt <password> <password> 256 -- in
+out` — owner password is deliberately set equal to the user password
+since there's no separate owner secret; follow this pattern for any
+future qpdf encrypt call.
 
 **D9. Sign is image-based, not cryptographic.** Three input modes: typed
-(with font suggestions), drawn, uploaded image. No PKI / digital
-signature, no mobile QR flow, no request-others-to-sign (would require
-a backend).
+(with font suggestions), drawn, uploaded image. No PKI/digital signature,
+no mobile QR flow, no request-others-to-sign (would need a backend).
+Currently moot — Sign was one of the nine tools dropped by R3; kept on
+record in case it returns as a standalone tool.
 
-**D10. PDF Forms handles both cases.** If the file has AcroForm fields,
-edit them directly. If not, allow the user to create new fields: text
-field, checkbox, radio, list box, combo box.
+**D10. PDF Forms handles both cases.** Edit existing AcroForm fields
+directly; if the file has none, allow creating them: text field,
+checkbox, radio, list box, combo box.
 
-**D11. Edit PDF shares one annotation infrastructure.** All annotation
-tools (Add text, Sign, Draw, Shapes, Eraser, Highlight, Image, Note)
-plus Watermark and Add page numbers reuse a single "draw object onto
-PDF" pipeline. Do not implement them as isolated features.
-
-> Known limitation: `annotationBake.ts`'s normalized-`Rect`-to-pdf-lib-
-> point conversion does not correct for a page's intrinsic `/Rotate`
-> value. Applies to annotations and to OCR's word boxes (`bakeOcrTextLayer.ts`,
-> derived from a rotation-aware rendered viewport). It does NOT apply to
-> `editText.ts`: pdf.js's raw text-run coordinates (`getTextContent`)
-> are already in the page's unrotated MediaBox space, matching
-> `page.view`/pdf-lib's `page.getSize()` directly — confirmed empirically,
-> no rotation adjustment needed there. Worth a look whenever
-> annotation-authoring UI or OCR UI work touches rotated pages.
+**D11. One shared "draw object onto PDF" pipeline.**
+`shared/lib/annotationBake.ts`, reached only via
+`pdfCore.copyPagesToPdf`. Never implement a page-drawing tool as an
+isolated feature. Partly superseded by R3: the nine per-page annotation
+tools and the `Annotation` discriminated union are gone, so the rule now
+binds Watermark, Page numbers, and any future page-drawing tool.
 
 ## Business model
 
-**D12. Tracking ads (AdSense) are acceptable.** Higher revenue than
-non-tracking alternatives, easier to set up. Consequence for
-positioning:
-- OK to say: "files never uploaded", "100% in your browser", "processed
-  on your device"
-- Not OK to say: "we don't track you", "fully private", "no tracking"
-  — third-party ad network still tracks via cookies/fingerprinting
-- Required: cookie banner for EU (GDPR), privacy policy page mentioning
-  AdSense, CCPA opt-out for California if applicable
+**D12. Tracking ads (AdSense) are acceptable.** Higher revenue and easier
+setup than non-tracking alternatives. Positioning consequences — OK to
+say: "files never uploaded", "100% in your browser", "processed on your
+device". Not OK: "we don't track you", "fully private", "no tracking"
+(the ad network still tracks via cookies/fingerprinting). Required: EU
+cookie banner (GDPR), privacy policy naming AdSense, CCPA opt-out for
+California if applicable.
 
-**D13. Free, no accounts, no tiers.** Simplifies operations (no auth,
-no DB, no billing). Matches "genuinely free" positioning.
+**D13. Free, no accounts, no tiers.** No auth, DB, or billing; matches
+the "genuinely free" positioning.
 
 ## Development workflow
 
 **D14. Prompts to Claude Code in English.** Higher fidelity than
-Vietnamese; more training data, more technical docs in English.
+Vietnamese — more training data and technical docs.
 
-**D15. Bug-fix prompt structure.** Every bug prompt must include:
-expected vs. actual, request to identify root cause before patching,
-scope limit (no unrelated refactors), specific verification steps.
-Common rules live in CLAUDE.md's "Bug Fix Protocol" to avoid repetition.
+**D15. Bug-fix prompt structure.** Every bug prompt states expected vs.
+actual, asks for root cause before patching, limits scope (no unrelated
+refactors), and lists verification steps. Common rules live in
+CLAUDE.md's "Bug Fix Protocol" to avoid repetition.
 
-**D16. Plan Mode for structural changes.** Any change affecting folder
-structure, cross-cutting infrastructure, or multiple features starts
-in Plan Mode. Review the plan before touching code.
+**D16. Plan Mode for structural changes.** Anything affecting folder
+structure, cross-cutting infrastructure, or multiple features starts in
+Plan Mode; review the plan before touching code.
 
 **D17. Git commit checkpoints, split by concern.** Safety commit before
-large refactors. Separate commits per logical change (e.g. hygiene fixes
-vs. structural moves) so each can be reverted independently.
+large refactors; one commit per logical change (e.g. hygiene fixes vs.
+structural moves) so each reverts independently. Performed by the
+product owner — see D21.
 
 **D18. `.claude/docs/` tracked in git; `settings.local.json` ignored.**
 Docs are shared project knowledge; local settings are per-machine.
 
-**D19. Logic-first, UI-last for this development cycle.** Build
-remaining feature logic (pdf-lib operations, data transforms, workers)
-before the corresponding UI/toolbar entry points, to avoid reworking
-buttons/screens repeatedly as logic changes. Prompts to Claude Code
-should scope strictly to logic + types, excluding ToolGrid/Toolbar/
-App.tsx wiring and new UI components — except when a tool is inherently
-interaction-first (e.g. a canvas-based annotation tool needs a pointer
-surface to exist at all); flag and discuss those cases rather than
-silently building or silently skipping them.
+**D19. Logic-first, UI-last for this development cycle.** Build feature
+logic (pdf-lib operations, data transforms, workers) before the matching
+UI/toolbar entry point, to avoid reworking screens as logic changes.
+Prompts scope strictly to logic + types, excluding ToolGrid/Toolbar/
+App.tsx wiring and new UI components — flag interaction-first tools for
+discussion rather than silently building or skipping them. (Its named
+exception, canvas-based annotation tools, has no subject after R3.)
 
 **D20. Verification scripts for logic depending on bundler-only imports
-(Vite `?url` assets, Worker/wasm loaders) must run under plain Node,
-re-invoking the underlying call directly instead of importing the TS
-module.** ts-node/direct import fails outside Vite's build pipeline.
-Learned from `pdfUnlock.ts`/`protectPdf.ts`; confirmed again for OCR and
-Edit Text (both `ocrDocument.ts`/`editText.ts` have a real runtime
-import chain through `shared/lib/pdfjs.ts`'s Vite-only `?url` asset
-import, so their scripts mirror the logic under plain Node). Exception:
-`bakeOcrTextLayer.ts` has zero runtime bundler-only dependencies (its
-only OCR-feature reference is a type-only import), so its verification
-script bundled the real file with esbuild and required it directly
-instead — prefer that stronger form whenever a module turns out not to
-need the mirroring workaround.
+must run under plain Node**, re-invoking the underlying call directly
+instead of importing the TS module — ts-node/direct import fails outside
+Vite's pipeline. Applies to Vite `?url` assets and Worker/wasm loaders.
+Learned from `pdfUnlock.ts`/`protectPdf.ts`; for OCR the mirrored script
+could run functionally in Node (tesseract.js has a Node backend,
+pdfjs-dist ships a Node build), but a temporary Vite entry was still
+needed to confirm the `?url` worker/wasm assets actually bundle, since
+`npm run build` doesn't touch UI-unwired code.
 
-## Reversals (for clarity)
+**D21. Claude Code never runs git.** No `add`, `commit`, `push`,
+`branch`, `checkout`, `reset`, `merge`, or `tag` — the product owner
+performs every git operation. Read-only inspection (`status`, `diff`,
+`log`) is fine when explicitly asked for.
 
-**R1. Edit Text was tentatively dropped, then reinstated.** See D6.
-Assessment shifted after confirming PDFAid ships this successfully with
-JS-only tooling.
+## Reversals
 
-**R2. OCR was briefly assumed dropped in one exchange, but was never
-actually dropped.** See D7. Authoritative state: OCR is in scope,
-client-side, Tesseract.js.
+**R1. Edit Text was dropped, then reinstated.** See D6 — assessment
+shifted after confirming PDFAid ships this with JS-only tooling.
 
-## Notes
+**R2. OCR was briefly assumed dropped, but never actually was.** See D7.
+Authoritative state: in scope, client-side, Tesseract.js.
 
-- Claude Code never runs git commands (add/commit/push/branch, etc.) —
-  the product owner handles all git/GitHub operations.
-- The app's UI shell was redesigned: `AppBar.tsx` (persistent top bar
-  with an "All tools" mega-menu) + `BrowseView.tsx` (continuous-scroll
-  browsing with a thumbnail sidebar) replaced the old
-  Header/Toolbar/ToolGrid and paginated Browse.
+**R3. Annotate was designed, partly built, then dropped (2026-07-20).**
+All nine sub-tools — Shapes, Eraser, Highlight, Add text, Note, Draw,
+Image, Sign, Text highlight — plus their shared authoring infrastructure
+are out of scope and deleted, not deferred. The approved build-out plan
+(`cozy-crunching-platypus.md`) is abandoned for the Annotate portion and
+must not be resumed or cited for Annotate work.
+
+Removed: all of `features/edit/annotate/` (~1,076 lines —
+`AnnotationUIContext`, `AnnotationToolbar`, `AnnotationOverlay`,
+`AnnotationFrame`, `ShapesSubToolbar`, drag/rotation coordinate helpers,
+per-type visuals), the `annotate` mode in `App.tsx`, `BrowseView`'s
+`renderPageOverlay` prop, the per-page `Annotation` union with its
+reducer actions and autosave field, and the `drawAnnotation` half of the
+bake pipeline. More had been built than features.md previously claimed:
+the full authoring layer for Shapes + Eraser existed.
+
+Affects D5, D9, D11 and D19 — noted at each; all four keep their
+substance. Watermark and Page numbers are explicitly NOT part of this
+reversal: their panels moved to `features/edit/doc-marks/`, and the
+`DocAnnotation` model, `docAnnotations` store slice and bake pipeline are
+unchanged in behaviour.

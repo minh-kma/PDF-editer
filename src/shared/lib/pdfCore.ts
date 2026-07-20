@@ -2,18 +2,18 @@
 // (buildPdf in workspace, splitPdf/extractPdf in split). Powered by pdf-lib;
 // runs entirely in the browser — no bytes are ever sent anywhere.
 //
-// copyPagesToPdf is the single place pages are copied out AND annotations are
-// baked on (decision D11) — build/split/extract all funnel through it.
+// copyPagesToPdf is the single place pages are copied out AND document marks
+// (watermark / page numbers) are baked on (decision D11) — build/split/extract
+// all funnel through it.
 import { PDFDocument, degrees } from 'pdf-lib'
-import type { Annotation, AssetMap, DocAnnotation, PageItem, SourceDoc } from '../state/types'
+import type { AssetMap, DocAnnotation, PageItem, SourceDoc } from '../state/types'
 import { createBakeSession, bakePage } from './annotationBake'
 
 /** Map of sourceId -> loaded pdf-lib document, so we parse each file only once. */
 export type SourceMap = Map<string, PDFDocument>
 
-/** Everything the bake step needs. Omit it to copy pages with no annotations. */
+/** Everything the bake step needs. Omit it to copy pages with no marks. */
 export interface BakeInput {
-  annotations: Record<string, Annotation[]>
   docAnnotations: DocAnnotation[]
   assets: AssetMap
 }
@@ -32,7 +32,7 @@ export async function loadSources(
 
 /**
  * Copy an ordered list of plan pages into a single new PDF — honouring each
- * page's user rotation and baking on any annotations — and return its bytes.
+ * page's user rotation and baking on any document marks — and return its bytes.
  * Per-page copying (vs batch) is intentional: it preserves the user's order.
  */
 export async function copyPagesToPdf(
@@ -57,10 +57,7 @@ export async function copyPagesToPdf(
     out.addPage(copied)
 
     if (session && bake) {
-      await bakePage(session, copied, bake.annotations[page.id] ?? [], bake.docAnnotations, {
-        pageNumber,
-        totalPages: total,
-      })
+      await bakePage(session, copied, bake.docAnnotations, { pageNumber, totalPages: total })
     }
   }
 

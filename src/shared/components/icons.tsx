@@ -210,3 +210,25 @@ export const ScanIcon = (p: IconProps) => (
     <line x1="7" y1="12" x2="17" y2="12" />
   </svg>
 )
+
+export const EditIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+)
+
+export const WatermarkIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M12 2.7 17.7 8.4a8 8 0 1 1-11.4 0z" />
+  </svg>
+)
+
+export const HashIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <line x1="4" y1="9" x2="20" y2="9" />
+    <line x1="4" y1="15" x2="20" y2="15" />
+    <line x1="10" y1="3" x2="8" y2="21" />
+    <line x1="16" y1="3" x2="14" y2="21" />
+  </svg>
+)

@@ -7,6 +7,8 @@ import { SplitPanel } from './features/page-management/split/SplitPanel'
 import { ExtractPanel } from './features/page-management/split/ExtractPanel'
 import { ProtectPanel } from './features/security/protect/ProtectPanel'
 import { OcrPanel } from './features/optimize/ocr/OcrPanel'
+import { WatermarkPanel } from './features/edit/doc-marks/WatermarkPanel'
+import { PageNumbersPanel } from './features/edit/doc-marks/PageNumbersPanel'
 import { PreviewModal } from './shared/components/PreviewModal'
 import { RecoverBanner } from './shared/components/RecoverBanner'
 import { BusyOverlay } from './shared/components/BusyOverlay'
@@ -41,6 +43,8 @@ interface PreviewState {
 // actions that go straight to a PreviewModal, same as today. 'protect' and
 // 'ocr' need user input first (a password; a language pick), so — unlike
 // Compress/Unlock — they're modal-form panels, same pattern as split/extract.
+// 'watermark' and 'pageNumbers' are modal-form panels over Browse, same
+// pattern as split/extract.
 type MainMode =
   | { kind: 'browse' }
   | { kind: 'manage' }
@@ -48,6 +52,8 @@ type MainMode =
   | { kind: 'extract' }
   | { kind: 'protect' }
   | { kind: 'ocr' }
+  | { kind: 'watermark' }
+  | { kind: 'pageNumbers' }
 
 // Don't offer to restore a session that's gone stale — past this age, skip
 // the recover banner and proceed as if no session existed.
@@ -58,7 +64,6 @@ export default function App() {
   const {
     sources,
     pages,
-    annotations,
     docAnnotations,
     assets,
     busy,
@@ -120,10 +125,10 @@ export default function App() {
     // before the user has actually done anything.
     if (recover) return
     const t = setTimeout(() => {
-      saveSession(sources, pages, annotations, docAnnotations, assets).catch(() => {})
+      saveSession(sources, pages, docAnnotations, assets).catch(() => {})
     }, 800)
     return () => clearTimeout(t)
-  }, [sources, pages, annotations, docAnnotations, assets, recover])
+  }, [sources, pages, docAnnotations, assets, recover])
 
   // -- Undo / redo keyboard shortcuts ----------------------------------------
   useEffect(() => {
@@ -294,30 +299,28 @@ export default function App() {
   const handleDownload = useCallback(async () => {
     try {
       setBusy(true, 'Preparing your PDF…')
-      const bytes = await buildPdf(sources, pages, { annotations, docAnnotations, assets })
+      const bytes = await buildPdf(sources, pages, { docAnnotations, assets })
       setPreview({ title: 'Your PDF is ready', bytes, fileName: outputName() })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create the PDF.')
     } finally {
       setBusy(false)
     }
-  }, [sources, pages, annotations, docAnnotations, assets, outputName, setBusy])
+  }, [sources, pages, docAnnotations, assets, outputName, setBusy])
 
   // -- Compress --------------------------------------------------------------
   const handleCompress = useCallback(async () => {
     try {
       setBusy(true, 'Compressing…')
-      const assembled = await buildPdf(sources, pages, { annotations, docAnnotations, assets })
+      const assembled = await buildPdf(sources, pages, { docAnnotations, assets })
       const compressed = await compressPdf(assembled)
 
       // Is the current plan exactly the uploaded file, untouched? Only then is
       // the original upload a faithful stand-in for the user's document, so we
-      // may fall back to it. Any delete/rotate/reorder/merge — or any
-      // annotation — makes it not pristine (re-assembly is the baseline then).
-      const hasAnnotations =
-        docAnnotations.length > 0 || Object.values(annotations).some((list) => list.length > 0)
+      // may fall back to it. Any delete/rotate/reorder/merge — or a watermark
+      // / page numbers — makes it not pristine (re-assembly is the baseline).
       const pristine =
-        !hasAnnotations &&
+        docAnnotations.length === 0 &&
         sources.length === 1 &&
         pages.length === sources[0].pageCount &&
         pages.every(
@@ -369,7 +372,7 @@ export default function App() {
     } finally {
       setBusy(false)
     }
-  }, [sources, pages, annotations, docAnnotations, assets, outputName, setBusy])
+  }, [sources, pages, docAnnotations, assets, outputName, setBusy])
 
   // -- Tool discovery (persistent bar + landing grid) -------------------------
   // 'unlock' always needs a freshly-picked file (never the current session —
@@ -412,6 +415,8 @@ export default function App() {
     else if (intent === 'extract') setMainMode({ kind: 'extract' })
     else if (intent === 'protect') setMainMode({ kind: 'protect' })
     else if (intent === 'ocr') setMainMode({ kind: 'ocr' })
+    else if (intent === 'watermark') setMainMode({ kind: 'watermark' })
+    else if (intent === 'pageNumbers') setMainMode({ kind: 'pageNumbers' })
     else if (intent === 'compress') handleCompress()
     else if (intent === 'manage' || intent === 'merge') setMainMode({ kind: 'manage' })
     // 'unlock' never reaches here — handleToolSelect routes it to its own
@@ -440,7 +445,6 @@ export default function App() {
       restore(
         recover.sources,
         recover.pages,
-        recover.annotations,
         recover.docAnnotations,
         recover.assets,
       )
@@ -513,6 +517,14 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {mainMode.kind === 'watermark' && (
+        <WatermarkPanel onClose={() => setMainMode({ kind: 'browse' })} />
+      )}
+
+      {mainMode.kind === 'pageNumbers' && (
+        <PageNumbersPanel onClose={() => setMainMode({ kind: 'browse' })} />
+      )}
 
       {mainMode.kind === 'split' && (
         <SplitPanel

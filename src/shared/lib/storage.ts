@@ -2,10 +2,17 @@
 // IndexedDB (via idb-keyval) so a page refresh doesn't lose in-progress work.
 // This never leaves the device.
 import { get, set, del } from 'idb-keyval'
-import type { Annotation, AssetMap, DocAnnotation, PageItem, SourceDoc } from '../state/types'
+import type { AssetMap, DocAnnotation, PageItem, SourceDoc } from '../state/types'
 
-// v2 adds annotations/docAnnotations/assets. The key suffix is bumped so any
-// incompatible v1 save is simply ignored (sessions are ephemeral — no migration).
+// v2 adds docAnnotations/assets. The key suffix is bumped so any incompatible
+// v1 save is simply ignored (sessions are ephemeral — no migration).
+//
+// A v2 session written before the Annotate tool was dropped also carries a
+// per-page `annotations` map. That field is simply not read any more: it isn't
+// declared here, loadSession never touches it, and restore() ignores it — so a
+// stale save still loads (pages, watermark/page numbers and assets intact)
+// rather than throwing. No version bump is needed for that; the rest of the
+// shape is unchanged.
 const SESSION_KEY = 'pdfdemo:session:v2'
 
 export interface SavedSession {
@@ -13,7 +20,6 @@ export interface SavedSession {
   savedAt: number
   sources: SourceDoc[]
   pages: PageItem[]
-  annotations: Record<string, Annotation[]>
   docAnnotations: DocAnnotation[]
   assets: AssetMap
 }
@@ -21,7 +27,6 @@ export interface SavedSession {
 export async function saveSession(
   sources: SourceDoc[],
   pages: PageItem[],
-  annotations: Record<string, Annotation[]>,
   docAnnotations: DocAnnotation[],
   assets: AssetMap,
 ): Promise<void> {
@@ -34,7 +39,6 @@ export async function saveSession(
     savedAt: Date.now(),
     sources,
     pages,
-    annotations,
     docAnnotations,
     assets,
   }
@@ -60,7 +64,6 @@ export async function loadSession(): Promise<SavedSession | undefined> {
     } else {
       session.assets = {}
     }
-    session.annotations ??= {}
     session.docAnnotations ??= []
     return session
   } catch {

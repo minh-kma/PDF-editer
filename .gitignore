@@ -14,6 +14,7 @@ vite.config.d.ts
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+reference_photos
 
 # Claude Code: keep local config out of git (docs under .claude/ stay tracked)
 .claude/settings.local.json

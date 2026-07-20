@@ -221,13 +221,14 @@ function PageRow({ page, source, position, zoom, shouldRender, registerEl }: Pag
           // wrapper) so the page visibly grows/shrinks — usePageRender's
           // resolution bump is about sharpness, not display size, so without
           // this the page never actually looked different when zoomed.
-          <img
-            src={url}
-            alt={`Page ${position}`}
-            style={{ width: `${zoom * 100}%` }}
-            className="max-w-none flex-none object-contain"
-            draggable={false}
-          />
+          <div className="max-w-none flex-none" style={{ width: `${zoom * 100}%` }}>
+            <img
+              src={url}
+              alt={`Page ${position}`}
+              className="w-full object-contain"
+              draggable={false}
+            />
+          </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-ink-faint">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />

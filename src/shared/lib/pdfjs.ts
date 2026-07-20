@@ -114,6 +114,29 @@ export async function getPageTextRuns(
   return { runs, width: x1 - x0, height: y1 - y0 }
 }
 
+// Unrotated MediaBox size (PDF points) per page — matches pdf-lib's
+// page.getSize(), so pt-based annotation values (font size, stroke width,
+// margins) can be converted to on-screen px: px = pt * containerPx / pagePt.
+const pageSizeCache = new Map<string, Promise<{ width: number; height: number }>>()
+
+export function getPageSizePt(
+  sourceId: string,
+  bytes: Uint8Array,
+  pageIndex: number,
+): Promise<{ width: number; height: number }> {
+  const key = `${sourceId}:${pageIndex}`
+  let size = pageSizeCache.get(key)
+  if (!size) {
+    size = loadDoc(sourceId, bytes).then(async (doc) => {
+      const page = await doc.getPage(pageIndex + 1)
+      const [x0, y0, x1, y1] = page.view
+      return { width: x1 - x0, height: y1 - y0 }
+    })
+    pageSizeCache.set(key, size)
+  }
+  return size
+}
+
 async function renderPageToCanvas(
   sourceId: string,
   bytes: Uint8Array,

@@ -11,6 +11,8 @@ import {
   ScanIcon,
   UnlockIcon,
   LockIcon,
+  WatermarkIcon,
+  HashIcon,
 } from '../components/icons'
 
 // The intent a tool entry carries into the upload flow (or, once a file is
@@ -30,6 +32,8 @@ export type ToolIntent =
   | 'ocr'
   | 'unlock'
   | 'protect'
+  | 'watermark'
+  | 'pageNumbers'
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -61,6 +65,13 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     tools: [
       { intent: 'compress', label: 'Compress', description: 'Shrink the file size, losslessly', icon: CompressIcon },
       { intent: 'ocr', label: 'OCR', description: 'Make scanned pages searchable', icon: ScanIcon },
+    ],
+  },
+  {
+    heading: 'Edit PDF',
+    tools: [
+      { intent: 'watermark', label: 'Watermark', description: 'Stamp text or a logo across pages', icon: WatermarkIcon },
+      { intent: 'pageNumbers', label: 'Page numbers', description: 'Number the pages of your PDF', icon: HashIcon },
     ],
   },
   {

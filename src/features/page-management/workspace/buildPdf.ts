@@ -1,12 +1,12 @@
 // Assembles the ordered page plan into a single PDF — this is where merge,
-// delete, reorder, rotate and now annotation baking all come together. Powered
+// delete, reorder, rotate and document-mark baking all come together. Powered
 // by pdf-lib; runs entirely in the browser — no bytes are ever sent anywhere.
 import type { PageItem, SourceDoc } from '../../../shared/state/types'
 import { loadSources, copyPagesToPdf, type BakeInput } from '../../../shared/lib/pdfCore'
 
 /**
  * Build a single PDF from an ordered list of pages. Pass `bake` to draw the
- * user's annotations onto the output; omit it for a plain assembly.
+ * user's watermark / page numbers onto the output; omit it for a plain assembly.
  */
 export async function buildPdf(
   sources: SourceDoc[],

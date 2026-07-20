@@ -31,7 +31,7 @@ type Phase = 'config' | 'running'
  * component only sequences and displays them, no changes to either.
  */
 export function OcrPanel({ baseName, onClose, onError, onDone }: OcrPanelProps) {
-  const { sources, pages, annotations, docAnnotations, assets } = useStore()
+  const { sources, pages, docAnnotations, assets } = useStore()
   const [phase, setPhase] = useState<Phase>('config')
   const [languages, setLanguages] = useState<string[]>(['eng'])
   const [progress, setProgress] = useState<OcrProgressInfo | null>(null)
@@ -56,7 +56,7 @@ export function OcrPanel({ baseName, onClose, onError, onDone }: OcrPanelProps) 
     if (languages.length === 0) return
     setPhase('running')
     try {
-      const assembled = await buildPdf(sources, pages, { annotations, docAnnotations, assets })
+      const assembled = await buildPdf(sources, pages, { docAnnotations, assets })
       const results = await ocrDocument(assembled, { languages, onProgress: setProgress })
       if (cancelledRef.current) return
 

@@ -27,7 +27,7 @@ interface ProtectPanelProps {
  * either form has on its own.
  */
 export function ProtectPanel({ baseName, onClose, onError, onProtected }: ProtectPanelProps) {
-  const { sources, pages, annotations, docAnnotations, assets, setBusy } = useStore()
+  const { sources, pages, docAnnotations, assets, setBusy } = useStore()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [visible, setVisible] = useState(false)
@@ -44,7 +44,7 @@ export function ProtectPanel({ baseName, onClose, onError, onProtected }: Protec
     try {
       setWorking(true)
       setBusy(true, 'Protecting…')
-      const assembled = await buildPdf(sources, pages, { annotations, docAnnotations, assets })
+      const assembled = await buildPdf(sources, pages, { docAnnotations, assets })
       const protectedBytes = await protectPdf(assembled, password)
       onProtected(protectedBytes, `${baseName}_protected.pdf`)
     } catch (err) {

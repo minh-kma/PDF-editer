@@ -1,7 +1,7 @@
 # PDFdemo — Feature Roadmap
 
 Client-side PDF toolkit. All processing runs in the browser. No backend,
-no database, no file uploads. Funded by ads (see decisions.md D12).
+no database, no file uploads. Ad-funded (decisions.md D12).
 
 ## Group 1: Organize
 
@@ -18,50 +18,42 @@ no database, no file uploads. Funded by ads (see decisions.md D12).
 | Feature | Status | Notes |
 |---|---|---|
 | Compress | Built | |
-| OCR | Logic complete (recognition + write-back), no UI yet (D19) | `src/features/optimize/ocr/`: `ocrWorker.ts` + `ocrDocument.ts` (recognition, per-page skip, word bboxes) and `bakeOcrTextLayer.ts` (write-back — invisible searchable text layer via pdf-lib). Verified: recognized pages become genuinely searchable, skipped pages untouched, page count/dimensions preserved. Only remaining work: ToolGrid/Toolbar entry, a "Run OCR" trigger chaining `ocrDocument()` → `bakeOcrTextLayer()`, and a progress bar. |
+| OCR | Recognition built, no UI yet (D19) | `src/features/optimize/ocr/`: `ocrWorker.ts` (Tesseract Web Worker, per-language worker cache) + `ocrDocument.ts` (per-page pipeline). Skips pages that already have text via `hasTextLayer` (≥20 non-whitespace chars from pdf.js `getTextContent`). Word bboxes normalized 0..1, reusing the `Rect` type — ready for the write-back into an invisible searchable layer, which is a separate, not-started sub-task. Progress contract: skipped pages fire `onProgress` once (`'skipped'`), recognized pages twice (`'recognizing'`, then `'done'`) — confirm this matches expectations before building a progress UI on it. Language models from Tesseract's CDN (D7); worker/wasm engine assets self-hosted via Vite `?url`. Verified 4/4 by a temporary script (text-page skip, recognition accuracy, worker cache hit, progress counts). `shared/lib/pdfjs.ts` changes were additive only (`getTextContent`, `renderPageForOcr`). |
 
 ## Group 3: Edit
 
-Toolbar tools (shared annotation infrastructure):
+**Annotate is dropped and deleted, not deferred (R3, 2026-07-20).** Its
+nine sub-tools — Shapes, Eraser, Highlight, Add text, Note, Draw, Image,
+Sign, Text highlight — are out of scope; don't treat them as planned.
+`features/edit/annotate/`, the per-page `Annotation` type and its half of
+the bake pipeline no longer exist. Watermark and Page numbers are
+unaffected.
 
 | Tool | Status | Notes |
 |---|---|---|
-| Undo / Redo | Built | Keyboard-only (Ctrl+Z / Ctrl+Shift+Z), no toolbar buttons yet. Works for Organize actions today; already wired for annotation actions too, pending authoring UI below. |
-| Add text | Data model + bake pipeline built, no authoring UI | Font, size, color pickers |
-| Edit text | Logic built, no UI yet (D19) | `src/features/edit/edit-text/editText.ts`: `extractEditableText` (read-only, per-run text + rect + font size via pdf.js) and `applyTextEdits` (draws an opaque white cover + new text on top, reusing Eraser's cover technique and Add-text's font loading from `annotationBake.ts`). Confirmed design: visual-only, same as Eraser (D5) — original text is NOT removed from the content stream and remains extractable; `EDIT_TEXT_DISCLOSURE` exported for a future UI. Verified: new text present after edit, old text also still present (expected, not a bug), page count/dimensions unchanged, new text uses normal (non-invisible) rendering. Only remaining work: click-to-edit overlay UI. |
-| Sign | Data model + bake pipeline built, no authoring UI | Typed (font suggestions), drawn, or uploaded image. Not digital signature. |
-| Draw | Data model + bake pipeline built, no authoring UI | Freehand |
-| Shapes | Data model + bake pipeline built, no authoring UI | Line / Arrow / Box / Circle — grouped dropdown |
-| Eraser | Data model + bake pipeline built, no authoring UI | White box overlay (visual only, does not remove underlying data) |
-| Highlight | Data model + bake pipeline built, no authoring UI | Arbitrary region |
-| Text highlight | Data model + bake pipeline built, no authoring UI | Existing text via pdf.js text layer |
-| Image | Data model + bake pipeline built, no authoring UI | Insert image |
-| Note | Data model + bake pipeline built, no authoring UI | Sticky note |
-
-Page-level tools:
-
-| Tool | Status | Notes |
-|---|---|---|
+| Undo / Redo | Built | Keyboard only (Ctrl+Z / Ctrl+Shift+Z), no toolbar buttons yet. Undoable slice: pages + document marks. |
 | Rotate | Built | |
-| Add page numbers | Data model + bake pipeline built, no authoring UI | Position, font, format |
-| Add watermark | Data model + bake pipeline built, no authoring UI | Text or image |
-| Crop | Logic complete, no UI yet (D19) | `src/features/edit/crop/cropPages.ts` (95 lines): `setCropBox` per page, degenerate-rect/no-overlap validation, per-page applied/failed results. |
-| PDF Forms | Logic complete, no UI yet (D19) | `src/features/edit/forms/formFields.ts`: `extractFormFields`/`fillFormFields` (read/fill existing AcroForm fields) plus `createFormFields` (new text field, checkbox, radio, list box, combo box) — both halves of D10 done. |
+| Add watermark | Built | `features/edit/doc-marks/WatermarkPanel.tsx` — modal panel (Split/Protect pattern), text or image, colour/size/angle/opacity, page range, live page-1 preview. Baked by `annotationBake.ts`. |
+| Add page numbers | Built | `features/edit/doc-marks/PageNumbersPanel.tsx` — twin of the above: `{n}`/`{total}` format, corner, margin, size, colour, page range, live preview. |
+| Edit text | Not started | pdf.js extract → inline edit → pdf-lib write-back (D6). Logic-first candidate (D19). |
+| Crop | Not started | pdf-lib `setCropBox`. Logic-first candidate (D19). |
+| PDF Forms | Not started | Fill existing forms; if none, allow creating text field, checkbox, radio, list box, combo box (D10). |
 
 ## Group 4: Security
 
 | Feature | Status | Notes |
 |---|---|---|
-| Unlock existing password (prompt-before-proceeding) | Built | qpdf-wasm decrypt only. `pdfUnlock.ts`, `PasswordPrompt.tsx`, wired in `App.tsx`. |
-| Protect PDF (create new password) | Logic built, no UI yet (D19) | `src/features/security/protect/protectPdf.ts`. AES-256 via qpdf-wasm, owner password set equal to user password (single secret — see decisions.md D8 addendum). Verified via a temporary round-trip script, 8/8 checks passed. No `ToolGrid`/`Toolbar`/`App.tsx` changes yet. |
+| Unlock existing password | Built | qpdf-wasm decrypt only. `pdfUnlock.ts`, `PasswordPrompt.tsx`, wired in `App.tsx`. |
+| Protect PDF (new password) | Logic built, no UI yet (D19) | `src/features/security/protect/protectPdf.ts` — AES-256 via qpdf-wasm, owner password set equal to the user password (D8). Mirrors `pdfUnlock.ts`'s scaffolding (dynamic import, fresh module instance per call, virtual FS). Verified 8/8 by a temporary round-trip script. No `ToolGrid`/`Toolbar`/`App.tsx` changes yet. |
 
 Cross-feature: opening a password-protected file in any tool must prompt
-for the password before proceeding.
+for the password first.
 
 ## Out of scope
 
-- Office ↔ PDF conversion (Word/Excel/PowerPoint)
-- Redact
+- Office ↔ PDF conversion (Word/Excel/PowerPoint) — D4
+- Redact — D5
+- Annotate, all nine sub-tools — R3
 - Digital signatures (PKI), mobile QR signing, request-others-to-sign
 - User accounts, paid tiers, usage limits
 
@@ -69,30 +61,22 @@ for the password before proceeding.
 
 - Autosave in-progress edits to IndexedDB; recover after reload
 - beforeunload warning for unsaved changes
-- Consistent hover animation on all enabled buttons, EXCEPT small/icon-only/
-  compact controls (rotate/delete on a thumbnail, zoom +/-, modal close,
-  sidebar thumbnails, menu items), which use color-only hover — no scale/
-  transform, which reads oddly at that size. `.btn-motion` (scale) for
-  labeled buttons, `.icon-btn` (color-only) for icon-only ones — see
-  index.css.
-- Long-running operations (OCR, compress) must run off the main thread
-  and show per-item progress
+- Consistent hover animation on all enabled buttons
+- Long-running operations (OCR, compress) run off the main thread with
+  per-item progress
 
 ## Known gaps
 
-- `toolCatalog.ts`'s `TOOL_CATEGORIES` (consumed by the persistent bar's
-  `MegaMenu.tsx`) only lists Organize + Optimize categories — Edit and
-  Security have zero user-facing entry points, even for Rotate/Unlock which
-  are otherwise fully built. Intentional for now — UI wiring is deferred to
-  a dedicated pass per D19.
-- The Edit group is backend-complete, UI-absent for its annotation tools:
-  data model (D11 discriminated union), undo/redo wiring, and the bake
-  pipeline (`annotationBake.ts`) are all done, but no component anywhere
-  creates an `Annotation`/`DocAnnotation` — no toolbar buttons, no canvas
-  overlay, no pickers. Per D19 this authoring-UI investment is
-  deliberately deferred until the logic-first batch (Crop, PDF Forms) is
-  done.
-- Logic-first batch progress (D19): all done — Protect PDF, OCR
-  (recognition + write-back), Edit text, PDF Forms (read/fill + create
-  fields), and Crop (`setCropBox`). Nothing logic-side remains; only UI
-  wiring is left for the whole batch.
+- D19 batch: Protect PDF and OCR recognition done. Remaining, all
+  logic-only with no UI entry point: Crop, PDF Forms, Edit text, OCR
+  write-back.
+
+## UI notes
+
+- Tool discovery is the AppBar's "All tools" mega-menu
+  (`shared/components/MegaMenu.tsx`, driven by
+  `shared/lib/toolCatalog.ts`): a fixed 4-column layout — Organize PDF,
+  Optimize PDF, Edit PDF, Security, in that order — so a short category
+  never wraps under a taller one. Drops to 2 columns below the `sm`
+  breakpoint. Edit PDF holds only Watermark and Page numbers (R3); don't
+  pad it out.

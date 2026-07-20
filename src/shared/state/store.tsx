@@ -8,7 +8,6 @@ import {
 } from 'react'
 import { produce } from 'immer'
 import type {
-  Annotation,
   AppState,
   Asset,
   AssetMap,
@@ -31,7 +30,6 @@ const HISTORY_LIMIT = 50
 export const initialState: AppState = {
   sources: [],
   pages: [],
-  annotations: {},
   docAnnotations: [],
   assets: {},
   past: [],
@@ -46,9 +44,6 @@ type Action =
   | { type: 'ROTATE_PAGE'; pageId: string; delta: number }
   | { type: 'ROTATE_ALL'; delta: number }
   | { type: 'REORDER'; pages: PageItem[] }
-  | { type: 'ADD_ANNOTATION'; pageId: string; annotation: Annotation }
-  | { type: 'UPDATE_ANNOTATION'; pageId: string; annotation: Annotation }
-  | { type: 'DELETE_ANNOTATION'; pageId: string; id: string }
   | { type: 'ADD_DOC_ANNOTATION'; annotation: DocAnnotation }
   | { type: 'UPDATE_DOC_ANNOTATION'; annotation: DocAnnotation }
   | { type: 'DELETE_DOC_ANNOTATION'; id: string }
@@ -58,7 +53,6 @@ type Action =
       type: 'RESTORE'
       sources: SourceDoc[]
       pages: PageItem[]
-      annotations?: Record<string, Annotation[]>
       docAnnotations?: DocAnnotation[]
       assets?: AssetMap
     }
@@ -66,7 +60,7 @@ type Action =
   | { type: 'UNDO' }
   | { type: 'REDO' }
 
-// Actions that create an undo step (the whole edit slice: pages + annotations).
+// Actions that create an undo step (the whole edit slice: pages + doc marks).
 // ADD_ASSET is deliberately absent — assets are append-only and referenced by
 // id, so they never need to be rolled back.
 const UNDOABLE = new Set<Action['type']>([
@@ -75,9 +69,6 @@ const UNDOABLE = new Set<Action['type']>([
   'ROTATE_PAGE',
   'ROTATE_ALL',
   'REORDER',
-  'ADD_ANNOTATION',
-  'UPDATE_ANNOTATION',
-  'DELETE_ANNOTATION',
   'ADD_DOC_ANNOTATION',
   'UPDATE_DOC_ANNOTATION',
   'DELETE_DOC_ANNOTATION',
@@ -90,7 +81,7 @@ function normalizeRotation(deg: number): number {
 function editSlice(s: AppState): EditSnapshot {
   // Cheap thanks to immer structural sharing: unchanged nested objects/arrays
   // keep their references, so a snapshot is just a few pointers.
-  return { pages: s.pages, annotations: s.annotations, docAnnotations: s.docAnnotations }
+  return { pages: s.pages, docAnnotations: s.docAnnotations }
 }
 
 // Core state transitions (no history bookkeeping — that's the wrapper's job).
@@ -102,7 +93,6 @@ const coreReducer = produce((draft: AppState, action: Action) => {
       break
     case 'DELETE_PAGE':
       draft.pages = draft.pages.filter((p) => p.id !== action.pageId)
-      delete draft.annotations[action.pageId]
       // Sources are retained (undo/redo of a delete needs the bytes back);
       // orphaned sources are ignored by loadSources and cleared on RESET.
       break
@@ -117,22 +107,6 @@ const coreReducer = produce((draft: AppState, action: Action) => {
     case 'REORDER':
       draft.pages = action.pages
       break
-    case 'ADD_ANNOTATION':
-      ;(draft.annotations[action.pageId] ??= []).push(action.annotation)
-      break
-    case 'UPDATE_ANNOTATION': {
-      const list = draft.annotations[action.pageId]
-      if (list) {
-        const i = list.findIndex((a) => a.id === action.annotation.id)
-        if (i >= 0) list[i] = action.annotation
-      }
-      break
-    }
-    case 'DELETE_ANNOTATION': {
-      const list = draft.annotations[action.pageId]
-      if (list) draft.annotations[action.pageId] = list.filter((a) => a.id !== action.id)
-      break
-    }
     case 'ADD_DOC_ANNOTATION':
       draft.docAnnotations.push(action.annotation)
       break
@@ -158,7 +132,6 @@ const coreReducer = produce((draft: AppState, action: Action) => {
         ...initialState,
         sources: action.sources,
         pages: action.pages,
-        annotations: action.annotations ?? {},
         docAnnotations: action.docAnnotations ?? [],
         assets: action.assets ?? {},
       }
@@ -219,9 +192,6 @@ interface StoreValue extends AppState {
   rotatePage: (pageId: string, delta: number) => void
   rotateAll: (delta: number) => void
   reorder: (pages: PageItem[]) => void
-  addAnnotation: (pageId: string, annotation: Annotation) => void
-  updateAnnotation: (pageId: string, annotation: Annotation) => void
-  deleteAnnotation: (pageId: string, id: string) => void
   addDocAnnotation: (annotation: DocAnnotation) => void
   updateDocAnnotation: (annotation: DocAnnotation) => void
   deleteDocAnnotation: (id: string) => void
@@ -231,7 +201,6 @@ interface StoreValue extends AppState {
   restore: (
     sources: SourceDoc[],
     pages: PageItem[],
-    annotations?: Record<string, Annotation[]>,
     docAnnotations?: DocAnnotation[],
     assets?: AssetMap,
   ) => void
@@ -266,10 +235,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       rotatePage: (pageId, delta) => dispatch({ type: 'ROTATE_PAGE', pageId, delta }),
       rotateAll: (delta) => dispatch({ type: 'ROTATE_ALL', delta }),
       reorder: (pages) => dispatch({ type: 'REORDER', pages }),
-      addAnnotation: (pageId, annotation) => dispatch({ type: 'ADD_ANNOTATION', pageId, annotation }),
-      updateAnnotation: (pageId, annotation) =>
-        dispatch({ type: 'UPDATE_ANNOTATION', pageId, annotation }),
-      deleteAnnotation: (pageId, id) => dispatch({ type: 'DELETE_ANNOTATION', pageId, id }),
       addDocAnnotation: (annotation) => dispatch({ type: 'ADD_DOC_ANNOTATION', annotation }),
       updateDocAnnotation: (annotation) => dispatch({ type: 'UPDATE_DOC_ANNOTATION', annotation }),
       deleteDocAnnotation: (id) => dispatch({ type: 'DELETE_DOC_ANNOTATION', id }),
@@ -281,8 +246,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return hash
       },
       reset: () => dispatch({ type: 'RESET' }),
-      restore: (sources, pages, annotations, docAnnotations, assets) =>
-        dispatch({ type: 'RESTORE', sources, pages, annotations, docAnnotations, assets }),
+      restore: (sources, pages, docAnnotations, assets) =>
+        dispatch({ type: 'RESTORE', sources, pages, docAnnotations, assets }),
       setBusy: (busy, message) => dispatch({ type: 'SET_BUSY', busy, message }),
       undo: () => dispatch({ type: 'UNDO' }),
       redo: () => dispatch({ type: 'REDO' }),
