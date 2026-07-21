@@ -9,7 +9,7 @@
 // bundled as static, same-origin assets via Vite's `?url` import, never a
 // CDN, so the app stays offline-capable. Per-language `.traineddata` files
 // are the one deliberate exception — those come from Tesseract's default CDN
-// on first use (see OCR_SPEED_DISCLOSURE in ocrDocument.ts); bundling every
+// on first use (see the `ocr:disclosure` locale string); bundling every
 // possible language locally isn't practical, and D7 explicitly allows this
 // one network path.
 import { createWorker, type Worker as TesseractWorker } from 'tesseract.js'

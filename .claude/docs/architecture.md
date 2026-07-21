@@ -29,11 +29,14 @@ src/
 
   shared/            Cross-cutting code used by more than one feature
     components/      Reusable UI: Modal, Toast, icons, DropZone, Header,
-                     PreviewModal, RecoverBanner, BusyOverlay
+                     PreviewModal, RecoverBanner, BusyOverlay,
+                     LanguageSwitcher, DocMarksOverlay
     lib/             Helpers: download, format, pdfjs (render), thumbnails,
                      storage (IndexedDB), pdfCore (shared pdf-lib primitives)
     state/           App store (store.tsx: useReducer + context) and
                      data types (types.ts: SourceDoc, PageItem, AppState)
+    i18n/            i18next setup (index.ts), key typing (i18next.d.ts) and
+                     locales/<lang>/<namespace>.json — see below
 ```
 
 ## The `features/<group>/<module>/` convention
@@ -138,6 +141,33 @@ group that doesn't literally match their roadmap group — intentionally:
 When reading the roadmap against the folder tree, expect this. New features
 should follow the same principle: co-locate by what shares code, not by
 product-group name.
+
+## Translations live in `shared/i18n/`, not beside each feature
+
+Locale files are **centralised** under `shared/i18n/locales/<lang>/`, with one
+namespace per feature area (`common`, `appbar`, `landing`, `workspace`,
+`split`, `compress`, `ocr`, `protect`, `docMarks`, `imagesToPdf`, `errors`).
+
+This deliberately does not mirror `features/<group>/<module>/`, and the reason
+is the dependency direction above: the i18next singleton must know every
+namespace at init, so co-locating would force `shared/i18n/index.ts` to import
+from `features/…`. Features import from shared, never the reverse — honouring
+the folder convention on the surface would break the rule it exists to
+protect. The namespace names still map onto the module folders, so a string's
+home stays predictable from where its UI lives.
+
+Two rules that follow from this:
+
+- **Components never hard-code display text.** `useTranslation(ns)` then
+  `t('key')`; use `<Trans>` where a sentence contains inline markup, so word
+  order stays translatable.
+- **Logic modules never import i18n** — `compressWorker.ts` and `ocrWorker.ts`
+  run in Workers with no React context, and logic stays UI-free (D19). They
+  throw English `Error`s as diagnostics; the UI maps them to translated
+  messages at the boundary (see `ProtectPanel`'s typed-error mapping).
+
+`i18next.d.ts` types `t()` against the English resources, so a typo or a key
+present in only one language fails `npx tsc --noEmit`.
 
 ## State & data flow
 

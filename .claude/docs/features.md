@@ -71,12 +71,24 @@ for the password first.
 - Consistent hover animation on all enabled buttons
 - Long-running operations (OCR, compress) run off the main thread with
   per-item progress
+- Every UI string is bilingual (English/Vietnamese) via `t()`; the
+  language switcher sits in the AppBar and the choice persists in
+  localStorage (D23)
 
 ## Known gaps
 
 - D19 batch: Protect PDF and OCR recognition done. Remaining, all
   logic-only with no UI entry point: Crop, PDF Forms, Edit text, OCR
   write-back.
+- **The Vietnamese copy is a Claude-drafted first pass and has not been
+  reviewed by a native speaker.** All ~400 strings need a tone/naturalness
+  check by the product owner before the bilingual UI counts as done
+  (D23) — particularly tool names, which are sometimes conventionally
+  left in English in Vietnamese software.
+- `EDIT_TEXT_DISCLOSURE` in `features/edit/edit-text/editText.ts` is the
+  only user-facing string still hard-coded in English, deliberately: Edit
+  text has no UI yet, so there is nothing rendering it. Move it into an
+  `editText` locale namespace when that UI is built.
 
 ## UI notes
 

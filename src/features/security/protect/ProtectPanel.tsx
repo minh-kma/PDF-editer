@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Modal } from '../../../shared/components/Modal'
 import { useStore } from '../../../shared/state/store'
 import { buildPdf } from '../../page-management/workspace/buildPdf'
-import { protectPdf } from './protectPdf'
+import { protectPdf, AlreadyEncryptedError, EmptyPasswordError } from './protectPdf'
 import { ShieldIcon, EyeIcon, EyeOffIcon, LockIcon } from '../../../shared/components/icons'
 
 interface ProtectPanelProps {
@@ -28,7 +28,7 @@ interface ProtectPanelProps {
  * either form has on its own.
  */
 export function ProtectPanel({ baseName, onClose, onError, onProtected }: ProtectPanelProps) {
-  const { t } = useTranslation(['protect', 'common'])
+  const { t } = useTranslation(['protect', 'common', 'errors'])
   const { sources, pages, docAnnotations, assets, setBusy } = useStore()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -49,9 +49,17 @@ export function ProtectPanel({ baseName, onClose, onError, onProtected }: Protec
       const assembled = await buildPdf(sources, pages, { docAnnotations, assets })
       const protectedBytes = await protectPdf(assembled, password)
       onProtected(protectedBytes, `${baseName}_protected.pdf`)
-    } catch {
-      // Logic-layer errors stay English as diagnostics; show a translated one.
-      onError(t('panel.failed'))
+    } catch (err) {
+      // The typed error classes are the contract; their English messages are
+      // developer diagnostics, so map each to a translated one here rather
+      // than rendering err.message.
+      onError(
+        err instanceof AlreadyEncryptedError
+          ? t('errors:alreadyEncrypted')
+          : err instanceof EmptyPasswordError
+            ? t('errors:emptyPassword')
+            : t('panel.failed'),
+      )
     } finally {
       setWorking(false)
       setBusy(false)

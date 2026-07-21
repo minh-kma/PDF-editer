@@ -19,7 +19,14 @@ import { getPageCount, getPageTextRuns, forgetDoc } from '../../../shared/lib/pd
 /**
  * Shown to the user before an edit is applied (decision D6's disclosure
  * requirement) — a plain string for a future dialog/banner to render; no UI
- * is built here. Mirrors OCR_SPEED_DISCLOSURE's phrasing pattern.
+ * is built here.
+ *
+ * i18n: this is the one piece of user-facing copy still hard-coded in English,
+ * deliberately. Edit text has no UI yet (D19), so there is nothing rendering
+ * it and no `editText` namespace to put it in — creating a one-key namespace
+ * for a string with no consumer would be speculative. When the UI is built,
+ * move this text into `shared/i18n/locales/<lang>/editText.json` and render it
+ * with `t()`, exactly as OCR's disclosure was handled.
  */
 export const EDIT_TEXT_DISCLOSURE =
   "Editing text covers the original with your new text — it doesn't erase what was underneath, so the old text may still be found by anyone who inspects the file closely (same as our Eraser tool). The replacement font may not exactly match the original, and longer text can shift the layout."

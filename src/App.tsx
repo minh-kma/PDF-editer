@@ -70,7 +70,7 @@ type MainMode =
 const RECOVER_MAX_AGE_MS = 5 * 60 * 1000
 
 export default function App() {
-  const { t } = useTranslation('landing')
+  const { t } = useTranslation(['landing', 'errors'])
   const store = useStore()
   const {
     sources,
@@ -193,7 +193,7 @@ export default function App() {
           return await decryptPdf(bytes, pw)
         } catch (err) {
           if (!(err instanceof WrongPasswordError)) {
-            setError(`"${fileName}" could not be unlocked.`)
+            setError(t('errors:couldNotUnlockNamed', { fileName }))
             return null
           }
         }
@@ -220,7 +220,7 @@ export default function App() {
             continue
           }
           setPendingUnlock(null)
-          setError(`"${fileName}" could not be unlocked.`)
+          setError(t('errors:couldNotUnlockNamed', { fileName }))
           return null
         }
       }
@@ -235,16 +235,16 @@ export default function App() {
   const handleUnlockTool = useCallback(
     async (file: File) => {
       try {
-        setBusy(true, 'Reading your file…')
+        setBusy(true, t('errors:busy.reading'))
         const bytes = new Uint8Array(await file.arrayBuffer())
         const probe = await probePdf(bytes)
 
         if (probe.status === 'damaged') {
-          setError(`"${file.name}" couldn't be opened. It may be damaged.`)
+          setError(t('errors:couldNotOpen', { fileName: file.name }))
           return
         }
         if (probe.status === 'ok') {
-          setError(`"${file.name}" isn't password-protected — there's nothing to unlock.`)
+          setError(t('errors:notProtected', { fileName: file.name }))
           return
         }
 
@@ -253,12 +253,13 @@ export default function App() {
         if (!unlocked) return // skipped or failed — unlockFile already surfaced any error
 
         setPreview({
-          title: 'Unlocked PDF',
+          title: t('errors:results.unlocked'),
           bytes: unlocked,
           fileName: `${baseName(file.name)}_unlocked.pdf`,
         })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not unlock this file.')
+        // Logic-layer errors stay English as diagnostics; show a translated one.
+        setError(t('errors:unlockFailed'))
       } finally {
         setBusy(false)
       }
@@ -271,12 +272,12 @@ export default function App() {
     async (files: File[]) => {
       try {
         for (const file of files) {
-          setBusy(true, 'Reading your file…')
+          setBusy(true, t('errors:busy.reading'))
           const bytes = new Uint8Array(await file.arrayBuffer())
           const probe = await probePdf(bytes)
 
           if (probe.status === 'damaged') {
-            setError(`"${file.name}" couldn't be opened. It may be damaged.`)
+            setError(t('errors:couldNotOpen', { fileName: file.name }))
             continue
           }
 
@@ -288,10 +289,10 @@ export default function App() {
             const unlocked = await unlockFile(file.name, bytes)
             if (!unlocked) continue // skipped or failed
             plaintext = unlocked
-            setBusy(true, 'Reading your file…')
+            setBusy(true, t('errors:busy.reading'))
             const after = await probePdf(plaintext)
             if (after.status !== 'ok') {
-              setError(`"${file.name}" couldn't be read after unlocking.`)
+              setError(t('errors:couldNotReadAfterUnlock', { fileName: file.name }))
               continue
             }
             pageCount = after.pageCount
@@ -309,11 +310,12 @@ export default function App() {
   // -- Download (build the assembled PDF, then preview) ----------------------
   const handleDownload = useCallback(async () => {
     try {
-      setBusy(true, 'Preparing your PDF…')
+      setBusy(true, t('errors:busy.preparing'))
       const bytes = await buildPdf(sources, pages, { docAnnotations, assets })
-      setPreview({ title: 'Your PDF is ready', bytes, fileName: outputName() })
+      setPreview({ title: t('errors:results.ready'), bytes, fileName: outputName() })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create the PDF.')
+      // Logic-layer errors stay English as diagnostics; show a translated one.
+      setError(t('errors:buildFailed'))
     } finally {
       setBusy(false)
     }
@@ -500,7 +502,7 @@ export default function App() {
           }}
           onExtracted={(bytes, fileName) => {
             setMainMode({ kind: 'browse' })
-            setPreview({ title: 'Extracted pages', bytes, fileName })
+            setPreview({ title: t('errors:results.extracted'), bytes, fileName })
           }}
         />
       )}
@@ -516,7 +518,7 @@ export default function App() {
           onProtected={(bytes, fileName) => {
             setMainMode({ kind: 'browse' })
             setPreview({
-              title: 'Protected PDF',
+              title: t('errors:results.protected'),
               bytes,
               fileName,
               // The encrypted result can only render in the preview frame as
@@ -529,8 +531,10 @@ export default function App() {
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-500">
                     <LockIcon width={24} height={24} />
                   </span>
-                  <p className="font-bold text-ink">Your PDF is now password-protected.</p>
-                  <p className="text-sm text-ink-soft">Download it below whenever you're ready.</p>
+                  <p className="font-bold text-ink">{t('errors:protectedNotice.title')}</p>
+                  <p className="text-sm text-ink-soft">
+                    {t('errors:protectedNotice.body')}
+                  </p>
                 </div>
               ),
             })
@@ -548,7 +552,7 @@ export default function App() {
           }}
           onDone={(bytes, fileName) => {
             setMainMode({ kind: 'browse' })
-            setPreview({ title: 'Searchable PDF', bytes, fileName })
+            setPreview({ title: t('errors:results.searchable'), bytes, fileName })
           }}
         />
       )}
@@ -563,7 +567,7 @@ export default function App() {
           }}
           onDone={(bytes, fileName, info) => {
             setMainMode({ kind: 'browse' })
-            setPreview({ title: 'Compressed PDF', bytes, fileName, info })
+            setPreview({ title: t('errors:results.compressed'), bytes, fileName, info })
           }}
         />
       )}

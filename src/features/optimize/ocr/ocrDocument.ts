@@ -14,8 +14,9 @@ import { getOcrWorker } from './ocrWorker'
  * requirement) — a plain string for a future banner/dialog to render; no UI
  * is built here.
  */
-export const OCR_SPEED_DISCLOSURE =
-  "OCR runs entirely on your device, which is slower and less accurate than cloud-based OCR services — recognizing a large document can take a while. Your file never leaves your browser."
+// (The disclosure text itself now lives in the locale files as
+// `ocr:disclosure` — OcrPanel renders it from there, so there is no English
+// copy here to drift out of sync.)
 
 /**
  * A page counts as "already has a real text layer" once its pdf.js text

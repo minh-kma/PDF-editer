@@ -74,7 +74,18 @@ npx tsc --noEmit  # typecheck only (use this to verify refactors)
   bigger** — that floor still holds, both per image and per document.
 - The app must keep working fully offline-capable/static — no runtime
   dependencies on external services.
-- User-facing copy is plain, friendly, non-technical English.
+- User-facing copy is plain, friendly and non-technical, in **both English
+  and Vietnamese**. Every UI string goes through `t()` — never hard-code
+  display text in a component. Strings live in
+  `src/shared/i18n/locales/<lang>/<namespace>.json`, bundled statically
+  (no translation service, no runtime fetch).
+- **Logic modules never import i18n.** Workers have no React context, and
+  logic stays UI-free. They throw English `Error`s as developer
+  diagnostics; the UI catches them and shows a translated message. Never
+  render `err.message` to the user.
+- Never translate the **PDFdemo** brand, user-authored content (watermark
+  text, uploaded file names), or the `_edited`/`_compressed`/`_ocr`
+  filename suffixes.
 
 ## Additional Documentation
 

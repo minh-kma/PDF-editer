@@ -1,0 +1,27 @@
+{
+  "busy": {
+    "reading": "Đang đọc file của bạn…",
+    "preparing": "Đang chuẩn bị file PDF…"
+  },
+  "results": {
+    "unlocked": "File PDF đã mở khóa",
+    "ready": "File PDF của bạn đã sẵn sàng",
+    "extracted": "Các trang đã trích xuất",
+    "protected": "File PDF đã được bảo vệ",
+    "searchable": "File PDF tìm kiếm được",
+    "compressed": "File PDF đã nén"
+  },
+  "protectedNotice": {
+    "title": "File PDF của bạn đã được bảo vệ bằng mật khẩu.",
+    "body": "Bạn có thể tải xuống bên dưới bất cứ lúc nào."
+  },
+  "couldNotUnlockNamed": "Không thể mở khóa \"{{fileName}}\".",
+  "couldNotOpen": "Không thể mở \"{{fileName}}\". File có thể đã bị hỏng.",
+  "notProtected": "\"{{fileName}}\" không được đặt mật khẩu — không có gì để mở khóa.",
+  "couldNotReadAfterUnlock": "Không thể đọc \"{{fileName}}\" sau khi mở khóa.",
+  "unlockFailed": "Không thể mở khóa file này.",
+  "buildFailed": "Không thể tạo file PDF.",
+  "wrongPassword": "Mật khẩu không đúng.",
+  "emptyPassword": "Vui lòng nhập mật khẩu.",
+  "alreadyEncrypted": "File PDF này đã được đặt mật khẩu."
+}

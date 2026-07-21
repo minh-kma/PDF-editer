@@ -14,6 +14,7 @@ import ocr from './ocr.json'
 import protect from './protect.json'
 import docMarks from './docMarks.json'
 import imagesToPdf from './imagesToPdf.json'
+import errors from './errors.json'
 
 export default {
   common,
@@ -26,4 +27,5 @@ export default {
   protect,
   docMarks,
   imagesToPdf,
+  errors,
 }

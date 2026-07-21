@@ -169,6 +169,54 @@ the widest page that references it", which is near-exact for scans and
 under-estimates DPI for small logos, i.e. it errs toward downsampling
 less. Verified against pdf-lib 1.17.1 under plain Node per D20.
 
+**D23. Bilingual UI (English/Vietnamese) via react-i18next, fully
+bundled.** `i18next` + `react-i18next` +
+`i18next-browser-languagedetector`, initialised in `shared/i18n/index.ts`
+and imported for side effects in `main.tsx` — no provider and no Suspense
+boundary, because resources are static imports and therefore synchronous.
+**No `i18next-http-backend` and no CDN**: locale data is bundled like
+every other asset, so the app stays offline-capable (verified in `dist/`:
+Vietnamese strings are inlined in the main chunk, with no separate locale
+chunk and no `loadPath` reference).
+
+Detection is `localStorage` → `navigator`, key `pdfdemo:lang` (matching
+storage.ts's convention), cached back to localStorage so an explicit
+toggle beats the browser locale on later visits. `load: 'languageOnly'`
+maps any `vi-*` tag onto `vi`; anything unsupported falls back to `en`.
+The key is deliberately in localStorage rather than the IndexedDB session
+store, so the preference survives "Start over" and `clearSession()`.
+
+Locale files are centralised in `shared/i18n/locales/<lang>/` as 11
+namespaces mirroring the feature modules, NOT co-located with each
+feature — co-location would force `shared/` to import from `features/`,
+inverting the module dependency direction (see architecture.md).
+`i18next.d.ts` types `t()` against the English resources so missing or
+misspelled keys fail the typecheck; this caught a real error during
+implementation (a namespace-scoped `t` cannot take a `ns:key` prefix —
+request the array form instead).
+
+Logic modules never import i18n (Workers have no React context; D19 keeps
+logic UI-free). They throw English `Error`s as developer diagnostics, and
+the UI maps them to translated messages — **`err.message` is never
+rendered to the user any more**, which was the practice throughout
+`App.tsx` before this change. Typed error classes
+(`WrongPasswordError`, `AlreadyEncryptedError`, `EmptyPasswordError`)
+remain the contract and are mapped by class at the UI boundary.
+
+Never translated: the **PDFdemo** brand, user-authored content (watermark
+text, uploaded file names), and generated filename suffixes
+(`_edited`, `_compressed`, …), which stay ASCII English by product
+decision. One deliberate exception sits on that boundary: Page numbers'
+third *Style* option is not a UI label — the picked string is stored on
+the `DocAnnotation` and printed into the output PDF — so it follows the
+UI language (`Trang {n} / {total}` in Vietnamese) and is then stored
+verbatim, never re-translated. The `{n}`/`{total}` tokens are safe
+because i18next interpolates `{{…}}`, not single braces.
+
+Implemented in three sequential passes (plumbing + shared components →
+tool panels → errors/toasts/docs) so a wrong convention couldn't be
+replicated across 35 files before review.
+
 ## Reversals
 
 **R1. Edit Text was dropped, then reinstated.** See D6 — assessment
