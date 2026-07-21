@@ -276,3 +276,24 @@ export const GlobeIcon = (p: IconProps) => (
     <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18Z" />
   </svg>
 )
+
+/**
+ * PDFChill brand mark: a deep-teal badge carrying the two-stroke wave.
+ * Unlike the icons above this one is self-coloured (it *is* the logo), so it
+ * ignores `currentColor` and the shared stroke `base`. Geometry and colours
+ * are traced from reference_photos/pdfchill-logo.pdf — the upper wave is the
+ * same sand as the lower one, drawn at reduced opacity.
+ */
+export const LogoMark = (p: IconProps) => (
+  <svg width={36} height={36} viewBox="0 0 40 40" fill="none" {...p}>
+    <circle cx="20" cy="20" r="20" fill="#006c76" />
+    <g stroke="#ebddb9" strokeWidth="2.8" strokeLinecap="round" fill="none">
+      {/* Upper stroke is the same sand at reduced opacity, as in the spec. */}
+      <path
+        d="M7.99 16.8C11.27 22.17 15.28 22.17 20 16.8C24.65 11.43 28.66 11.43 32.02 16.8"
+        opacity="0.5"
+      />
+      <path d="M7.99 23.2C11.27 28.57 15.28 28.57 20 23.2C24.65 17.83 28.66 17.83 32.02 23.2" />
+    </g>
+  </svg>
+)

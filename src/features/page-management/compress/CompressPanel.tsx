@@ -89,7 +89,7 @@ export function CompressPanel({ baseName, onClose, onError, onDone }: CompressPa
           : t('detailRecompressed', { count: result.replaced, level: levelLabel })
 
       const info = (
-        <div className="rounded-xl bg-cream-soft p-3 text-sm">
+        <div className="rounded-xl bg-surface-soft p-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-ink-soft">{t('before')}</span>
             <span className="font-bold text-ink">{formatBytes(baseline.length)}</span>

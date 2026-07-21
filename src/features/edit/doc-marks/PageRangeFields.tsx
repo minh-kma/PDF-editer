@@ -28,7 +28,7 @@ export function PageRangeFields({ total, value, onChange }: PageRangeFieldsProps
     <div className="mt-4">
       <p className="text-sm font-bold text-ink">Apply to</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1 rounded-lg bg-cream-soft p-1">
+        <div className="flex items-center gap-1 rounded-lg bg-surface-soft p-1">
           <button
             type="button"
             onClick={() => onChange({ ...value, mode: 'all' })}

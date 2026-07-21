@@ -107,7 +107,7 @@ export function ExtractPanel({ baseName, onClose, onError, onExtracted }: Extrac
         <Trans
           i18nKey="extract.example"
           ns="split"
-          components={[<code className="rounded bg-cream-soft px-1" key="code" />]}
+          components={[<code className="rounded bg-surface-soft px-1" key="code" />]}
         />
       </p>
 
@@ -124,7 +124,7 @@ export function ExtractPanel({ baseName, onClose, onError, onExtracted }: Extrac
         className="mt-1 w-full rounded-xl border border-brand-100 bg-white px-3 py-2.5 font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
       />
 
-      <div className="mt-4 rounded-xl bg-cream-soft p-3">
+      <div className="mt-4 rounded-xl bg-surface-soft p-3">
         <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-ink">
           <ExpandIcon width={16} height={16} className="text-brand-500" />
           {selection.length > 0

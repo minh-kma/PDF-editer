@@ -217,6 +217,36 @@ Implemented in three sequential passes (plumbing + shared components →
 tool panels → errors/toasts/docs) so a wrong convention couldn't be
 replicated across 35 files before review.
 
+**D24. The app is PDFChill, and every colour comes from three Tailwind
+theme tokens (2026-07-21).** The product owner renamed PDFdemo →
+**PDFChill** (one word, that exact casing) and replaced the warm
+coral/cream palette with the teal/blue one specified in
+`reference_photos/pdfchill-logo.pdf` and
+`reference_photos/pdfchill-website-mockup.pdf`.
+
+Colour lives **only** in `tailwind.config.js`, as `brand` (teal 50–900,
+500 = `#006c76`), `surface` (page/card/inset backgrounds; formerly named
+`cream`, renamed because the old name described the old palette) and
+`ink` (text). No component hard-codes a brand colour, and no raw Tailwind
+palette class (`bg-rose-500` and friends) is used for brand intent — the
+only literal colours left in components are `red-*` for errors/destructive
+actions and neutral `#666`/`#888` defaults for *user-authored* annotation
+content, which are not brand colours. Re-theming is therefore a
+one-file edit; keep it that way.
+
+The logo is `LogoMark` in `shared/components/icons.tsx` — an inline SVG
+following the existing hand-drawn-icon convention, but deliberately
+self-coloured rather than `currentColor`, since it *is* the brand mark.
+Its geometry and colours (`#006c76` badge, `#ebddb9` wave, upper stroke
+at reduced opacity) are traced from the vector data in the logo PDF.
+`public/favicon.svg` is the same artwork and must be updated with it.
+
+Two `pdfdemo:` **storage keys were deliberately not renamed**
+(`pdfdemo:session:v2` in `storage.ts`, `pdfdemo:lang` in `i18n/index.ts`).
+They are invisible to users, and renaming them would silently throw away
+every existing user's autosaved session and language preference. Rename
+them only alongside a migration.
+
 ## Reversals
 
 **R1. Edit Text was dropped, then reinstated.** See D6 — assessment

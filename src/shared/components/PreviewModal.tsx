@@ -84,7 +84,7 @@ export function PreviewModal({
     >
       {info && <div className="mb-3">{info}</div>}
       <p className="mb-2 text-sm text-ink-soft">{t('previewIntro')}</p>
-      <div className="relative overflow-hidden rounded-xl border border-black/10 bg-cream-soft">
+      <div className="relative overflow-hidden rounded-xl border border-black/10 bg-surface-soft">
         <iframe
           title={t('pdfPreview')}
           src={url}

@@ -85,7 +85,7 @@ export function ImageCard({ image, position, onRotate, onEnlarge, onRemove }: Im
       <div
         {...attributes}
         {...listeners}
-        className="relative flex aspect-square cursor-grab items-center justify-center overflow-hidden bg-cream-soft active:cursor-grabbing"
+        className="relative flex aspect-square cursor-grab items-center justify-center overflow-hidden bg-surface-soft active:cursor-grabbing"
       >
         <img
           src={image.url}

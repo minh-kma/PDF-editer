@@ -4,6 +4,7 @@ import { MegaMenu } from './MegaMenu'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { TOOL_CATEGORIES, type ToolEntry, type ToolIntent } from '../lib/toolCatalog'
 import {
+  LogoMark,
   ShieldIcon,
   DownloadIcon,
   UndoIcon,
@@ -75,11 +76,9 @@ export function AppBar({
           aria-label={t('logoAria')}
           className="icon-btn flex items-center gap-2.5 rounded-xl hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-brand-500 font-extrabold text-white shadow-soft">
-            P
-          </div>
+          <LogoMark width={36} height={36} className="flex-none" />
           <span className="hidden text-xl font-extrabold tracking-tight text-ink sm:inline">
-            PDF<span className="text-brand-500">demo</span>
+            PDF<span className="text-brand-500">Chill</span>
           </span>
         </button>
 
@@ -116,8 +115,8 @@ export function AppBar({
               the switcher is reachable from the landing screen too. */}
           <LanguageSwitcher disabled={disabled} />
 
-          <div className="hidden items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-sm font-semibold text-ink-soft shadow-soft sm:flex">
-            <ShieldIcon width={16} height={16} className="text-brand-400" />
+          <div className="hidden items-center gap-2 rounded-full bg-brand-100 px-3 py-1.5 text-sm font-semibold text-brand-700 shadow-soft sm:flex">
+            <ShieldIcon width={16} height={16} className="text-brand-600" />
             {t('inBrowser')}
           </div>
 

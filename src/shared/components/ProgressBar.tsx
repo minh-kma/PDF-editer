@@ -15,7 +15,7 @@ export function ProgressBar({ value, max, className }: ProgressBarProps) {
       aria-valuenow={pct}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={`h-2.5 w-full overflow-hidden rounded-full bg-cream-soft ${className ?? ''}`}
+      className={`h-2.5 w-full overflow-hidden rounded-full bg-surface-soft ${className ?? ''}`}
     >
       <div
         className="h-full rounded-full bg-brand-500 transition-[width] duration-200 ease-out"

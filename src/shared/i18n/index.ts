@@ -49,8 +49,8 @@ function syncDocumentLanguage(language: string) {
   document.documentElement.lang = language
   document.title =
     language === 'vi'
-      ? 'PDFdemo — Trình chỉnh sửa PDF miễn phí, riêng tư, ngay trong trình duyệt'
-      : 'PDFdemo — Free, private, in-browser PDF editor'
+      ? 'PDFChill — Trình chỉnh sửa PDF miễn phí, riêng tư, ngay trong trình duyệt'
+      : 'PDFChill — Free, private, in-browser PDF editor'
 }
 
 syncDocumentLanguage(i18n.language)

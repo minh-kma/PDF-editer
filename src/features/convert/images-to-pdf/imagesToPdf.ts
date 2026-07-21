@@ -160,7 +160,7 @@ export async function imagesToPdf(
     for (const image of images) {
       addImagePage(doc, await embedImage(doc, image), image.rotation, options)
     }
-    return [{ name: 'PDFdemo_images.pdf', bytes: await doc.save() }]
+    return [{ name: 'PDFChill_images.pdf', bytes: await doc.save() }]
   }
 
   // One PDF per image. Two images can share a base name ("scan.jpg" and

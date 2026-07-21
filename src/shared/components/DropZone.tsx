@@ -87,10 +87,10 @@ export function DropZone({ onFiles, variant = 'hero', disabled }: DropZoneProps)
         className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
           dragging
             ? 'border-brand-400 bg-brand-50'
-            : 'border-brand-200 bg-cream-soft hover:border-brand-300 hover:bg-brand-50'
+            : 'border-brand-300 bg-brand-100 hover:border-brand-400 hover:bg-brand-200'
         }`}
       >
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-500">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-200 text-brand-600">
           <UploadIcon width={30} height={30} />
         </div>
         <p className="text-lg font-extrabold text-ink">{t('dropTitle')}</p>

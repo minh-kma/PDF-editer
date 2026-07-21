@@ -186,10 +186,10 @@ function SidebarThumb({
       className={`icon-btn flex w-full flex-col items-center gap-1 rounded-lg border-2 p-1 ${
         active
           ? 'border-brand-500 bg-brand-50'
-          : 'border-transparent hover:border-brand-100 hover:bg-cream-soft'
+          : 'border-transparent hover:border-brand-100 hover:bg-surface-soft'
       }`}
     >
-      <div className="relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-md bg-cream-soft">
+      <div className="relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-md bg-surface-soft">
         {thumb ? (
           <>
             <img
@@ -240,7 +240,7 @@ function PageRow({ page, source, position, total, zoom, shouldRender, registerEl
       className="card scroll-mt-24 flex flex-col items-center gap-2 p-3 sm:p-4"
     >
       <p className="text-xs font-semibold text-ink-faint">{t('pageAlt', { position })}</p>
-      <div className="flex min-h-[60vh] w-full items-center justify-center overflow-x-auto rounded-xl bg-cream-soft">
+      <div className="flex min-h-[60vh] w-full items-center justify-center overflow-x-auto rounded-xl bg-surface-soft">
         {url ? (
           // Width is driven by `zoom` directly (same technique as PageZoom.tsx's
           // wrapper) so the page visibly grows/shrinks — usePageRender's

@@ -144,7 +144,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
         bytes: results[0].bytes,
         fileName: results[0].name,
         info: (
-          <div className="rounded-xl bg-cream-soft p-3 text-sm text-ink-soft">
+          <div className="rounded-xl bg-surface-soft p-3 text-sm text-ink-soft">
             <Trans
               i18nKey="multiInfo"
               ns="imagesToPdf"
@@ -154,7 +154,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
           </div>
         ),
         downloadLabel: t('downloadZip'),
-        onDownload: () => downloadBlob(blob, 'PDFdemo_images.zip'),
+        onDownload: () => downloadBlob(blob, 'PDFChill_images.zip'),
       })
     } catch {
       // Logic-layer errors stay English as diagnostics; show a translated one.
@@ -193,7 +193,7 @@ export function ImagesToPdfView({ onClose, onError, onCreated }: ImagesToPdfView
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         className={`rounded-2xl border-2 border-dashed p-4 transition-colors ${
-          dragging ? 'border-brand-400 bg-brand-50' : 'border-brand-200 bg-cream-soft'
+          dragging ? 'border-brand-400 bg-brand-100' : 'border-brand-300 bg-brand-50'
         }`}
       >
         <input

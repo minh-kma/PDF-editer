@@ -52,7 +52,7 @@ export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarg
         {...listeners}
         onDoubleClick={() => onEnlarge(page)}
         title={t('doubleClickToEnlarge')}
-        className="relative flex aspect-[3/4] cursor-grab items-center justify-center bg-cream-soft active:cursor-grabbing"
+        className="relative flex aspect-[3/4] cursor-grab items-center justify-center bg-surface-soft active:cursor-grabbing"
       >
         {thumb ? (
           <img

@@ -1,4 +1,4 @@
-// Core data shapes for PDFdemo.
+// Core data shapes for PDFChill.
 //
 // The app keeps an in-memory "plan": a list of source PDF files, plus an
 // ordered list of pages. Nothing is written to a real file until the user

@@ -120,7 +120,7 @@ export default function App() {
   // A friendly default name for the exported file.
   const outputName = useCallback(() => {
     if (sources.length === 1) return `${baseName(sources[0].name)}_edited.pdf`
-    return 'PDFdemo_merged.pdf'
+    return 'PDFChill_merged.pdf'
   }, [sources])
 
   // -- Reload recovery: look for a saved session on first load ---------------

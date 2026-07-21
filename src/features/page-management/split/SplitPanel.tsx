@@ -108,7 +108,7 @@ export function SplitPanel({ baseName, onClose, onError }: SplitPanelProps) {
         <Trans
           i18nKey="split.example"
           ns="split"
-          components={[<code className="rounded bg-cream-soft px-1" key="code" />]}
+          components={[<code className="rounded bg-surface-soft px-1" key="code" />]}
         />
       </p>
 
@@ -130,7 +130,7 @@ export function SplitPanel({ baseName, onClose, onError }: SplitPanelProps) {
         </p>
       )}
 
-      <div className="mt-4 rounded-xl bg-cream-soft p-3">
+      <div className="mt-4 rounded-xl bg-surface-soft p-3">
         <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-ink">
           <ScissorsIcon width={16} height={16} className="text-brand-500" />
           {t('split.willCreate', { count: ranges.length })}

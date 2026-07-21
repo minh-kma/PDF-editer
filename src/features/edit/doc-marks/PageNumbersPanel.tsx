@@ -197,7 +197,7 @@ export function PageNumbersPanel({ onClose }: PageNumbersPanelProps) {
         <div className="flex-none">
           <p className="mb-1.5 text-xs font-semibold text-ink-faint">{t('preview')}</p>
           <div
-            className="relative overflow-hidden rounded-lg border border-black/10 bg-cream-soft"
+            className="relative overflow-hidden rounded-lg border border-black/10 bg-surface-soft"
             style={{ width: PREVIEW_WIDTH_PX }}
           >
             {url ? (

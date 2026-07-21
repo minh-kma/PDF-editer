@@ -117,7 +117,7 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
     >
       <div className="flex flex-wrap gap-5">
         <div className="min-w-[15rem] flex-1">
-          <div className="flex items-center gap-1 rounded-lg bg-cream-soft p-1">
+          <div className="flex items-center gap-1 rounded-lg bg-surface-soft p-1">
             <button
               type="button"
               onClick={() => setTab('text')}
@@ -235,7 +235,7 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
         <div className="flex-none">
           <p className="mb-1.5 text-xs font-semibold text-ink-faint">{t('preview')}</p>
           <div
-            className="relative overflow-hidden rounded-lg border border-black/10 bg-cream-soft"
+            className="relative overflow-hidden rounded-lg border border-black/10 bg-surface-soft"
             style={{ width: PREVIEW_WIDTH_PX }}
           >
             {url ? (

@@ -1,11 +1,11 @@
-# PDFdemo
+# PDFChill
 
 A free, **100% in-your-browser** PDF editor. Upload one or more PDFs and merge,
 split, rotate, delete, reorder (drag & drop), and compress them. **Your files
 never leave your device** — there is no server, which is what keeps it private
 and free to run.
 
-If you refresh the page mid-edit, PDFdemo offers to restore your previous work.
+If you refresh the page mid-edit, PDFChill offers to restore your previous work.
 
 ---
 
@@ -81,8 +81,8 @@ under `src/features/` — see `.claude/docs/architecture.md` for the details.
 
 ## A note on "Compress"
 
-Compression happens safely in the browser: PDFdemo re-saves the file more
+Compression happens safely in the browser: PDFChill re-saves the file more
 efficiently and strips wasted data. This is lossless (no quality change), but
 how much it shrinks **depends heavily on the file** — image-heavy or scanned
-PDFs may barely change. PDFdemo always keeps whichever version is smaller and
+PDFs may barely change. PDFChill always keeps whichever version is smaller and
 tells you the before/after size, so it never makes a file bigger.
