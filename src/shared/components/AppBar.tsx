@@ -3,8 +3,11 @@ import { DropZone } from './DropZone'
 import { MegaMenu } from './MegaMenu'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { TOOL_CATEGORIES, type ToolEntry, type ToolIntent } from '../lib/toolCatalog'
+// The brand mark is the complete artwork from reference_photos/pdfchill-logo.png,
+// scaled down and nothing else (D24), imported so Vite hashes and copies it. The
+// favicons in public/ are the same full image at smaller sizes.
+import logoMark from '../assets/logo-mark.png'
 import {
-  LogoMark,
   ShieldIcon,
   DownloadIcon,
   UndoIcon,
@@ -76,7 +79,13 @@ export function AppBar({
           aria-label={t('logoAria')}
           className="icon-btn flex items-center gap-2.5 rounded-xl hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <LogoMark width={36} height={36} className="flex-none" />
+          <img
+            src={logoMark}
+            alt=""
+            width={36}
+            height={36}
+            className="flex-none rounded-lg"
+          />
           <span className="hidden text-xl font-extrabold tracking-tight text-ink sm:inline">
             PDF<span className="text-brand-500">Chill</span>
           </span>

@@ -241,6 +241,43 @@ self-coloured rather than `currentColor`, since it *is* the brand mark.
 Its geometry and colours (`#006c76` badge, `#ebddb9` wave, upper stroke
 at reduced opacity) are traced from the vector data in the logo PDF.
 `public/favicon.svg` is the same artwork and must be updated with it.
+*(This paragraph is superseded by the D24 amendment below — the mark is no
+longer an inline SVG and `favicon.svg` no longer exists.)*
+
+**D24 amendment — the brand mark is raster artwork, used whole and scaled
+only (2026-07-22).** The product owner supplied new logo art as a raster
+PNG, `reference_photos/pdfchill-logo.png` (2000×2000): a beach scene —
+umbrella, orange sky, teal wave, yellow sun — with "PDF"/"CHILL" lettering
+baked into the image. The hand-drawn-icon convention does **not** apply to
+it: gradients, fine linework and baked-in type cannot be hand-traced into
+inline SVG paths with any fidelity, so it is treated as an image asset, not
+redrawn. `LogoMark` is therefore deleted from `icons.tsx` (a comment there
+points here), and `AppBar` renders `src/shared/assets/logo-mark.png` via
+`<img>` in the same 36×36 slot, `rounded-lg`. The adjacent "PDFChill"
+wordmark and the header's layout are unchanged.
+
+**The whole image is used, uniformly scaled, and nothing else.** A first
+pass cropped the text-free umbrella portion out for the icon, on the
+reasoning that the baked-in lettering is illegible at 16px and duplicates
+the live wordmark beside it. The product owner rejected that: the complete
+composition is the logo. No cropping, no trimming, no recolouring — the only
+permitted transform is a proportional resize. Illegible lettering in the
+small icon is accepted and is **not** to be "fixed" by cropping or by
+resizing asymmetrically. The source is square, so every output size is a
+straight square scale.
+
+Favicon delivery moved from a single `public/favicon.svg` (deleted) to sized
+PNGs generated from the same full image: `public/favicon-16.png`,
+`favicon-32.png`, `apple-touch-icon.png` (180), plus a regenerated
+`public/favicon.ico` holding 16/32/48 PNG frames — which also clears R5's
+outstanding "the .ico is still the old teal badge" note. All four are
+referenced from **both** static entry points (`index.html` with `./`,
+`vi/index.html` with `../`, per D25's hand-set public-asset paths); the two
+`<head>`s must stay in sync.
+
+Assets were produced with a one-off Node script using `sharp`, installed via
+`npm i --no-save` so it never enters `package.json` (no build-time image
+dependency); regenerate the same way if the artwork changes.
 
 Two `pdfdemo:` **storage keys were deliberately not renamed**
 (`pdfdemo:session:v2` in `storage.ts`, `pdfdemo:lang` in `i18n/index.ts`).
@@ -438,7 +475,9 @@ the mockup's badge — with `public/favicon.svg` edited in lockstep as D24
 requires. Geometry and the `#ebddb9` sand wave are untouched, and the mark
 stays deliberately self-coloured rather than joining the tokens. Still
 outstanding: `public/favicon.ico` is a binary and is **not** regenerated,
-so it remains the old teal badge.
+so it remains the old teal badge. *(This whole paragraph is moot as of the
+D24 amendment: `LogoMark` and `favicon.svg` are gone, and the `.ico` has
+been regenerated from the new artwork.)*
 
 **Error red moved to the `rose-*` ramp.** D24 could keep literal `red-*`
 for errors/destructive actions because teal was obviously not red. Against
