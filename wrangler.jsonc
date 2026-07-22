@@ -1,5 +1,4 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "pdfchill",
   "compatibility_date": "2026-07-22",
   "assets": {
