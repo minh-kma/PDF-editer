@@ -97,7 +97,7 @@ export function PageThumb({ page, source, position, onRotate, onDelete, onEnlarg
             onClick={() => onDelete(page.id)}
             title={t('deletePage')}
             aria-label={t('deletePageAria', { position })}
-            className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-red-50 hover:text-red-600"
+            className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-rose-50 hover:text-rose-600"
           >
             <TrashIcon width={16} height={16} />
           </button>

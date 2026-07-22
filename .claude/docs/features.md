@@ -120,3 +120,24 @@ for the password first.
   `App.handleToolSelect` forces a file picker when none is. Images to PDF
   brings its own images, so it returns early *before* that check and takes
   over the main content area as its own `MainMode`.
+- Hover feedback is deliberately three-tiered: `.btn-motion` (scale +
+  shadow) on large labelled action buttons, `.icon-btn` (colour only) on
+  small/compact controls, and `.appbar-item` / `.appbar-lift` (a 2px lift,
+  no colour change) on the **AppBar nav cluster only** — the tool
+  shortcuts, "All tools" and the language switcher. Travel rather than
+  scale there because those buttons sit in a row and scaling nudges their
+  neighbours. Every other button in the app, including the AppBar's own
+  *action* buttons (Add files, Start over, Undo/Redo, Download), keeps its
+  colour hover; don't extend the lift to them without asking.
+- Since the coral palette (R5), the header still renders on a hard-coded
+  `bg-white/90` and the drop-zone still sits inside a white `.card`, where
+  the mockup shows both as peach with the drop-zone directly on the page.
+  Those are structural choices in `AppBar.tsx`/`App.tsx`, not palette
+  values, so R5 left them alone.
+
+- The `LogoMark` badge was recoloured teal → `#ae0200` with R5 (approved
+  by the product owner), and `public/favicon.svg` with it. The mark is
+  still deliberately self-coloured and off-token (D24) — re-theming does
+  **not** reach it, so any future palette change must edit both files by
+  hand. `public/favicon.ico` is binary and still shows the old teal badge;
+  it needs regenerating outside this repo's toolchain.

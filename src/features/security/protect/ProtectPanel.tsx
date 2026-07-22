@@ -123,10 +123,10 @@ export function ProtectPanel({ baseName, onClose, onError, onProtected }: Protec
       />
 
       {touched && empty && (
-        <p className="mt-1.5 text-xs font-semibold text-red-600">{t('panel.enterPassword')}</p>
+        <p className="mt-1.5 text-xs font-semibold text-rose-600">{t('panel.enterPassword')}</p>
       )}
       {touched && mismatch && (
-        <p className="mt-1.5 text-xs font-semibold text-red-600">{t('panel.mismatch')}</p>
+        <p className="mt-1.5 text-xs font-semibold text-rose-600">{t('panel.mismatch')}</p>
       )}
 
       <p className="mt-4 flex items-start gap-1.5 text-xs text-ink-faint">

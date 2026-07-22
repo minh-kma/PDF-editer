@@ -132,7 +132,7 @@ export function OcrPanel({ baseName, onClose, onError, onDone }: OcrPanelProps) 
             ))}
           </div>
           {languages.length === 0 && (
-            <p className="mt-1.5 text-xs font-semibold text-red-600">{t('pickAtLeastOne')}</p>
+            <p className="mt-1.5 text-xs font-semibold text-rose-600">{t('pickAtLeastOne')}</p>
           )}
 
           <p className="mt-4 flex items-start gap-1.5 text-xs text-ink-faint">

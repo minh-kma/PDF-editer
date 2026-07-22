@@ -73,7 +73,7 @@ export function ImageCard({ image, position, onRotate, onEnlarge, onRemove }: Im
           onClick={() => onRemove(image.id)}
           title={t('card.remove')}
           aria-label={t('card.removeAria', { position })}
-          className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-red-50 hover:text-red-600"
+          className="icon-btn rounded-lg p-1.5 text-ink-soft hover:bg-rose-50 hover:text-rose-600"
         >
           <TrashIcon width={16} height={16} />
         </button>

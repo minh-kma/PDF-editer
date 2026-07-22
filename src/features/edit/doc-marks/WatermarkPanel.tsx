@@ -98,7 +98,7 @@ export function WatermarkPanel({ onClose }: WatermarkPanelProps) {
           {existing && (
             <button
               type="button"
-              className="btn-ghost mr-auto text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="btn-ghost mr-auto text-rose-600 hover:bg-rose-50 hover:text-rose-700"
               onClick={handleRemove}
             >
               <TrashIcon width={16} height={16} />

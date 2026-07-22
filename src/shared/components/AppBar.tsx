@@ -88,7 +88,7 @@ export function AppBar({
             <button
               key={tool.intent}
               type="button"
-              className="btn-secondary"
+              className="appbar-item"
               disabled={disabled}
               onClick={() => onSelectTool(tool.intent)}
             >

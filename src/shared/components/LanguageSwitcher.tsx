@@ -65,7 +65,7 @@ export function LanguageSwitcher({ disabled }: LanguageSwitcherProps) {
         title={t('language')}
         aria-expanded={open}
         aria-haspopup="true"
-        className="icon-btn flex items-center gap-1 rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+        className="appbar-lift flex items-center gap-1 rounded-lg p-2 text-ink-soft disabled:cursor-not-allowed disabled:opacity-40"
       >
         <GlobeIcon width={18} height={18} />
         <span className="text-sm font-bold uppercase">{current}</span>

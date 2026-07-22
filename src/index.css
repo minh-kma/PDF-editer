@@ -9,14 +9,16 @@
   body {
     @apply bg-surface text-ink font-sans antialiased;
   }
-  /* Subtle teal background wash reminiscent of the reference UI. */
+  /* Subtle coral background wash reminiscent of the reference UI. Same two
+     gradients in the same positions — only the tint changed with the palette
+     (it was hard-coded teal, which no token would have caught). */
   body {
     background-image: radial-gradient(
         60rem 60rem at 90% -10%,
-        rgba(0, 108, 118, 0.06),
+        rgba(255, 134, 91, 0.1),
         transparent 60%
       ),
-      radial-gradient(50rem 50rem at -10% 10%, rgba(0, 108, 118, 0.05), transparent 55%);
+      radial-gradient(50rem 50rem at -10% 10%, rgba(255, 134, 91, 0.08), transparent 55%);
     background-attachment: fixed;
   }
 }
@@ -34,6 +36,25 @@
      hover, no scale/transform — that motion reads oddly at this size. */
   .icon-btn {
     @apply transition-colors duration-150;
+  }
+  /* AppBar nav items only (tool shortcuts, "All tools", language switcher):
+     these hover by *moving*, not by changing colour — a small lift, matching
+     the existing .btn-motion vocabulary but travel instead of scale, since
+     these sit in a row where scaling would nudge their neighbours. Every other
+     button in the app keeps its colour-change hover.
+     Self-contained rather than a modifier on .btn-secondary: it has to drop
+     that class's colour hover *and* .btn-motion's scale, and cancelling two
+     inherited hover utilities is more fragile than restating the six layout
+     ones. Geometry below is copied verbatim from .btn/.btn-secondary. */
+  .appbar-lift {
+    @apply transition-transform duration-150 ease-out
+      enabled:hover:-translate-y-0.5 enabled:active:translate-y-0;
+  }
+  .appbar-item {
+    @apply appbar-lift inline-flex items-center justify-center gap-2
+      rounded-xl px-4 py-2.5 font-bold
+      bg-white text-ink border border-brand-100
+      disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn {
     @apply btn-motion inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5

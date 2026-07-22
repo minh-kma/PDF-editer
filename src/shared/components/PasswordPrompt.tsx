@@ -86,7 +86,7 @@ export function PasswordPrompt({
         </button>
       </div>
       {wrongPassword && (
-        <p className="mt-1.5 text-xs font-semibold text-red-600">{t('prompt.wrongPassword')}</p>
+        <p className="mt-1.5 text-xs font-semibold text-rose-600">{t('prompt.wrongPassword')}</p>
       )}
 
       <p className="mt-4 flex items-start gap-1.5 text-xs text-ink-faint">

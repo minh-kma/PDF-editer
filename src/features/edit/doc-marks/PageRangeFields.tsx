@@ -77,7 +77,7 @@ export function PageRangeFields({ total, value, onChange }: PageRangeFieldsProps
         )}
       </div>
       {value.mode === 'custom' && value.from > value.to && (
-        <p className="mt-1 text-xs font-semibold text-red-600">
+        <p className="mt-1 text-xs font-semibold text-rose-600">
           {t('range.invalid')}
         </p>
       )}

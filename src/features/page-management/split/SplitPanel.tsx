@@ -125,7 +125,7 @@ export function SplitPanel({ baseName, onClose, onError }: SplitPanelProps) {
         className="mt-1 w-full rounded-xl border border-brand-100 bg-white px-3 py-2.5 font-semibold outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-200"
       />
       {invalid.length > 0 && (
-        <p className="mt-1.5 text-xs font-semibold text-red-600">
+        <p className="mt-1.5 text-xs font-semibold text-rose-600">
           {t('split.invalid', { invalid: invalid.join(', '), max: total - 1 })}
         </p>
       )}

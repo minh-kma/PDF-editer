@@ -395,3 +395,57 @@ modal panel (`CompressPanel.tsx`), taking the before/after and
 `pristine`/`baseline` logic out of `App.tsx` with it. CLAUDE.md's Key
 Constraints bullet and the mega-menu's "losslessly" description were
 both rewritten — they had become false.
+
+**R5. The teal/blue palette is reversed back to warm coral/terracotta
+(2026-07-22).** D24 replaced a warm coral/cream palette with teal/blue,
+citing `reference_photos/pdfchill-website-mockup.pdf`. That file has since
+been **overwritten** with a new coral/terracotta/cream mockup, so D24's
+description of what it shows is stale — the file is still the source of
+truth, its contents just changed. What D24 established structurally
+(colour lives only in the three tokens) is unchanged and was re-confirmed
+by this swap.
+
+Values were sampled from the mockup, not guessed: the PDF was rendered at
+2x via pdfjs and read per-pixel at each element, cross-checked against the
+fill operators in its own content streams. `(ref)` in
+`tailwind.config.js` now means "sampled at that element".
+
+- **`brand`** is one continuous coral → maroon ramp, so the mockup's strong
+  button red is a *step of the scale* (500 = `#b20000`) rather than a new
+  token: 100 = `#ffb285` (drop-zone fill, privacy pill), 200 = `#ff865b`
+  (upload-icon circle), 600 = `#940000` (hover step, "Chill" wordmark),
+  700 = `#740000` (pill text). 300/400 are interpolated. **Deliberate
+  divergence:** the mockup draws the drop-zone's dashed border in a crimson
+  almost identical to its button red; `border-brand-300` renders it
+  `#ea4e2c` instead, because 300 sitting on top of 500 would collapse
+  `border-brand-300 → hover:border-brand-400` and the
+  `border-brand-200 / border-t-brand-500` spinner into invisible steps.
+- **`surface`**: `#ffe5d2` page (ref), white cards (ref), `soft` `#f3d9c7`
+  interpolated toward the mockup's `#eac5b1` divider.
+- **`ink`**: `#271511` headings (ref), `#5b4039` body (ref). `faint` is
+  `#8b7268`, *not* the mockup's own `#61453e` — that is indistinguishable
+  from its body copy, and collapsing the third step would flatten a
+  hierarchy the app uses in 33 places.
+
+**Two hard-coded colours existed outside the three tokens**, so D24's
+"re-theming is a one-file edit" was not quite true and is now corrected:
+`index.css`'s body radial-gradient wash was literal
+`rgba(0, 108, 118, …)` teal, and `tailwind.config.js`'s `card`/`soft`
+box-shadows were a cold teal-black. Both now follow the palette (shadow
+geometry untouched). **`LogoMark`'s badge was recoloured too**, on the
+product owner's explicit go-ahead — `#006c76` → `#ae0200`, sampled from
+the mockup's badge — with `public/favicon.svg` edited in lockstep as D24
+requires. Geometry and the `#ebddb9` sand wave are untouched, and the mark
+stays deliberately self-coloured rather than joining the tokens. Still
+outstanding: `public/favicon.ico` is a binary and is **not** regenerated,
+so it remains the old teal badge.
+
+**Error red moved to the `rose-*` ramp.** D24 could keep literal `red-*`
+for errors/destructive actions because teal was obviously not red. Against
+a maroon brand it is not: `btn-primary` `#b20000` and `text-red-600`
+`#dc2626` render as the same colour, so "primary" and "destructive" stop
+being distinguishable — verified side by side in the built CSS. All 12
+usages moved `red-{50,100,200,600,700}` → `rose-*` (`#e11d48` at 600):
+still unmistakably an error colour, pink-shifted well clear of the
+terracotta family. Keep error colour *off* the brand hue whenever the
+brand moves.

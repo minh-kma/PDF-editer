@@ -44,7 +44,7 @@ export function MegaMenu({ onSelect, disabled }: MegaMenuProps) {
     <div className="relative" ref={containerRef}>
       <button
         type="button"
-        className="btn-secondary"
+        className="appbar-item"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         aria-expanded={open}
