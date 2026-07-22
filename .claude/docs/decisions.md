@@ -247,6 +247,53 @@ They are invisible to users, and renaming them would silently throw away
 every existing user's autosaved session and language preference. Rename
 them only alongside a migration.
 
+**D25. Homepage SEO localization: two static HTML entry points, one shared
+bundle, path-driven initial language (2026-07-22).** The site served one URL
+for both languages, with the UI language chosen at runtime
+(`localStorage` → `navigator`). A Vietnamese visitor saw Vietnamese UI, but
+Google's crawler — with no browser locale — only ever saw and indexed the
+English page, and with one URL there was no way for a Vietnamese search result
+to exist. Competitors (Smallpdf) solve this with a `/vi` path.
+
+Approach, scoped to the **homepage route only** (every in-app tool screen keeps
+the runtime-only switch, unchanged):
+
+- **Two static HTML entries, one JS/CSS bundle.** `vite.config.ts` gains
+  `build.rollupOptions.input = { main: 'index.html', vi: 'vi/index.html' }`.
+  Both HTML files load the same `/src/main.tsx`, so Rollup emits **one** shared
+  hashed bundle that both pages reference — the pages differ only in their baked
+  `<head>` and their initial language. 100% static output, no server/SSR, no
+  router; deploys to Netlify exactly as before. `base: './'` is untouched and
+  still required.
+- **Relative asset paths under `base: './'` work for the nested page.** Verified
+  in built output: `dist/index.html` references `./assets/…`; `dist/vi/index.html`
+  references `../assets/…` (Vite computes per-page relative paths). Public-dir
+  assets (favicons) are **not** rewritten by Vite, so their relative paths are
+  set by hand per file: `./favicon.*` at root, `../favicon.*` in `vi/`.
+- **Per-language `<head>` baked at build time** (crawler-visible, not
+  JS-injected): `<html lang>`, translated `<title>` and `<meta description>`,
+  a self-referential `<link rel="canonical">`, and the three reciprocal
+  `hreflang` alternates (`en`, `vi`, `x-default` → English) on **both** pages.
+  Absolute production URLs under `https://pdfchill.online` — the domain was not
+  previously referenced anywhere in the repo; introduced here and in the sitemap.
+- **Initial language from the URL path.** A custom `path` detector is placed
+  first in `i18n`'s detection order (`['path', 'localStorage', 'navigator']`):
+  it returns `'vi'` only on the `/vi/` path and `undefined` everywhere else, so
+  the root page falls through to the **unchanged** `localStorage` → `navigator`
+  chain. The path sets the starting point without ever replacing or fighting the
+  existing detector. `caches: ['localStorage']` still persists the choice.
+- **Switcher navigates between `/` and `/vi/`** (a real URL change / full
+  reload) instead of toggling in-memory state, so the crawlable page and the UI
+  language always agree. Target URL is derived from the current path
+  (`homepageUrlForLanguage`), so it works on localhost, `npm run preview`, and a
+  subfolder deploy alike — not a hardcoded `/vi/`.
+- **`public/sitemap.xml`** lists both URLs with `xhtml:link` hreflang
+  alternates; **`public/robots.txt`** points at it. Both copy to `dist/` root.
+
+The Vietnamese `<title>`/`<meta description>` are a first-draft translation
+pending native-speaker review, consistent with the rest of the VI copy (see
+features.md "Known gaps").
+
 ## Reversals
 
 **R1. Edit Text was dropped, then reinstated.** See D6 — assessment

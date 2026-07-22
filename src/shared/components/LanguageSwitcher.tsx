@@ -1,9 +1,12 @@
-// English/Vietnamese switcher for the AppBar. Changing the language writes it
-// to localStorage via i18next's detector cache, so an explicit choice sticks
-// across visits and beats the browser locale from then on.
+// English/Vietnamese switcher for the AppBar. Picking a language navigates
+// between the two static homepages (/ and /vi/) — a real URL change, so the
+// crawlable page and the UI language stay in sync — rather than only toggling
+// in-memory state. The full page load re-runs i18n init, which reads the new
+// path; i18next's detector cache also writes the choice to localStorage, so it
+// sticks across visits and beats the browser locale from then on.
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '../i18n'
+import { SUPPORTED_LANGUAGES, homepageUrlForLanguage, type SupportedLanguage } from '../i18n'
 import { GlobeIcon, ChevronDownIcon, CheckIcon } from './icons'
 
 interface LanguageSwitcherProps {
@@ -74,7 +77,9 @@ export function LanguageSwitcher({ disabled }: LanguageSwitcherProps) {
               role="menuitem"
               onClick={() => {
                 setOpen(false)
-                void i18n.changeLanguage(code)
+                if (code !== current) {
+                  window.location.assign(homepageUrlForLanguage(code))
+                }
               }}
               className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-semibold hover:bg-brand-50 ${
                 code === current ? 'text-brand-600' : 'text-ink'

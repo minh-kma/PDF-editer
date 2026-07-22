@@ -74,6 +74,15 @@ for the password first.
 - Every UI string is bilingual (English/Vietnamese) via `t()`; the
   language switcher sits in the AppBar and the choice persists in
   localStorage (D23)
+- **URL-based localization covers the homepage only (D25).** The homepage
+  is served as two static HTML entries sharing one bundle — `/` (English)
+  and `/vi/` (Vietnamese) — each with its own baked `<html lang>`, title,
+  description, canonical and hreflang for crawlers, and the switcher
+  navigates between them. **Every other screen (all tool panels) still
+  relies on the runtime-only `localStorage` → `navigator` switch** — there
+  is no per-tool URL or localized `<head>`; only the homepage's *initial*
+  language is path-driven. Caveat: the Vietnamese homepage title/description
+  are an unreviewed first-draft translation (see "Known gaps").
 
 ## Known gaps
 
