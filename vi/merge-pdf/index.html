@@ -1,0 +1,42 @@
+<!doctype html>
+<!-- Vietnamese page for the merge tool. One of the per-tool static entries
+     (see vite.config.ts): it loads the exact same JS/CSS bundle as every other
+     page, and the URL's tool + language segments are what select the tool and
+     the language at runtime (src/shared/lib/routes.ts). The head below is baked
+     at build time so a crawler sees it without running JS.
+     NOTE: the Vietnamese title/description are a first-draft translation and
+     still need a native-speaker review (see .claude/docs/features.md). -->
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Favicons live in public/ and are copied to the site root; from this
+         page that is two levels up. Vite does not rewrite public-dir
+         paths, so the depth is set by hand here. -->
+    <link rel="icon" href="../../favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Gộp nhiều file PDF thành một, theo đúng thứ tự bạn muốn. Miễn phí, không cần đăng ký, và không có gì được tải lên — mọi thứ diễn ra trên thiết bị của bạn."
+    />
+    <!-- Canonical points at this page, and the hreflang trio at this tool's own
+         English/Vietnamese pair — not at the homepage. -->
+    <link rel="canonical" href="https://pdfchill.online/vi/merge-pdf/" />
+    <link rel="alternate" hreflang="en" href="https://pdfchill.online/merge-pdf/" />
+    <link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/merge-pdf/" />
+    <link rel="alternate" hreflang="x-default" href="https://pdfchill.online/merge-pdf/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <title>Gộp file PDF — miễn phí, riêng tư, ngay trong trình duyệt | PDFChill</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Every URL is a real static HTML file in the build (see vite.config.ts), one
+     per language. Tool URLs keep their trailing slash, matching what is served
+     and what the pages declare as canonical. Only the four routed tools appear
+     here; every other tool is still reachable only from inside the app. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
@@ -12,5 +16,53 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/" />
     <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/" />
+  </url>
+  <url>
+    <loc>https://pdfchill.online/merge-pdf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/merge-pdf/" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/merge-pdf/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/merge-pdf/" />
+  </url>
+  <url>
+    <loc>https://pdfchill.online/vi/merge-pdf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/merge-pdf/" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/merge-pdf/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/merge-pdf/" />
+  </url>
+  <url>
+    <loc>https://pdfchill.online/split-pdf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/split-pdf/" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/split-pdf/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/split-pdf/" />
+  </url>
+  <url>
+    <loc>https://pdfchill.online/vi/split-pdf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/split-pdf/" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/split-pdf/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/split-pdf/" />
+  </url>
+  <url>
+    <loc>https://pdfchill.online/compress-pdf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/compress-pdf/" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/compress-pdf/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/compress-pdf/" />
+  </url>
+  <url>
+    <loc>https://pdfchill.online/vi/compress-pdf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/compress-pdf/" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/compress-pdf/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/compress-pdf/" />
+  </url>
+  <url>
+    <loc>https://pdfchill.online/images-to-pdf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/images-to-pdf/" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/images-to-pdf/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/images-to-pdf/" />
+  </url>
+  <url>
+    <loc>https://pdfchill.online/vi/images-to-pdf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pdfchill.online/images-to-pdf/" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://pdfchill.online/vi/images-to-pdf/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pdfchill.online/images-to-pdf/" />
   </url>
 </urlset>

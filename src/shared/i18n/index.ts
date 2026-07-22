@@ -11,19 +11,20 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
+import { buildPath, parseLocation } from '../lib/routes'
 import en from './locales/en'
 import vi from './locales/vi'
 
-/** True when the current URL path is the Vietnamese homepage (/vi/ or /vi,
- *  with or without a trailing index.html). The homepage is served as two static
- *  HTML files — / (English) and /vi/ (Vietnamese) — and the path decides which
- *  language react-i18next starts in. Only the /vi/ path claims a language; the
- *  root path returns nothing so the existing localStorage -> navigator chain is
- *  used unchanged. Matched on the last path segment so a subfolder deploy
- *  (base: './') still works. */
+/** True when the current URL path is a Vietnamese page — the /vi/ homepage or
+ *  any /vi/<tool>/ page. Every page is served as two static HTML files (English
+ *  at the root, Vietnamese under /vi/), and the path decides which language
+ *  react-i18next starts in. Only the Vietnamese paths claim a language; English
+ *  paths return nothing so the existing localStorage -> navigator chain is used
+ *  unchanged. Parsing goes through shared/lib/routes.ts so the router and this
+ *  detector can never disagree about what a path means, and a subfolder deploy
+ *  (base: './') keeps working. */
 function isVietnamesePath(): boolean {
-  const path = window.location.pathname.replace(/index\.html$/, '')
-  return /\/vi\/?$/.test(path)
+  return parseLocation(window.location.pathname).vietnamese
 }
 
 /** Matches storage.ts's 'pdfdemo:session:v2' key convention. Deliberately
@@ -65,18 +66,18 @@ export function persistLanguagePreference(language: SupportedLanguage): void {
   }
 }
 
-/** URL of the homepage in the given language, derived from the current path so
- *  it works on localhost, `npm run preview`, and a subfolder deploy alike (base:
- *  './'). The language switcher navigates here (a real URL change / page load)
- *  rather than only toggling in-memory state, so the crawlable /vi/ page and the
- *  UI language always agree. English is the site root; Vietnamese is /vi/. */
-export function homepageUrlForLanguage(language: SupportedLanguage): string {
-  // Strip a trailing index.html and any existing /vi/ segment to get the
-  // English root of wherever the app is hosted, then re-add /vi/ if needed.
-  let root = window.location.pathname.replace(/index\.html$/, '')
-  root = root.replace(/\/vi\/?$/, '/')
-  if (!root.endsWith('/')) root += '/'
-  return language === 'vi' ? `${root}vi/` : root
+/** URL of the *current page* in the given language, derived from the current
+ *  path so it works on localhost, `npm run preview`, and a subfolder deploy
+ *  alike (base: './'). The language switcher navigates here (a real URL change /
+ *  page load) rather than only toggling in-memory state, so the crawlable page
+ *  and the UI language always agree. English is the site root; Vietnamese is
+ *  under /vi/. The tool segment is preserved, so switching language on
+ *  /split-pdf/ lands on /vi/split-pdf/ rather than dumping the user back on the
+ *  homepage. On the homepage the result is identical to before per-tool URLs
+ *  existed. */
+export function urlForLanguage(language: SupportedLanguage): string {
+  const current = parseLocation(window.location.pathname)
+  return buildPath({ ...current, vietnamese: language === 'vi' })
 }
 
 // Custom detector placed first in the order: on the /vi/ homepage it starts the
@@ -118,15 +119,16 @@ void i18n
     react: { useSuspense: false },
   })
 
-// index.html hard-codes lang="en" and an English <title>; without this they'd
-// stay English for a Vietnamese reader (and for screen readers).
+// Each static page hard-codes a lang attribute; without this it would stay
+// whatever the file baked in when detection resolves to the other language
+// (which happens on the root path, where localStorage/navigator decide).
+//
+// The <title> is deliberately NOT set here any more. It used to be forced to
+// the homepage title on every load, which would wipe out the baked per-tool
+// <title> the crawler was served. App.tsx owns it now, keyed on the current
+// route as well as the language (see the `seo` namespace).
 function syncDocumentLanguage(detected: string) {
-  const language = toSupportedLanguage(detected)
-  document.documentElement.lang = language
-  document.title =
-    language === 'vi'
-      ? 'PDFChill — Trình chỉnh sửa PDF miễn phí, riêng tư, ngay trong trình duyệt'
-      : 'PDFChill — Free, private, in-browser PDF editor'
+  document.documentElement.lang = toSupportedLanguage(detected)
 }
 
 syncDocumentLanguage(i18n.language)

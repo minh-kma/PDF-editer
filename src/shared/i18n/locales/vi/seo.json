@@ -1,0 +1,26 @@
+{
+  "home": {
+    "title": "PDFChill — Trình chỉnh sửa PDF miễn phí, riêng tư, ngay trong trình duyệt",
+    "description": "Trình chỉnh sửa PDF miễn phí, riêng tư, chạy hoàn toàn trong trình duyệt. Gộp, tách, xoay, xóa, sắp xếp lại và nén PDF — tệp của bạn không bao giờ rời khỏi thiết bị."
+  },
+  "merge": {
+    "heading": "Gộp file PDF",
+    "title": "Gộp file PDF — miễn phí, riêng tư, ngay trong trình duyệt | PDFChill",
+    "description": "Gộp nhiều file PDF thành một, theo đúng thứ tự bạn muốn. Miễn phí, không cần đăng ký, và không có gì được tải lên — mọi thứ diễn ra trên thiết bị của bạn."
+  },
+  "split": {
+    "heading": "Tách file PDF",
+    "title": "Tách file PDF — chia thành từng trang hoặc khoảng trang | PDFChill",
+    "description": "Chia một file PDF thành nhiều file riêng hoặc theo khoảng trang, rồi tải tất cả về trong một file zip. Miễn phí, không cần đăng ký, và file của bạn không rời khỏi trình duyệt."
+  },
+  "compress": {
+    "heading": "Nén file PDF",
+    "title": "Nén file PDF — giảm dung lượng PDF | PDFChill",
+    "description": "Giảm dung lượng PDF bằng cách nén lại hình ảnh bên trong, với mức chất lượng do bạn chọn. Xem dung lượng trước và sau, và không bao giờ nhận về file lớn hơn. Chạy hoàn toàn trong trình duyệt."
+  },
+  "imagesToPdf": {
+    "heading": "Ảnh sang PDF",
+    "title": "Ảnh sang PDF — chuyển JPG và PNG thành PDF | PDFChill",
+    "description": "Chuyển ảnh JPG và PNG thành file PDF. Sắp xếp lại và xoay ảnh trước, chọn khổ giấy và lề, rồi nhận một file PDF hoặc mỗi ảnh một file. Miễn phí, và không có gì được tải lên."
+  }
+}

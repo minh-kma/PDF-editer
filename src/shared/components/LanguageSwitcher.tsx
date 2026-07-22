@@ -1,7 +1,7 @@
 // English/Vietnamese switcher for the AppBar. Picking a language navigates
-// between the two static homepages (/ and /vi/) — a real URL change, so the
-// crawlable page and the UI language stay in sync — rather than only toggling
-// in-memory state. The full page load re-runs i18n init from scratch, so the
+// between the two static copies of the *current* page (/ ↔ /vi/, /split-pdf/ ↔
+// /vi/split-pdf/) — a real URL change, so the crawlable page and the UI language
+// stay in sync — rather than only toggling in-memory state. The full page load re-runs i18n init from scratch, so the
 // choice is also written to localStorage first (persistLanguagePreference) —
 // otherwise, on the English root path, detection would fall through to the
 // browser locale and a Vietnamese browser would never reach English.
@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   SUPPORTED_LANGUAGES,
-  homepageUrlForLanguage,
+  urlForLanguage,
   persistLanguagePreference,
   toSupportedLanguage,
   type SupportedLanguage,
@@ -88,7 +88,7 @@ export function LanguageSwitcher({ disabled }: LanguageSwitcherProps) {
                   // Persist before navigating — the next page load re-detects
                   // from storage, not from anything we hold in memory.
                   persistLanguagePreference(code)
-                  window.location.assign(homepageUrlForLanguage(code))
+                  window.location.assign(urlForLanguage(code))
                 }
               }}
               className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-semibold hover:bg-brand-50 ${

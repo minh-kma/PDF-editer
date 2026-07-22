@@ -15,6 +15,9 @@ import protect from './protect.json'
 import docMarks from './docMarks.json'
 import imagesToPdf from './imagesToPdf.json'
 import errors from './errors.json'
+// Mirrors the copy baked into the Vietnamese static HTML entries — see the note
+// in en/index.ts.
+import seo from './seo.json'
 
 export default {
   common,
@@ -28,4 +31,5 @@ export default {
   docMarks,
   imagesToPdf,
   errors,
+  seo,
 }

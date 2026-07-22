@@ -24,6 +24,8 @@ import { probePdf, decryptPdf, WrongPasswordError } from './shared/lib/pdfUnlock
 import { buildPdf } from './features/page-management/workspace/buildPdf'
 import { baseName } from './shared/lib/format'
 import { saveSession, loadSession, clearSession, type SavedSession } from './shared/lib/storage'
+import { useRoute } from './shared/lib/useRoute'
+import { routedTool, type RoutedTool } from './shared/lib/routes'
 import type { ToolIntent } from './shared/lib/toolCatalog'
 
 interface PreviewState {
@@ -70,7 +72,7 @@ type MainMode =
 const RECOVER_MAX_AGE_MS = 5 * 60 * 1000
 
 export default function App() {
-  const { t } = useTranslation(['landing', 'errors'])
+  const { t, i18n } = useTranslation(['landing', 'errors', 'appbar', 'seo'])
   const store = useStore()
   const {
     sources,
@@ -98,6 +100,12 @@ export default function App() {
   // is loaded, the matching panel/action is opened (see the effect below).
   const [pendingTool, setPendingTool] = useState<ToolIntent | null>(null)
   const toolFileInput = useRef<HTMLInputElement>(null)
+
+  // Four tools have their own URL (/merge-pdf/, /split-pdf/, /compress-pdf/,
+  // /images-to-pdf/, each also under /vi/). The route is what a search result
+  // lands on and what in-app navigation pushes; every other tool leaves the URL
+  // alone and works exactly as before.
+  const { tool: routeTool, navigateToTool } = useRoute()
 
   // Unlock (mega-menu tool): always operates on a freshly-picked file, never
   // the current session — its own file input, separate from toolFileInput,
@@ -329,12 +337,17 @@ export default function App() {
   // a file is already loaded, applies straight to the current pages (no
   // re-upload); otherwise it remembers the intent and opens the picker, same
   // as a fresh landing-page pick.
-  const handleToolSelect = useCallback(
-    (intent: ToolIntent) => {
-      if (intent === 'unlock') {
-        unlockFileInput.current?.click()
-        return
-      }
+  // The selection itself, shared by the menu and the URL. `openPicker` is the
+  // only difference between the two: a click can open the file dialog, a page
+  // load cannot (browsers require a user gesture), so a URL arms the tool and
+  // leaves the user on the normal upload screen — the pendingTool effect below
+  // then opens it as soon as a file arrives, which is the same path a
+  // menu-pick-then-upload takes.
+  const appliedRoute = useRef<RoutedTool | null | undefined>(undefined)
+  // 'unlock' is excluded by type: it has no mode of its own and is routed to its
+  // own file picker before it could ever reach here (and it has no URL either).
+  const applyTool = useCallback(
+    (intent: Exclude<ToolIntent, 'unlock'>, { openPicker }: { openPicker: boolean }) => {
       // Images to PDF brings its own images — it must never demand a PDF
       // upload first, so it opens ahead of the !hasPages check below.
       if (intent === 'imagesToPdf') {
@@ -343,13 +356,54 @@ export default function App() {
       }
       if (intent === 'merge' || !hasPages) {
         setPendingTool(intent)
-        toolFileInput.current?.click()
+        if (openPicker) toolFileInput.current?.click()
         return
       }
       setMainMode({ kind: intent })
     },
     [hasPages],
   )
+
+  const handleToolSelect = useCallback(
+    (intent: ToolIntent) => {
+      if (intent === 'unlock') {
+        unlockFileInput.current?.click()
+        return
+      }
+      // Routed tools take the URL with them; the rest leave it where it is.
+      const routed = routedTool(intent)
+      if (routed) {
+        appliedRoute.current = routed // already handled here — don't re-apply
+        navigateToTool(routed)
+      }
+      applyTool(intent, { openPicker: true })
+    },
+    [applyTool, navigateToTool],
+  )
+
+  // The URL as an input: a direct load (search result, shared link, reload) and
+  // the browser's back/forward buttons both land here. Guarded by the last route
+  // this actually applied, so a tool picked from the menu — which navigates
+  // itself — isn't opened a second time.
+  useEffect(() => {
+    if (appliedRoute.current === routeTool) return
+    appliedRoute.current = routeTool
+    if (routeTool) applyTool(routeTool, { openPicker: false })
+    else {
+      // Back to the homepage URL: drop any armed tool and return to the default
+      // view, matching what closing a tool does.
+      setPendingTool(null)
+      setMainMode({ kind: 'browse' })
+    }
+  }, [routeTool, applyTool])
+
+  // Returns to the default view *and* to the homepage URL. Non-routed panels
+  // are already on the homepage URL, where navigateToTool(null) is a no-op.
+  const closeTool = useCallback(() => {
+    setMainMode({ kind: 'browse' })
+    appliedRoute.current = null
+    navigateToTool(null)
+  }, [navigateToTool])
 
   // Once pages exist and a tool was requested, open that tool's mode/action.
   // A merge upload lands in 'manage' (not the 'browse' default) so the user
@@ -372,13 +426,23 @@ export default function App() {
     // file input before pendingTool is ever set.
   }, [hasPages, pendingTool, busy])
 
+  // -- Document title --------------------------------------------------------
+  // Each static page ships with its own baked <title> for crawlers; this keeps
+  // the tab honest afterwards, when the route changes without a reload or the
+  // language resolves to the other one. Same strings as the HTML files (see the
+  // note in locales/en/index.ts). i18n.language is in the deps because the
+  // detected language can differ from what the page baked in.
+  useEffect(() => {
+    document.title = t(`seo:${routeTool ?? 'home'}.title`)
+  }, [routeTool, t, i18n.language])
+
   // -- Start over ------------------------------------------------------------
   const handleReset = useCallback(() => {
     reset()
-    setMainMode({ kind: 'browse' }) // don't carry a stale mode into the next upload
+    closeTool() // don't carry a stale mode — or a stale tool URL — into the next upload
     sessionPassword.current = null // forget the cached password on Start over
     clearSession().catch(() => {})
-  }, [reset])
+  }, [reset, closeTool])
 
   // -- Logo click: same destination as Start over, confirm first if there's
   // a session to lose (nothing to confirm when the screen is already empty).
@@ -426,13 +490,22 @@ export default function App() {
       />
 
       <main className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-        {/* Intro headline (only before any pages are loaded). */}
+        {/* Intro headline (only before any pages are loaded). On a tool URL it
+            names that tool instead of the site, so a visitor arriving from a
+            search result sees the page they clicked. The heading comes from the
+            `seo` namespace so it reads like the page title they clicked ("Split
+            PDF"), not like the mega-menu entry ("Split"); the subtitle reuses
+            the menu's existing tool description. Driven by the URL, not
+            pendingTool, so picking a tool and cancelling the file dialog doesn't
+            rewrite the headline. */}
         {!hasPages && !recover && mainMode.kind !== 'imagesToPdf' && (
           <div className="mb-6 mt-2 text-center">
             <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              {t('heroTitle')}
+              {routeTool ? t(`seo:${routeTool}.heading`) : t('heroTitle')}
             </h1>
-            <p className="mx-auto mt-2 max-w-2xl text-ink-soft">{t('heroSubtitle')}</p>
+            <p className="mx-auto mt-2 max-w-2xl text-ink-soft">
+              {routeTool ? t(`appbar:tools.${routeTool}.description`) : t('heroSubtitle')}
+            </p>
           </div>
         )}
 
@@ -448,7 +521,7 @@ export default function App() {
 
         {mainMode.kind === 'imagesToPdf' ? (
           <ImagesToPdfView
-            onClose={() => setMainMode({ kind: 'browse' })}
+            onClose={closeTool}
             onError={setError}
             onCreated={setPreview}
           />
@@ -457,8 +530,11 @@ export default function App() {
             <DropZone
               onFiles={(files) => {
                 // A plain upload clears any tool the user may have picked and
-                // then cancelled, so it doesn't fire unexpectedly on load.
-                setPendingTool(null)
+                // then cancelled, so it doesn't fire unexpectedly on load — but
+                // never a tool the URL armed: on /split-pdf/ this drop zone *is*
+                // Split's upload step, and clearing it would drop the user into
+                // the plain viewer instead.
+                if (!routeTool) setPendingTool(null)
                 handleFiles(files)
               }}
               disabled={busy}
@@ -474,19 +550,19 @@ export default function App() {
       </main>
 
       {mainMode.kind === 'watermark' && (
-        <WatermarkPanel onClose={() => setMainMode({ kind: 'browse' })} />
+        <WatermarkPanel onClose={closeTool} />
       )}
 
       {mainMode.kind === 'pageNumbers' && (
-        <PageNumbersPanel onClose={() => setMainMode({ kind: 'browse' })} />
+        <PageNumbersPanel onClose={closeTool} />
       )}
 
       {mainMode.kind === 'split' && (
         <SplitPanel
           baseName={baseName(outputName())}
-          onClose={() => setMainMode({ kind: 'browse' })}
+          onClose={closeTool}
           onError={(m) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setError(m)
           }}
         />
@@ -495,13 +571,13 @@ export default function App() {
       {mainMode.kind === 'extract' && (
         <ExtractPanel
           baseName={baseName(outputName())}
-          onClose={() => setMainMode({ kind: 'browse' })}
+          onClose={closeTool}
           onError={(m) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setError(m)
           }}
           onExtracted={(bytes, fileName) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setPreview({ title: t('errors:results.extracted'), bytes, fileName })
           }}
         />
@@ -510,13 +586,13 @@ export default function App() {
       {mainMode.kind === 'protect' && (
         <ProtectPanel
           baseName={baseName(outputName())}
-          onClose={() => setMainMode({ kind: 'browse' })}
+          onClose={closeTool}
           onError={(m) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setError(m)
           }}
           onProtected={(bytes, fileName) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setPreview({
               title: t('errors:results.protected'),
               bytes,
@@ -545,13 +621,13 @@ export default function App() {
       {mainMode.kind === 'ocr' && (
         <OcrPanel
           baseName={baseName(outputName())}
-          onClose={() => setMainMode({ kind: 'browse' })}
+          onClose={closeTool}
           onError={(m) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setError(m)
           }}
           onDone={(bytes, fileName) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setPreview({ title: t('errors:results.searchable'), bytes, fileName })
           }}
         />
@@ -560,13 +636,13 @@ export default function App() {
       {mainMode.kind === 'compress' && (
         <CompressPanel
           baseName={baseName(outputName())}
-          onClose={() => setMainMode({ kind: 'browse' })}
+          onClose={closeTool}
           onError={(m) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setError(m)
           }}
           onDone={(bytes, fileName, info) => {
-            setMainMode({ kind: 'browse' })
+            closeTool()
             setPreview({ title: t('errors:results.compressed'), bytes, fileName, info })
           }}
         />

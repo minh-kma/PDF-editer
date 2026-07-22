@@ -15,6 +15,12 @@ import protect from './protect.json'
 import docMarks from './docMarks.json'
 import imagesToPdf from './imagesToPdf.json'
 import errors from './errors.json'
+// Page <title>/<meta description> for the routed pages. These duplicate the
+// copy baked into the static HTML entries (index.html, vi/index.html,
+// <tool>/index.html …): the crawler needs it in the file, the SPA needs it when
+// the route changes without a reload. Edit both, or a tab title drifts from
+// what Google shows.
+import seo from './seo.json'
 
 export default {
   common,
@@ -28,4 +34,5 @@ export default {
   docMarks,
   imagesToPdf,
   errors,
+  seo,
 }

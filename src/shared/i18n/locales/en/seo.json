@@ -1,0 +1,26 @@
+{
+  "home": {
+    "title": "PDFChill — Free, private, in-browser PDF editor",
+    "description": "Free, private PDF editor that runs entirely in your browser. Merge, split, rotate, delete, reorder and compress PDFs — your files never leave your device."
+  },
+  "merge": {
+    "heading": "Merge PDF files",
+    "title": "Merge PDF files — free, private, in your browser | PDFChill",
+    "description": "Combine several PDFs into one file, in the order you choose. Free, no sign-up, and nothing is uploaded — the merging happens on your own device."
+  },
+  "split": {
+    "heading": "Split PDF",
+    "title": "Split PDF — separate pages or page ranges | PDFChill",
+    "description": "Cut one PDF into separate files or page ranges and download them together as a zip. Free, no sign-up, and your file never leaves your browser."
+  },
+  "compress": {
+    "heading": "Compress PDF",
+    "title": "Compress PDF — make a PDF smaller | PDFChill",
+    "description": "Shrink a PDF by recompressing the images inside it, with a quality level you choose. See the before and after size, and never get a bigger file back. Runs entirely in your browser."
+  },
+  "imagesToPdf": {
+    "heading": "Images to PDF",
+    "title": "Images to PDF — convert JPG and PNG to PDF | PDFChill",
+    "description": "Turn JPG and PNG images into a PDF. Reorder and rotate them first, pick a page size and margin, and get one PDF or one per image. Free, and nothing is uploaded."
+  }
+}
