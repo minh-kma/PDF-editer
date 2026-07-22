@@ -73,7 +73,11 @@ for the password first.
   per-item progress
 - Every UI string is bilingual (English/Vietnamese) via `t()`; the
   language switcher sits in the AppBar and the choice persists in
-  localStorage (D23)
+  localStorage (D23). **An explicit choice always wins over the browser
+  locale, and the switcher is the only thing that writes the
+  `pdfdemo:lang` key** — detected languages are never cached back, or the
+  stored value stops meaning "chosen" and a Vietnamese browser can no
+  longer reach English (D26).
 - **URL-based localization covers the homepage only (D25).** The homepage
   is served as two static HTML entries sharing one bundle — `/` (English)
   and `/vi/` (Vietnamese) — each with its own baked `<html lang>`, title,
@@ -81,8 +85,11 @@ for the password first.
   navigates between them. **Every other screen (all tool panels) still
   relies on the runtime-only `localStorage` → `navigator` switch** — there
   is no per-tool URL or localized `<head>`; only the homepage's *initial*
-  language is path-driven. Caveat: the Vietnamese homepage title/description
-  are an unreviewed first-draft translation (see "Known gaps").
+  language is path-driven. The switcher persists the choice to localStorage
+  *before* it navigates, so the reload lands in the chosen language even on
+  `/`, where the path carries no signal (D26). Caveat: the Vietnamese homepage
+  title/description are an unreviewed first-draft translation (see "Known
+  gaps").
 
 ## Known gaps
 

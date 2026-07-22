@@ -180,8 +180,9 @@ Vietnamese strings are inlined in the main chunk, with no separate locale
 chunk and no `loadPath` reference).
 
 Detection is `localStorage` → `navigator`, key `pdfdemo:lang` (matching
-storage.ts's convention), cached back to localStorage so an explicit
-toggle beats the browser locale on later visits. `load: 'languageOnly'`
+storage.ts's convention), so an explicit toggle beats the browser locale
+on later visits. (The key is now written by the switcher alone rather
+than by i18next's detector cache — see D26.) `load: 'languageOnly'`
 maps any `vi-*` tag onto `vi`; anything unsupported falls back to `en`.
 The key is deliberately in localStorage rather than the IndexedDB session
 store, so the preference survives "Start over" and `clearSession()`.
@@ -281,7 +282,9 @@ the runtime-only switch, unchanged):
   it returns `'vi'` only on the `/vi/` path and `undefined` everywhere else, so
   the root page falls through to the **unchanged** `localStorage` → `navigator`
   chain. The path sets the starting point without ever replacing or fighting the
-  existing detector. `caches: ['localStorage']` still persists the choice.
+  existing detector. (This entry originally kept `caches: ['localStorage']` to
+  persist the choice; that turned out to be the bug fixed in D26 — the
+  switcher now persists explicitly and automatic caching is off.)
 - **Switcher navigates between `/` and `/vi/`** (a real URL change / full
   reload) instead of toggling in-memory state, so the crawlable page and the UI
   language always agree. Target URL is derived from the current path
@@ -293,6 +296,45 @@ the runtime-only switch, unchanged):
 The Vietnamese `<title>`/`<meta description>` are a first-draft translation
 pending native-speaker review, consistent with the rest of the VI copy (see
 features.md "Known gaps").
+
+**D26. An explicit language choice is persisted by the switcher, and only by
+the switcher; detected tags are normalised before comparison (2026-07-22).**
+D25 left a Vietnamese-browser user with no way to reach English at all. Two
+independent causes, both fixed in `shared/i18n/index.ts` +
+`shared/components/LanguageSwitcher.tsx`:
+
+- **The switcher changed the URL but never recorded the choice.** It relied on
+  i18next's `caches: ['localStorage']`, which writes back whatever was
+  *detected*, not what was *chosen*. So merely loading `/vi/` (path detector) or
+  merely having a Vietnamese browser (navigator) stamped `'vi'` into
+  `pdfdemo:lang` as if the user had asked for it — and that stale value then
+  outranked `navigator` on the root path forever after. Picking English
+  navigated to `/`, where the path detector correctly stays silent, and
+  detection fell straight through to the cached/browser `'vi'`.
+  Fix: `caches: []`, plus an exported `persistLanguagePreference()` the switcher
+  calls immediately before `window.location.assign`. **The stored key now means
+  "explicitly chosen" and nothing else**, which is what made it safe to let it
+  outrank the browser locale in the first place. Detection order is unchanged
+  (`path` → `localStorage` → `navigator`), so `/vi/` opened cold is still
+  Vietnamese and `/` opened cold still follows the browser then English.
+- **`i18n.language` can be a region tag.** `load: 'languageOnly'` resolves which
+  *resources* load, not the reported language string: when the navigator
+  detector won, `i18n.language` was `'vi-VN'`, which is not in
+  `SUPPORTED_LANGUAGES`. The switcher's `current` therefore fell back to `'en'`
+  while the page rendered Vietnamese — the badge read "EN", and clicking English
+  was a no-op because `code !== current` was false. This is why the bug report
+  said English was unreachable from `/` specifically. Fix: an exported
+  `toSupportedLanguage()` that narrows any tag to `'en' | 'vi'`, used by the
+  switcher and by `syncDocumentLanguage` (which was also setting
+  `<html lang="vi-VN">`). Anything comparing i18next's language against
+  `SUPPORTED_LANGUAGES` must go through it.
+
+Verified with Playwright against the production build across simulated browser
+locales (`vi-VN`, `en-US`, `fr-FR`): switch both directions with storage
+cleared, each surviving a manual reload; `/vi/` cold → Vietnamese regardless of
+locale and with nothing written to storage; `/` cold → browser language, then
+English. The static `<head>` of both built pages was re-checked and is
+unchanged.
 
 ## Reversals
 

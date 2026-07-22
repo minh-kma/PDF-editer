@@ -1,12 +1,19 @@
 // English/Vietnamese switcher for the AppBar. Picking a language navigates
 // between the two static homepages (/ and /vi/) — a real URL change, so the
 // crawlable page and the UI language stay in sync — rather than only toggling
-// in-memory state. The full page load re-runs i18n init, which reads the new
-// path; i18next's detector cache also writes the choice to localStorage, so it
-// sticks across visits and beats the browser locale from then on.
+// in-memory state. The full page load re-runs i18n init from scratch, so the
+// choice is also written to localStorage first (persistLanguagePreference) —
+// otherwise, on the English root path, detection would fall through to the
+// browser locale and a Vietnamese browser would never reach English.
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { SUPPORTED_LANGUAGES, homepageUrlForLanguage, type SupportedLanguage } from '../i18n'
+import {
+  SUPPORTED_LANGUAGES,
+  homepageUrlForLanguage,
+  persistLanguagePreference,
+  toSupportedLanguage,
+  type SupportedLanguage,
+} from '../i18n'
 import { GlobeIcon, ChevronDownIcon, CheckIcon } from './icons'
 
 interface LanguageSwitcherProps {
@@ -44,9 +51,9 @@ export function LanguageSwitcher({ disabled }: LanguageSwitcherProps) {
     }
   }, [open])
 
-  const current = (SUPPORTED_LANGUAGES as readonly string[]).includes(i18n.language)
-    ? (i18n.language as SupportedLanguage)
-    : 'en'
+  // Via toSupportedLanguage, not a raw comparison: i18n.language can be a
+  // region tag like 'vi-VN' when the browser locale won detection.
+  const current = toSupportedLanguage(i18n.language)
 
   return (
     <div className="relative" ref={containerRef}>
@@ -78,6 +85,9 @@ export function LanguageSwitcher({ disabled }: LanguageSwitcherProps) {
               onClick={() => {
                 setOpen(false)
                 if (code !== current) {
+                  // Persist before navigating — the next page load re-detects
+                  // from storage, not from anything we hold in memory.
+                  persistLanguagePreference(code)
                   window.location.assign(homepageUrlForLanguage(code))
                 }
               }}
